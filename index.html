@@ -114,17 +114,17 @@
         #stopwatch.running {
              background-color: #166534; /* green-800 */
         }
-        .gender-btn.active, .vitals-btn-base.active {
+        .gender-btn.active, .vitals-btn.active {
             background-color: #3b82f6;
             color: white;
         }
-        #toggle-keywords-btn, #toggle-vitals-summary-btn {
+        #toggle-keywords-btn {
             transition: transform 0.2s ease-in-out;
         }
-        #toggle-keywords-btn.collapsed, #toggle-vitals-summary-btn.collapsed {
+        #toggle-keywords-btn.collapsed {
             transform: rotate(180deg);
         }
-         @keyframes flash-red-bg {
+        @keyframes flash-red-bg {
           0%, 100% { background-color: transparent; }
           50% { background-color: rgba(220, 38, 38, 0.4); } /* red-600 with opacity */
         }
@@ -200,7 +200,7 @@
                         </button>
                     </div>
                 </div>
-                 <div id="vitals-summary-container" class="w-full">
+                <div id="vitals-summary-container" class="w-full">
                      <div class="flex items-start">
                         <div id="vitals-summary-area" class="flex flex-wrap gap-x-4 gap-y-1 items-center flex-grow text-sm text-gray-300 bg-gray-900/50 p-2 rounded-lg border border-gray-700">
                         </div>
@@ -452,8 +452,9 @@
           measurementId: "G-WS7375ELMT"
         };
         
-        const firebaseConfig = typeof __firebase_config !== 'undefined' ? JSON.parse(__firebase_config) : paozoFirebaseConfig;
-        const appId = typeof __app_id !== 'undefined' ? __app_id : firebaseConfig.projectId;
+        const isCanvas = typeof __firebase_config !== 'undefined';
+        const firebaseConfig = isCanvas ? JSON.parse(__firebase_config) : paozoFirebaseConfig;
+        const appId = isCanvas ? __app_id : firebaseConfig.projectId;
         
         const app = initializeApp(firebaseConfig);
         const db = getFirestore(app);
@@ -506,6 +507,10 @@
         const vitalsClearBtn = document.getElementById('vitals-clear-btn');
         const vitalsForm = document.getElementById('vitals-form');
         const gcsTotalEl = document.getElementById('gcs-total');
+        const vitalsSummaryContainer = document.getElementById('vitals-summary-container');
+        const vitalsSummaryArea = document.getElementById('vitals-summary-area');
+        const toggleVitalsSummaryBtn = document.getElementById('toggle-vitals-summary-btn');
+
         
         // --- State Variables ---
         let selectedItems = new Set();
