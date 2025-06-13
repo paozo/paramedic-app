@@ -5,216 +5,128 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>救急隊員向け臨床推論サポートアプリ</title>
     
-    <!-- PWA Manifest -->
     <link rel="manifest" href="manifest.json">
     <meta name="theme-color" content="#1f2937">
-    
-    <!-- iOS PWA Tags -->
     <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
     <meta name="apple-mobile-web-app-title" content="救急推論">
     <link rel="apple-touch-icon" href="icon-192.png">
 
     <script src="https://cdn.tailwindcss.com"></script>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Noto+Sans+JP:wght@400;500;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" crossorigin="anonymous" referrerpolicy="no-referrer" />
     <style>
         body {
             font-family: 'Inter', 'Noto Sans JP', sans-serif;
+            -webkit-tap-highlight-color: transparent; /* Disable tap highlight on iOS */
         }
         ::-webkit-scrollbar { width: 8px; }
         ::-webkit-scrollbar-track { background: #1f2937; }
         ::-webkit-scrollbar-thumb { background: #4b5563; border-radius: 4px; }
         ::-webkit-scrollbar-thumb:hover { background: #6b7280; }
-        .content-card { transition: all 0.3s ease-in-out; transform-origin: top; }
-        .modal { transition: opacity 0.3s ease, transform 0.3s ease; }
+        
+        /* Smooth transitions for modals and cards */
+        .modal, .content-card { transition: all 0.3s ease-in-out; }
         .modal.hidden { opacity: 0; transform: scale(0.95); pointer-events: none; }
         
-        .highlight {
-            background-color: yellow;
-            color: #1f2937;
-            padding: 0 2px;
-            border-radius: 2px;
-        }
-        .current-highlight {
-            outline: 2px solid #f97316;
-            scroll-margin-top: 150px;
-        }
-        .search-nav-btn:disabled {
-            opacity: 0.5;
-            cursor: not-allowed;
-        }
-        .item-checkbox, .nav-item-checkbox {
-            transform: scale(1.2);
-            margin-right: 12px;
-            accent-color: #3b82f6;
-        }
-        .keyword-tag, .content-keyword-tag {
-            cursor: pointer;
-        }
-        .keyword-tag.active {
-            background-color: yellow;
-            color: #1f2937;
-            font-weight: bold;
-        }
-        .nav-item {
-            white-space: nowrap;
-            overflow: hidden;
-            text-overflow: ellipsis;
-            transition: background-color 0.2s ease-in-out, color 0.2s ease-in-out;
-        }
-        .nav-item.active-nav {
-            background-color: #2563eb;
-            color: white;
-        }
+        /* Highlighting styles */
+        .highlight { background-color: yellow; color: #1f2937; padding: 0 2px; border-radius: 2px; }
+        .current-highlight { outline: 2px solid #f97316; scroll-margin-top: 150px; }
+        
+        /* Consistent disabled state */
+        .search-nav-btn:disabled, button:disabled { opacity: 0.5; cursor: not-allowed; }
+        
+        /* Checkbox styling */
+        .item-checkbox, .nav-item-checkbox { transform: scale(1.2); margin-right: 12px; accent-color: #3b82f6; }
+        
+        /* Keyword tags styling */
+        .keyword-tag, .content-keyword-tag { cursor: pointer; transition: background-color 0.2s ease, color 0.2s ease; }
+        .keyword-tag.active { background-color: yellow; color: #1f2937; font-weight: bold; }
+        
+        /* Navigation item styles */
+        .nav-item { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; transition: background-color 0.2s ease, color 0.2s ease; }
+        .nav-item.active-nav { background-color: #2563eb; color: white; }
+        
         /* AND/OR Toggle Switch */
-        #logic-switch-container {
-            position: relative;
-            display: inline-flex;
-            background-color: #374151; /* gray-700 */
-            border-radius: 9999px;
-            padding: 2px;
-            cursor: pointer;
-        }
-        .switch-label {
-            padding: 2px 10px;
-            font-size: 0.75rem;
-            line-height: 1rem;
-            font-weight: 500;
-            color: #d1d5db; /* gray-300 */
-            transition: color 0.2s ease-in-out;
-            z-index: 10;
-        }
-        .switch-label.active-logic {
-            color: #111827; /* gray-900 */
-        }
-        #switch-bg {
-            position: absolute;
-            top: 2px;
-            bottom: 2px;
-            left: 2px;
-            width: calc(50% - 2px);
-            background-color: #fBBF24; /* amber-400 */
-            border-radius: 9999px;
-            transition: transform 0.2s ease-in-out;
-        }
-        #logic-switch-container[data-mode="AND"] #switch-bg {
-            transform: translateX(100%);
-        }
-        .favorite-btn .fa-star, .favorite-disease-btn .fa-star {
-            transition: color 0.2s ease-in-out, transform 0.2s ease-in-out;
-        }
-        #filter-favorites-btn.active {
-            color: #fBBF24; /* amber-400 */
-            background-color: #374151; /* gray-700 */
-        }
-         #stopwatch {
-            transition: background-color 0.2s ease-in-out;
-        }
-        #stopwatch.running {
-             background-color: #166534; /* green-800 */
-        }
-        .gender-btn.active, .vitals-btn.active {
-            background-color: #3b82f6;
-            color: white;
-        }
-        #toggle-keywords-btn {
-            transition: transform 0.2s ease-in-out;
-        }
-        #toggle-keywords-btn.collapsed {
-            transform: rotate(180deg);
-        }
-        @keyframes flash-red-bg {
-          0%, 100% { background-color: transparent; }
-          50% { background-color: rgba(220, 38, 38, 0.4); } /* red-600 with opacity */
-        }
-         @keyframes flash-red-text {
-          0%, 100% { color: inherit; }
-          50% { color: #f87171; } /* red-400 */
-        }
-        .vitals-alert-bg {
-          animation: flash-red-bg 1.5s infinite;
-        }
-         .vitals-alert-text {
-          animation: flash-red-text 1.5s infinite;
-        }
+        #logic-switch-container { position: relative; display: inline-flex; background-color: #374151; border-radius: 9999px; padding: 2px; cursor: pointer; }
+        .switch-label { padding: 2px 10px; font-size: 0.75rem; font-weight: 500; color: #d1d5db; transition: color 0.2s ease-in-out; z-index: 10; }
+        .switch-label.active-logic { color: #111827; }
+        #switch-bg { position: absolute; top: 2px; bottom: 2px; left: 2px; width: calc(50% - 2px); background-color: #fBBF24; border-radius: 9999px; transition: transform 0.2s ease-in-out; }
+        #logic-switch-container[data-mode="AND"] #switch-bg { transform: translateX(100%); }
+        
+        /* Favorite button styles */
+        #filter-favorites-btn.active { color: #fBBF24; background-color: #374151; }
+        
+        /* Stopwatch running state */
+        #stopwatch.running { background-color: #166534; }
+        
+        /* Active button state */
+        .gender-btn.active, .vitals-btn.active { background-color: #3b82f6; color: white; }
+        
+        /* Chevron icon rotation */
+        .toggle-chevron { transition: transform 0.2s ease-in-out; }
+        .toggle-chevron.collapsed { transform: rotate(180deg); }
+
+        /* Animation for vital alerts */
+        @keyframes flash-red-bg { 0%, 100% { background-color: transparent; } 50% { background-color: rgba(220, 38, 38, 0.4); } }
+        @keyframes flash-red-text { 0%, 100% { color: inherit; } 50% { color: #f87171; } }
+        .vitals-alert-bg { animation: flash-red-bg 1.5s infinite; }
+        .vitals-alert-text { animation: flash-red-text 1.5s infinite; }
     </style>
 </head>
-<body class="bg-gray-900 text-gray-100">
+<body class="bg-gray-900 text-gray-100 antialiased">
 
     <div id="app" class="flex h-screen overflow-hidden">
-        <nav id="jump-nav" class="w-28 bg-gray-800 p-2 overflow-y-auto hidden md:block"></nav>
+        <nav id="jump-nav" class="w-28 bg-gray-800 p-2 overflow-y-auto hidden md:block flex-shrink-0"></nav>
 
         <main class="flex-1 flex flex-col">
             <header class="bg-gray-800/50 backdrop-blur-sm p-4 sticky top-0 z-20 shadow-lg">
                 <div class="flex items-center flex-wrap gap-2 md:gap-4 mb-3">
-                    <div id="stopwatch" class="bg-gray-700 text-white font-mono text-xl p-2 rounded-lg cursor-pointer flex-shrink-0" title="クリック: スタート/ストップ | トリプルクリック: リセット">
-                        00:00
-                    </div>
+                    <div id="stopwatch" class="bg-gray-700 text-white font-mono text-xl p-2 rounded-lg cursor-pointer flex-shrink-0" title="クリック: スタート/ストップ | トリプルクリック: リセット">00:00</div>
                     
                     <div class="flex items-center space-x-2 bg-gray-700 p-1 rounded-lg flex-shrink-0">
-                        <input type="number" id="age-input" placeholder="年齢" min="0" max="130" class="w-16 bg-gray-600 text-white placeholder-gray-400 text-center rounded-md p-1 focus:outline-none focus:ring-2 focus:ring-blue-500">
-                        <button id="dob-btn" class="p-1 text-white hover:text-blue-400"><i class="fas fa-calendar-alt"></i></button>
+                        <input type="number" id="age-input" placeholder="年齢" min="0" max="130" class="w-16 bg-gray-600 text-white placeholder-gray-400 text-center rounded-md p-1 focus:outline-none focus:ring-2 focus:ring-blue-500" aria-label="年齢">
+                        <button id="dob-btn" class="p-1 text-white hover:text-blue-400" aria-label="生年月日から年齢を計算"><i class="fas fa-calendar-alt"></i></button>
                         <div class="flex">
                            <button class="gender-btn bg-gray-600 hover:bg-gray-500 text-white font-bold py-1 px-3 rounded-l-md" data-gender="male">男</button>
                            <button class="gender-btn bg-gray-600 hover:bg-gray-500 text-white font-bold py-1 px-3 rounded-r-md" data-gender="female">女</button>
                         </div>
                     </div>
-                     <button id="vitals-btn" class="bg-cyan-600 hover:bg-cyan-700 text-white font-bold py-2 px-3 rounded-lg flex-shrink-0" title="バイタル入力">
-                        <i class="fas fa-wave-square"></i>
-                    </button>
+                     <button id="vitals-btn" class="bg-cyan-600 hover:bg-cyan-700 text-white font-bold py-2 px-3 rounded-lg flex-shrink-0" title="バイタル入力" aria-label="バイタル入力モーダルを開く"><i class="fas fa-wave-square"></i></button>
                     
-                    <input type="text" id="temp-memo" placeholder="一時メモ..." class="flex-grow min-w-[150px] bg-gray-700 text-white placeholder-gray-400 rounded-lg p-2 focus:outline-none focus:ring-2 focus:ring-blue-500">
+                    <input type="text" id="temp-memo" placeholder="一時メモ..." class="flex-grow min-w-[150px] bg-gray-700 text-white placeholder-gray-400 rounded-lg p-2 focus:outline-none focus:ring-2 focus:ring-blue-500" aria-label="一時メモ">
                     
                     <div class="flex-grow flex items-center bg-gray-700 rounded-lg relative">
-                        <input type="text" id="search-input" placeholder="鑑別検索..." class="flex-grow bg-transparent text-white placeholder-gray-400 rounded-lg py-2 px-4 focus:outline-none">
-                        <button id="search-history-btn" class="text-gray-400 hover:text-white px-2" title="検索履歴の表示">
-                            <i class="fas fa-history"></i>
-                        </button>
-                        <button id="search-clear-btn" class="text-gray-400 hover:text-white pr-2" title="検索文字のクリア">
-                            <i class="fas fa-times"></i>
-                        </button>
-                        <div id="search-history-dropdown" class="absolute top-full left-0 mt-2 w-full bg-gray-800 border border-gray-700 rounded-lg shadow-lg z-30 hidden">
-                        </div>
+                        <input type="text" id="search-input" placeholder="鑑別検索..." class="flex-grow bg-transparent text-white placeholder-gray-400 rounded-lg py-2 px-4 focus:outline-none" aria-label="鑑別検索">
+                        <button id="search-history-btn" class="text-gray-400 hover:text-white px-2" title="検索履歴の表示" aria-label="検索履歴の表示"><i class="fas fa-history"></i></button>
+                        <button id="search-clear-btn" class="text-gray-400 hover:text-white pr-2" title="検索文字のクリア" aria-label="検索文字のクリア"><i class="fas fa-times"></i></button>
+                        <div id="search-history-dropdown" class="absolute top-full left-0 mt-2 w-full bg-gray-800 border border-gray-700 rounded-lg shadow-lg z-30 hidden"></div>
                     </div>
+
                      <div class="flex items-center space-x-2">
-                        <button id="search-exec-btn" class="bg-blue-600 hover:bg-blue-700 text-white p-2 rounded-lg flex-shrink-0 w-10 h-10 flex items-center justify-center" title="検索実行">
-                            <i class="fas fa-search"></i>
-                        </button>
+                        <button id="search-exec-btn" class="bg-blue-600 hover:bg-blue-700 text-white p-2 rounded-lg flex-shrink-0 w-10 h-10 flex items-center justify-center" title="検索実行" aria-label="検索実行"><i class="fas fa-search"></i></button>
                         <div class="flex items-center space-x-2 bg-gray-700 p-2 rounded-lg">
-                             <span id="search-count" class="text-sm font-mono text-gray-300 w-16 text-center">0 / 0</span>
-                             <button id="search-prev-btn" class="search-nav-btn text-white hover:bg-gray-600 p-1 rounded-md" disabled title="前のハイライトへ"><i class="fas fa-arrow-up"></i></button>
-                             <button id="search-next-btn" class="search-nav-btn text-white hover:bg-gray-600 p-1 rounded-md" disabled title="次のハイライトへ"><i class="fas fa-arrow-down"></i></button>
+                             <span id="search-count" class="text-sm font-mono text-gray-300 w-16 text-center" aria-live="polite">0 / 0</span>
+                             <button id="search-prev-btn" class="search-nav-btn text-white hover:bg-gray-600 p-1 rounded-md" disabled title="前のハイライトへ" aria-label="前のハイライトへ"><i class="fas fa-arrow-up"></i></button>
+                             <button id="search-next-btn" class="search-nav-btn text-white hover:bg-gray-600 p-1 rounded-md" disabled title="次のハイライトへ" aria-label="次のハイライトへ"><i class="fas fa-arrow-down"></i></button>
                         </div>
-                         <button id="filter-favorites-btn" class="bg-gray-600 hover:bg-gray-500 text-white font-bold py-2 px-3 rounded-lg flex-shrink-0" title="お気に入りフィルター">
-                            <i class="fas fa-star"></i>
-                        </button>
-                        <button id="random-btn" class="bg-purple-600 hover:bg-purple-700 text-white font-bold py-2 px-3 rounded-lg flex-shrink-0" title="ランダム表示">
-                            <i class="fas fa-dice"></i>
-                        </button>
-                        <button id="add-new-btn" class="bg-green-600 hover:bg-green-700 text-white font-bold py-2 px-3 rounded-lg flex-shrink-0">
-                            <i class="fas fa-plus"></i> <span class="hidden lg:inline">新規</span>
-                        </button>
-                        <button id="settings-btn" class="bg-gray-600 hover:bg-gray-500 text-white font-bold py-2 px-3 rounded-lg flex-shrink-0" title="データ管理">
-                            <i class="fas fa-cog"></i>
-                        </button>
+                         <button id="filter-favorites-btn" class="bg-gray-600 hover:bg-gray-500 text-white font-bold py-2 px-3 rounded-lg flex-shrink-0" title="お気に入りフィルター" aria-label="お気に入りフィルター"><i class="fas fa-star"></i></button>
+                        <button id="random-btn" class="bg-purple-600 hover:bg-purple-700 text-white font-bold py-2 px-3 rounded-lg flex-shrink-0" title="ランダム表示" aria-label="ランダム表示"><i class="fas fa-dice"></i></button>
+                        <button id="add-new-btn" class="bg-green-600 hover:bg-green-700 text-white font-bold py-2 px-3 rounded-lg flex-shrink-0"><i class="fas fa-plus"></i> <span class="hidden lg:inline">新規</span></button>
+                        <button id="settings-btn" class="bg-gray-600 hover:bg-gray-500 text-white font-bold py-2 px-3 rounded-lg flex-shrink-0" title="データ管理" aria-label="データ管理"><i class="fas fa-cog"></i></button>
                     </div>
                 </div>
+                
                 <div id="vitals-summary-container" class="w-full">
                      <div class="flex items-start">
-                        <div id="vitals-summary-area" class="flex flex-wrap gap-x-4 gap-y-1 items-center flex-grow text-sm text-gray-300 bg-gray-900/50 p-2 rounded-lg border border-gray-700">
-                        </div>
-                         <button id="toggle-vitals-summary-btn" class="ml-2 text-gray-400 hover:text-white p-2" title="バイタル概要表示を切り替え">
-                            <i class="fas fa-chevron-up"></i>
-                        </button>
+                        <div id="vitals-summary-area" class="flex flex-wrap gap-x-4 gap-y-1 items-center flex-grow text-sm text-gray-300 bg-gray-900/50 p-2 rounded-lg border border-gray-700"></div>
+                         <button id="toggle-vitals-summary-btn" class="ml-2 text-gray-400 hover:text-white p-2 flex-shrink-0" title="バイタル概要の表示切替" aria-label="バイタル概要の表示切替"><i class="fas fa-chevron-up toggle-chevron"></i></button>
                     </div>
                  </div>
+
                 <div class="flex items-start mt-3">
-                    <div id="selected-keywords-area" class="flex flex-wrap gap-2 items-center flex-grow">
-                    </div>
-                     <button id="toggle-keywords-btn" class="ml-2 text-gray-400 hover:text-white p-2" title="キーワード表示を切り替え">
-                        <i class="fas fa-chevron-up"></i>
-                    </button>
+                    <div id="selected-keywords-area" class="flex flex-wrap gap-2 items-center flex-grow"></div>
+                     <button id="toggle-keywords-btn" class="ml-2 text-gray-400 hover:text-white p-2 flex-shrink-0" title="キーワード表示の切替" aria-label="キーワード表示の切替"><i class="fas fa-chevron-up toggle-chevron"></i></button>
                 </div>
             </header>
 
@@ -224,13 +136,13 @@
                     <p class="mt-4 text-gray-400">データを読み込んでいます...</p>
                 </div>
             </div>
+            
             <footer class="bg-gray-800 p-2 text-center text-xs text-gray-500">
                 UserID: <span id="user-id-display">未ログイン</span>
             </footer>
         </main>
     </div>
 
-    <!-- Modals -->
     <div id="dob-era-modal" class="modal hidden fixed inset-0 bg-black bg-opacity-70 flex items-center justify-center z-50 p-4">
         <div class="bg-gray-800 rounded-lg shadow-xl w-full max-w-sm">
             <div class="p-6">
@@ -263,11 +175,11 @@
         <div class="bg-gray-800 rounded-2xl shadow-xl w-full max-w-4xl max-h-[90vh] flex flex-col">
              <div class="p-4 border-b border-gray-700 flex justify-between items-center">
                 <h2 class="text-2xl font-bold text-white">バイタルサイン記録</h2>
-                <button id="vitals-modal-close-btn" class="text-gray-400 hover:text-white text-2xl">&times;</button>
+                <button id="vitals-modal-close-btn" class="text-gray-400 hover:text-white text-2xl" aria-label="閉じる">&times;</button>
             </div>
             <div id="vitals-form" class="flex-grow p-6 overflow-auto space-y-4">
                  <div>
-                    <label id="vitals-appearance-label" class="block text-gray-300 text-sm font-bold mb-2">外観・様子</label>
+                    <label id="vitals-appearance-label" for="vitals-appearance" class="block text-gray-300 text-sm font-bold mb-2">外観・様子</label>
                     <div id="vitals-appearance-tags" class="flex flex-wrap gap-2 mb-2">
                         <button type="button" class="vitals-btn bg-gray-600 hover:bg-gray-500 text-sm py-1 px-3 rounded-full">起坐呼吸</button>
                         <button type="button" class="vitals-btn bg-gray-600 hover:bg-gray-500 text-sm py-1 px-3 rounded-full">喘鳴</button>
@@ -323,9 +235,9 @@
                      <div>
                         <label id="vitals-bp-label" class="block text-gray-300 text-sm font-bold mb-2">血圧 (mmHg)</label>
                         <div class="flex items-center">
-                             <input type="number" id="vitals-bp-sys" inputmode="numeric" pattern="[0-9]*" class="w-full bg-gray-700 text-white rounded-l-lg p-2 focus:outline-none focus:ring-2 focus:ring-blue-500">
+                             <input type="number" id="vitals-bp-sys" aria-label="収縮期血圧" inputmode="numeric" pattern="[0-9]*" class="w-full bg-gray-700 text-white rounded-l-lg p-2 focus:outline-none focus:ring-2 focus:ring-blue-500">
                              <span class="bg-gray-600 p-2">/</span>
-                             <input type="number" id="vitals-bp-dia" inputmode="numeric" pattern="[0-9]*" class="w-full bg-gray-700 text-white rounded-r-lg p-2 focus:outline-none focus:ring-2 focus:ring-blue-500">
+                             <input type="number" id="vitals-bp-dia" aria-label="拡張期血圧" inputmode="numeric" pattern="[0-9]*" class="w-full bg-gray-700 text-white rounded-r-lg p-2 focus:outline-none focus:ring-2 focus:ring-blue-500">
                         </div>
                     </div>
                     <div>
@@ -340,7 +252,7 @@
                  </div>
             </div>
              <div class="p-4 border-t border-gray-700 flex justify-end space-x-3">
-                <button type="button" id="vitals-clear-btn" title="トリプルクリックでクリア" class="bg-gray-600 hover:bg-gray-500 text-white font-bold py-2 px-4 rounded-lg">クリア</button>
+                <button type="button" id="vitals-clear-btn" title="トリプルクリックで全クリア" class="bg-gray-600 hover:bg-gray-500 text-white font-bold py-2 px-4 rounded-lg">クリア</button>
             </div>
         </div>
     </div>
@@ -406,7 +318,7 @@
                         <h3 class="text-lg font-semibold text-gray-300 mb-2">表示設定</h3>
                          <label class="flex items-center">
                             <input type="checkbox" id="show-random-btn-toggle" class="h-4 w-4 text-blue-600 bg-gray-700 border-gray-600 rounded focus:ring-blue-500">
-                            <span class="ml-2 text-sm text-gray-300">ランダムボタンを表示する</span>
+                            <span class="ml-2 text-sm text-gray-300">ランダムボタンをヘッダーに表示する</span>
                         </label>
                     </div>
                 </div>
@@ -417,7 +329,7 @@
         <div class="bg-gray-900 rounded-2xl shadow-xl w-full max-w-6xl max-h-[90vh] flex flex-col">
             <div class="p-4 border-b border-gray-700 flex justify-between items-center">
                 <h2 class="text-2xl font-bold text-white">鑑別診断の比較</h2>
-                <button id="compare-modal-close-btn" class="text-gray-400 hover:text-white text-2xl">&times;</button>
+                <button id="compare-modal-close-btn" class="text-gray-400 hover:text-white text-2xl" aria-label="閉じる">&times;</button>
             </div>
             <div id="compare-content-area" class="flex-grow p-4 overflow-auto flex space-x-4">
             </div>
@@ -425,7 +337,6 @@
     </div>
 
     <script>
-      // Register Service Worker
       if ('serviceWorker' in navigator) {
         window.addEventListener('load', () => {
           navigator.serviceWorker.register('./sw.js').then(registration => {
@@ -436,34 +347,18 @@
         });
       }
     </script>
+
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
         import { getFirestore, collection, onSnapshot, doc, addDoc, setDoc, deleteDoc, getDocs, writeBatch, updateDoc } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
         import { getAuth, signInAnonymously, onAuthStateChanged, signInWithCustomToken } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
 
-        // --- Firebase Config and Initial Data ---
-        const firebaseConfig = {
-          apiKey: "AIzaSyDO3fkrzGL0nosVHf-Sm2bIL8PsHqKJARU",
-          authDomain: "paramedic-app-paozo.firebaseapp.com",
-          projectId: "paramedic-app-paozo",
-          storageBucket: "paramedic-app-paozo.firebasestorage.app",
-          messagingSenderId: "646996057722",
-          appId: "1:646996057722:web:7e14e135b81faea5cee5c3",
-          measurementId: "G-WS7375ELMT"
-        };
-        
-        const isCanvas = typeof __firebase_config !== 'undefined';
-        const firebaseConfig = isCanvas ? JSON.parse(__firebase_config) : paozoFirebaseConfig;
-        const appId = isCanvas ? __app_id : firebaseConfig.projectId;
-        
-        const app = initializeApp(firebaseConfig);
-        const db = getFirestore(app);
-        const auth = getAuth(app);
+        // --- Firebase & App Variables ---
+        let db, auth, dataCollectionRef;
         let userId = null;
         let dataStore = [];
         const collectionName = 'clinical_cases';
-        let dataCollectionRef;
-        const initialData = [ { chiefComplaint: "気分不良", description: "身体的な不調や精神的な落ち込みなど、主観的な不快感全般。", memo: "", isFavorite: false, diseases: [ { name: "脳血管障害", description: "脳の血管が詰まったり破れたりすることで脳細胞が障害される病気。", memo: "", isFavorite: false, keywords: ["突然の片麻痺", "顔面神経麻痺", "言語障害", "意識障害", "激しい頭痛", "嘔吐", "めまい"], pitfalls: ["非典型症状（高齢者、後方循環系）", "頭痛軽微なくも膜下出血の見逃し", "TIAの見過ごし"] }, { name: "急性冠症候群", description: "心臓の血管が急に詰まり、心筋に血液が供給されなくなる危険な状態。", memo: "", isFavorite: false, keywords: ["胸痛", "放散痛", "冷や汗", "呼吸困難", "吐き気"], pitfalls: ["非典型的な胸痛（糖尿病患者、高齢者）", "心電図変化がない場合の見逃し", "消化器症状との誤認"] }, { name: "低血糖", description: "血糖値が異常に低くなることで様々な症状を引き起こす状態。", memo: "", isFavorite: false, keywords: ["冷や汗", "動悸", "意識障害", "痙攣", "空腹感"], pitfalls: ["高齢者の非典型的症状", "インスリン・経口血糖降下薬の使用歴確認漏れ", "アルコール摂取後の低血糖"] } ] }, { chiefComplaint: "呼吸困難", description: "息が苦しい、息切れがする、十分に息が吸えないといった主観的な感覚。", memo: "", isFavorite: false, diseases: [ { name: "心不全", description: "心臓のポンプ機能が低下し、全身に必要な血液を送れなくなった状態。", memo: "", isFavorite: false, keywords: ["起坐呼吸", "発作性夜間呼吸困難", "下腿浮腫", "頸静脈怒張", "ピンク色泡沫状痰"], pitfalls: ["喘息との鑑別困難", "右心不全のみの場合の呼吸困難感の欠如", "腎不全との合併"] }, { name: "気管支喘息", description: "気道が慢性的に炎症を起こし、様々な刺激で狭くなる病気。", memo: "", isFavorite: false, keywords: ["喘鳴", "呼気性呼吸困難", "夜間・早朝の増悪", "アトピー素因"], pitfalls: ["心臓喘息との鑑別", "重積発作時の喘鳴減弱（silent chest）", "アナフィラキシーの初期症状"] } ] } ];
+        let appId;
         
         // --- DOM Elements ---
         const contentArea = document.getElementById('content-area');
@@ -510,8 +405,25 @@
         const vitalsSummaryContainer = document.getElementById('vitals-summary-container');
         const vitalsSummaryArea = document.getElementById('vitals-summary-area');
         const toggleVitalsSummaryBtn = document.getElementById('toggle-vitals-summary-btn');
+        const dataModal = document.getElementById('data-modal');
+        const modalTitle = document.getElementById('modal-title');
+        const dataForm = document.getElementById('data-form');
+        const entryIdInput = document.getElementById('entry-id');
+        const chiefComplaintInput = document.getElementById('chiefComplaint');
+        const descriptionInput = document.getElementById('description');
+        const chiefComplaintMemoInput = document.getElementById('chiefComplaintMemo');
+        const diseasesContainer = document.getElementById('diseases-container');
+        const deleteBtn = document.getElementById('delete-btn');
+        const addNewBtn = document.getElementById('add-new-btn');
+        const modalCloseBtn = document.getElementById('modal-close-btn');
+        const addDiseaseBtn = document.getElementById('add-disease-btn');
+        const confirmModal = document.getElementById('confirm-modal');
+        const confirmTitle = document.getElementById('confirm-title');
+        const confirmMessage = document.getElementById('confirm-message');
+        const confirmButtons = document.getElementById('confirm-buttons');
+        const alertIcon = document.getElementById('alert-icon');
 
-        
+
         // --- State Variables ---
         let selectedItems = new Set();
         let highlightedElements = [];
@@ -527,31 +439,88 @@
         let vitalsClearClickCount = 0;
         let vitalsClearClickTimer = null;
         let intersectionObserver = null;
-        const DATA_CACHE_KEY = `paramedic_data_cache_${appId}`;
-        const HISTORY_STORAGE_KEY = `paramedic_app_search_history_${appId}`;
+        const MAX_HISTORY_ITEMS = 15;
         const SHOW_RANDOM_BTN_KEY = `paramedic_app_show_random_button`;
         let gcs = { E: 0, V: 0, M: 0 };
         let pupilSize = { r: '', l: '' };
         let pupilReflex = { r: '', l: '' };
 
         // --- Auth & Data Loading ---
-        onAuthStateChanged(auth, async (user) => { if (user) { userId = user.uid; document.getElementById('user-id-display').textContent = userId; dataCollectionRef = collection(db, 'artifacts', appId, 'users', userId, collectionName); setupSnapshotListener(); } else { document.getElementById('user-id-display').textContent = "匿名ログイン中..."; } });
-        async function signIn() { try { if (typeof __initial_auth_token !== 'undefined' && __initial_auth_token) { await signInWithCustomToken(auth, __initial_auth_token); } else { await signInAnonymously(auth); } } catch (error) { console.error("Authentication failed:", error); const loadingEl = document.getElementById('loading'); if (loadingEl) { loadingEl.innerHTML = '<p class="text-red-500">Authentication Failed.</p>'; } } }
+        function startApp() {
+            try {
+                let firebaseConfig;
+                // Check if the global config variable exists (for production/Canvas environment)
+                if (typeof __firebase_config !== 'undefined' && __firebase_config) {
+                    firebaseConfig = JSON.parse(__firebase_config);
+                } else {
+                    // Fallback for local development.
+                    // The user can paste their config here.
+                const firebaseConfig = {
+                apiKey: "AIzaSyC6umJXFGulRAkwdhx-Hoj1_5DbEbSdBOQ",
+                authDomain: "paramedic-app-df696.firebaseapp.com",
+                projectId: "paramedic-app-df696",
+                storageBucket: "paramedic-app-df696.firebasestorage.app",
+                messagingSenderId: "950566286423",
+                appId: "1:950566286423:web:8086a8eb31b63008465f12",
+                measurementId: "G-GHKF63GY9X"
+                };
+                }
+
+                appId = typeof __app_id !== 'undefined' ? __app_id : 'default-app-id';
+                const app = initializeApp(firebaseConfig);
+                db = getFirestore(app);
+                auth = getAuth(app);
+
+                onAuthStateChanged(auth, async (user) => {
+                    if (user) {
+                        userId = user.uid;
+                        document.getElementById('user-id-display').textContent = userId;
+                        dataCollectionRef = collection(db, 'artifacts', appId, 'users', userId, collectionName);
+                        setupSnapshotListener();
+                    } else {
+                        document.getElementById('user-id-display').textContent = "匿名ログイン中...";
+                        await signIn();
+                    }
+                });
+
+            } catch (error) {
+                console.error("Firebase Initialization Failed:", error);
+                document.getElementById('loading').innerHTML = `<p class="text-red-500 p-8">アプリケーションの初期化に失敗しました。設定を確認してください。</p>`;
+            }
+        }
+
+        async function signIn() {
+            try {
+                if (typeof __initial_auth_token !== 'undefined' && __initial_auth_token) {
+                    await signInWithCustomToken(auth, __initial_auth_token);
+                } else {
+                    await signInAnonymously(auth);
+                }
+            } catch (error) {
+                console.error("Authentication failed:", error);
+                const loadingEl = document.getElementById('loading');
+                if (loadingEl) {
+                    loadingEl.innerHTML = '<p class="text-red-500">Authentication Failed.</p>';
+                }
+            }
+        }
         
         function setupSnapshotListener() {
             onSnapshot(dataCollectionRef, (snapshot) => {
                 const loadingEl = document.getElementById('loading');
                 if (loadingEl) { loadingEl.style.display = 'none'; }
                 
+                const serverData = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+                dataStore = serverData;
+
                 if (snapshot.empty && dataStore.length === 0) { 
                     seedInitialData(); 
                     return; 
                 }
-                const serverData = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
-                dataStore = serverData;
-                localStorage.setItem(DATA_CACHE_KEY, JSON.stringify(dataStore)); // Cache data
+                
                 render(); 
                 renderSelectedKeywords();
+                setupIntersectionObserver();
             }, (error) => {
                 console.error("Error fetching data:", error);
                 const loadingEl = document.getElementById('loading');
@@ -561,18 +530,20 @@
             });
         }
         
-        async function seedInitialData() { try { for (const item of initialData) { await addDoc(dataCollectionRef, item); } } catch (error) { console.error("Error seeding data:", error); } }
-
-        function loadInitialData() {
-            const cachedData = localStorage.getItem(DATA_CACHE_KEY);
-            if (cachedData) {
-                dataStore = JSON.parse(cachedData);
-                const loadingEl = document.getElementById('loading');
-                if (loadingEl) loadingEl.style.display = 'none';
-                render();
+        async function seedInitialData() {
+            const initialData = [ { chiefComplaint: "気分不良", description: "身体的な不調や精神的な落ち込みなど、主観的な不快感全般。", memo: "", isFavorite: false, diseases: [ { name: "脳血管障害", description: "脳の血管が詰まったり破れたりすることで脳細胞が障害される病気。", memo: "", isFavorite: false, keywords: ["突然の片麻痺", "顔面神経麻痺", "言語障害", "意識障害", "激しい頭痛", "嘔吐", "めまい"], pitfalls: ["非典型症状（高齢者、後方循環系）", "頭痛軽微なくも膜下出血の見逃し", "TIAの見過ごし"] }, { name: "急性冠症候群", description: "心臓の血管が急に詰まり、心筋に血液が供給されなくなる危険な状態。", memo: "", isFavorite: false, keywords: ["胸痛", "放散痛", "冷や汗", "呼吸困難", "吐き気"], pitfalls: ["非典型的な胸痛（糖尿病患者、高齢者）", "心電図変化がない場合の見逃し", "消化器症状との誤認"] }, { name: "低血糖", description: "血糖値が異常に低くなることで様々な症状を引き起こす状態。", memo: "", isFavorite: false, keywords: ["冷や汗", "動悸", "意識障害", "痙攣", "空腹感"], pitfalls: ["高齢者の非典型的症状", "インスリン・経口血糖降下薬の使用歴確認漏れ", "アルコール摂取後の低血糖"] } ] }, { chiefComplaint: "呼吸困難", description: "息が苦しい、息切れがする、十分に息が吸えないといった主観的な感覚。", memo: "", isFavorite: false, diseases: [ { name: "心不全", description: "心臓のポンプ機能が低下し、全身に必要な血液を送れなくなった状態。", memo: "", isFavorite: false, keywords: ["起坐呼吸", "発作性夜間呼吸困難", "下腿浮腫", "頸静脈怒張", "ピンク色泡沫状痰"], pitfalls: ["喘息との鑑別困難", "右心不全のみの場合の呼吸困難感の欠如", "腎不全との合併"] }, { name: "気管支喘息", description: "気道が慢性的に炎症を起こし、様々な刺激で狭くなる病気。", memo: "", isFavorite: false, keywords: ["喘鳴", "呼気性呼吸困難", "夜間・早朝の増悪", "アトピー素因"], pitfalls: ["心臓喘息との鑑別", "重積発作時の喘鳴減弱（silent chest）", "アナフィラキシーの初期症状"] } ] } ];
+            try {
+                const batch = writeBatch(db);
+                initialData.forEach(item => {
+                    const docRef = doc(collection(db, 'artifacts', appId, 'users', userId, collectionName));
+                    batch.set(docRef, item);
+                });
+                await batch.commit();
+            } catch (error) {
+                console.error("Error seeding data:", error);
             }
-            signIn();
         }
+
         
         // --- Rendering ---
         function render() {
@@ -606,10 +577,11 @@
                 const filters = Array.from(activeKeywordFilters);
                 dataToRender = processedData.map(entry => {
                     const matchingDiseases = entry.diseases.filter(d => {
+                        const keywords = d.keywords || [];
                         if (keywordFilterMode === 'OR') {
-                            return filters.some(filter => d.keywords.includes(filter));
+                            return filters.some(filter => keywords.includes(filter));
                         } else { // AND
-                            return filters.every(filter => d.keywords.includes(filter));
+                            return filters.every(filter => keywords.includes(filter));
                         }
                     });
                     if (matchingDiseases.length > 0) {
@@ -622,7 +594,7 @@
                 const regex = new RegExp(searchTerm.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'), 'i');
                 dataToRender = processedData.filter(entry => 
                     regex.test(entry.chiefComplaint) || 
-                    entry.diseases.some(d => regex.test(d.name) || d.keywords.some(k => regex.test(k)) || d.pitfalls.some(p => regex.test(p)))
+                    entry.diseases.some(d => regex.test(d.name) || (d.keywords && d.keywords.some(k => regex.test(k))) || (d.pitfalls && d.pitfalls.some(p => regex.test(p))))
                 );
                 termToHighlight = [searchTerm];
             } else {
@@ -669,7 +641,7 @@
                         </div>
                          <p class="text-sm text-gray-400 mt-1 ml-10">${entry.description || ''}</p>
                         ${memoHTML}
-                        <div class="mt-4 space-y-4 pl-6">${entry.diseases.map(disease => { 
+                        <div class="mt-4 space-y-4 pl-6">${(entry.diseases || []).map(disease => { 
                             const isDiseaseChecked = selectedItems.has(`d_${entry.id}_${disease.name.replace(/\s/g, '_')}`);
                              const diseaseFavoriteClass = disease.isFavorite ? 'fas text-yellow-400' : 'far text-gray-500';
                             const diseaseMemoHTML = disease.memo ? `<div class="mt-3 text-sm text-amber-300 bg-gray-900/50 p-2 rounded-lg"><div class="font-bold mb-1 flex items-center"><i class="fas fa-pencil-alt mr-2"></i>疾患メモ</div><div>${disease.memo.replace(/\n/g, '<br>')}</div></div>` : '';
@@ -685,13 +657,13 @@
                                     <div class="mt-2 pl-8">
                                         <p class="text-sm text-gray-400 mt-1">${disease.description || ''}</p>
                                         ${diseaseMemoHTML}
-                                        <h4 class="font-bold text-sm text-gray-300 mt-3"><i class="fas fa-lightbulb text-yellow-400 mr-2"></i>キーワード</h4><div class="flex flex-wrap gap-2 mt-1">${disease.keywords.map(k => `<span class="content-keyword-tag bg-gray-700 text-sm text-gray-200 rounded-full px-3 py-1 hover:bg-gray-500">${k}</span>`).join('')}</div>
-                                        <h4 class="font-bold text-sm text-gray-300 mt-3"><i class="fas fa-exclamation-triangle text-red-400 mr-2"></i>落とし穴</h4><ul class="list-disc list-inside mt-1 text-sm text-gray-300 space-y-1">${disease.pitfalls.map(p => `<li>${p}</li>`).join('')}</ul>
+                                        <h4 class="font-bold text-sm text-gray-300 mt-3"><i class="fas fa-lightbulb text-yellow-400 mr-2"></i>キーワード</h4><div class="flex flex-wrap gap-2 mt-1">${(disease.keywords || []).map(k => `<span class="content-keyword-tag bg-gray-700 text-sm text-gray-200 rounded-full px-3 py-1 hover:bg-gray-500">${k}</span>`).join('')}</div>
+                                        <h4 class="font-bold text-sm text-gray-300 mt-3"><i class="fas fa-exclamation-triangle text-red-400 mr-2"></i>落とし穴</h4><ul class="list-disc list-inside mt-1 text-sm text-gray-300 space-y-1">${(disease.pitfalls || []).map(p => `<li>${p}</li>`).join('')}</ul>
                                     </div>
                                 </div>`
                         }).join('')}</div>`;
                     
-                    if (termToHighlight.length > 0) {
+                    if (termToHighlight && termToHighlight.length > 0) {
                         const regex = new RegExp(`(${termToHighlight.map(t => t.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')).join('|')})`, 'gi');
                         contentHTML = contentHTML.replace(regex, `<mark class="highlight">$1</mark>`);
                     }
@@ -733,13 +705,13 @@
             const keywords = new Set();
             
             if (selectedItems.size === 0) {
-                dataStore.forEach(entry => entry.diseases.forEach(d => d.keywords.forEach(k => keywords.add(k))));
+                dataStore.forEach(entry => (entry.diseases || []).forEach(d => (d.keywords || []).forEach(k => keywords.add(k))));
             } else {
                 selectedItems.forEach(itemId => {
                     const parts = itemId.split('_'); const type = parts[0]; const entryId = parts[1];
                     const entry = dataStore.find(e => e.id === entryId); if (!entry) return;
-                    if (type === 'c') { entry.diseases.forEach(d => d.keywords.forEach(k => keywords.add(k))); } 
-                    else if (type === 'd') { const diseaseName = parts.slice(2).join(' ').replace(/_/g, ' '); const disease = entry.diseases.find(d => d.name === diseaseName); if (disease) { disease.keywords.forEach(k => keywords.add(k)); } }
+                    if (type === 'c') { (entry.diseases || []).forEach(d => (d.keywords || []).forEach(k => keywords.add(k))); } 
+                    else if (type === 'd') { const diseaseName = parts.slice(2).join(' ').replace(/_/g, ' '); const disease = (entry.diseases || []).find(d => d.name === diseaseName); if (disease) { (disease.keywords || []).forEach(k => keywords.add(k)); } }
                 });
             }
             
@@ -903,7 +875,8 @@
         function performSearch() { 
             clearKeywordFilter();
             const term = searchInput.value.trim(); 
-            saveSearchTerm(term); 
+            const HISTORY_STORAGE_KEY = `paramedic_app_search_history_${appId}`;
+            saveSearchTerm(term, HISTORY_STORAGE_KEY); 
             render(); 
         }
 
@@ -917,7 +890,7 @@
                     const diseaseName = parts.slice(2).join(' ').replace(/_/g, ' ');
                     const entry = dataStore.find(e => e.id === entryId);
                     if(entry) {
-                        const disease = entry.diseases.find(d => d.name === diseaseName);
+                        const disease = (entry.diseases || []).find(d => d.name === diseaseName);
                         if (disease) {
                             selectedDiseases.push(disease);
                         }
@@ -929,8 +902,8 @@
                 const column = document.createElement('div');
                 column.className = 'flex-1 min-w-[250px] bg-gray-800 p-4 rounded-lg';
                 
-                const keywordsHTML = disease.keywords.map(k => `<li>${k}</li>`).join('') || '<li>なし</li>';
-                const pitfallsHTML = disease.pitfalls.map(p => `<li>${p}</li>`).join('') || '<li>なし</li>';
+                const keywordsHTML = (disease.keywords || []).map(k => `<li>${k}</li>`).join('') || '<li>なし</li>';
+                const pitfallsHTML = (disease.pitfalls || []).map(p => `<li>${p}</li>`).join('') || '<li>なし</li>';
                 
                 column.innerHTML = `
                     <h3 class="text-xl font-bold text-teal-400 mb-3 border-b border-teal-500 pb-2">${disease.name}</h3>
@@ -955,10 +928,35 @@
         function navigateToHighlight(index) { if (index < 0 || index >= highlightedElements.length) return; highlightedElements.forEach(el => el.classList.remove('current-highlight')); const currentEl = highlightedElements[index]; currentEl.classList.add('current-highlight'); currentEl.scrollIntoView({ behavior: 'smooth', block: 'center' }); currentHighlightIndex = index; updateSearchNav(); }
 
         // --- Search History ---
-        function getSearchHistory() { return JSON.parse(localStorage.getItem(HISTORY_STORAGE_KEY)) || []; }
-        function saveSearchTerm(term) { if (!term) return; let history = getSearchHistory(); history = history.filter(item => item !== term); history.unshift(term); if (history.length > MAX_HISTORY_ITEMS) { history.pop(); } localStorage.setItem(HISTORY_STORAGE_KEY, JSON.stringify(history)); }
-        function clearSearchHistory() { localStorage.removeItem(HISTORY_STORAGE_KEY); renderSearchHistory(); }
-        function renderSearchHistory() { const history = getSearchHistory(); searchHistoryDropdown.innerHTML = ''; if (history.length === 0) { searchHistoryDropdown.innerHTML = '<div class="p-3 text-sm text-gray-500 text-center">検索履歴はありません。</div>'; return; } const list = document.createElement('ul'); history.forEach(term => { const item = document.createElement('li'); item.className = 'px-4 py-2 hover:bg-gray-700 cursor-pointer text-gray-200'; item.textContent = term; item.addEventListener('click', () => { searchInput.value = term; performSearch(); searchHistoryDropdown.classList.add('hidden'); }); list.appendChild(item); }); searchHistoryDropdown.appendChild(list); const footer = document.createElement('div'); footer.className = 'p-2 border-t border-gray-700 text-center'; const clearButton = document.createElement('button'); clearButton.className = 'text-sm text-red-500 hover:text-red-400'; clearButton.textContent = '履歴を消去'; clearButton.addEventListener('click', (e) => { e.stopPropagation(); clearSearchHistory(); }); footer.appendChild(clearButton); searchHistoryDropdown.appendChild(footer); }
+        function getSearchHistory(key) { return JSON.parse(localStorage.getItem(key)) || []; }
+        function saveSearchTerm(term, key) { if (!term) return; let history = getSearchHistory(key); history = history.filter(item => item !== term); history.unshift(term); if (history.length > MAX_HISTORY_ITEMS) { history.pop(); } localStorage.setItem(key, JSON.stringify(history)); }
+        function clearSearchHistory(key) { localStorage.removeItem(key); renderSearchHistory(); }
+        function renderSearchHistory() {
+            const HISTORY_STORAGE_KEY = `paramedic_app_search_history_${appId}`;
+            const history = getSearchHistory(HISTORY_STORAGE_KEY);
+            searchHistoryDropdown.innerHTML = '';
+            if (history.length === 0) {
+                searchHistoryDropdown.innerHTML = '<div class="p-3 text-sm text-gray-500 text-center">検索履歴はありません。</div>';
+                return;
+            }
+            const list = document.createElement('ul');
+            history.forEach(term => {
+                const item = document.createElement('li');
+                item.className = 'px-4 py-2 hover:bg-gray-700 cursor-pointer text-gray-200';
+                item.textContent = term;
+                item.addEventListener('click', () => { searchInput.value = term; performSearch(); searchHistoryDropdown.classList.add('hidden'); });
+                list.appendChild(item);
+            });
+            searchHistoryDropdown.appendChild(list);
+            const footer = document.createElement('div');
+            footer.className = 'p-2 border-t border-gray-700 text-center';
+            const clearButton = document.createElement('button');
+            clearButton.className = 'text-sm text-red-500 hover:text-red-400';
+            clearButton.textContent = '履歴を消去';
+            clearButton.addEventListener('click', (e) => { e.stopPropagation(); clearSearchHistory(HISTORY_STORAGE_KEY); });
+            footer.appendChild(clearButton);
+            searchHistoryDropdown.appendChild(footer);
+        }
         function toggleHistoryDropdown() { if (searchHistoryDropdown.classList.contains('hidden')) { renderSearchHistory(); searchHistoryDropdown.classList.remove('hidden'); } else { searchHistoryDropdown.classList.add('hidden'); } }
 
         // --- Stopwatch ---
@@ -1009,138 +1007,168 @@
             stopwatchEl.classList.remove('running');
         }
 
-        // --- Event Listeners ---
-        searchExecBtn.addEventListener('click', performSearch);
-        searchInput.addEventListener('keypress', e => { if (e.key === 'Enter') { performSearch(); e.preventDefault(); } });
-        searchClearBtn.addEventListener('click', () => { searchInput.value = ''; performSearch(); });
-        searchHistoryBtn.addEventListener('click', (e) => { e.stopPropagation(); toggleHistoryDropdown(); });
-        document.addEventListener('click', (e) => { if (searchHistoryBtn && !searchHistoryBtn.parentElement.contains(e.target)) { searchHistoryDropdown.classList.add('hidden'); } });
-        searchNextBtn.addEventListener('click', () => { if (highlightedElements.length > 0) navigateToHighlight((currentHighlightIndex + 1) % highlightedElements.length); });
-        searchPrevBtn.addEventListener('click', () => { if (highlightedElements.length > 0) navigateToHighlight((currentHighlightIndex - 1 + highlightedElements.length) % highlightedElements.length); });
-        settingsBtn.addEventListener('click', () => settingsModal.classList.remove('hidden'));
-        settingsModalCloseBtn.addEventListener('click', () => settingsModal.classList.add('hidden'));
-        exportDataBtn.addEventListener('click', exportDataAsJSON);
-        importDataBtn.addEventListener('click', () => importFileInput.click());
-        importFileInput.addEventListener('change', handleFileSelect);
-        filterFavoritesBtn.addEventListener('click', () => {
-            isFavoritesFilterActive = !isFavoritesFilterActive;
-            filterFavoritesBtn.classList.toggle('active', isFavoritesFilterActive);
-            render();
-        });
-        compareModalCloseBtn.addEventListener('click', () => compareModal.classList.add('hidden'));
-        stopwatchEl.addEventListener('click', handleStopwatchClick);
-        toggleKeywordsBtn.addEventListener('click', () => {
-            selectedKeywordsArea.classList.toggle('hidden');
-            toggleKeywordsBtn.classList.toggle('collapsed');
-        });
-        randomBtn.addEventListener('click', () => {
-            const allComplaintCards = document.querySelectorAll('.content-card');
-            if (allComplaintCards.length > 0) {
-                const randomIndex = Math.floor(Math.random() * allComplaintCards.length);
-                allComplaintCards[randomIndex].scrollIntoView({ behavior: 'smooth', block: 'center' });
-            }
-        });
-        
-        showRandomBtnToggle.addEventListener('change', (e) => {
-            const isVisible = e.target.checked;
-            randomBtn.classList.toggle('hidden', !isVisible);
-            localStorage.setItem(SHOW_RANDOM_BTN_KEY, isVisible);
-        });
-        
-        contentArea.addEventListener('click', (e) => {
-            const editBtn = e.target.closest('.edit-btn');
-            const favoriteBtn = e.target.closest('.favorite-btn');
-            const favoriteDiseaseBtn = e.target.closest('.favorite-disease-btn');
-            
-            if (editBtn) { handleEdit(editBtn.dataset.id); return; }
-            if (favoriteBtn) { handleFavoriteClick(favoriteBtn.dataset.id); return; }
-            if (favoriteDiseaseBtn) { handleDiseaseFavoriteClick(favoriteDiseaseBtn.dataset.complaintId, favoriteDiseaseBtn.dataset.diseaseName); return; }
-            if (e.target.classList.contains('content-keyword-tag')) { handleKeywordTagClick(e.target.textContent); }
-        });
-        contentArea.addEventListener('change', handleCheckboxChange);
-        jumpNav.addEventListener('change', handleCheckboxChange);
-
-        genderBtns.forEach(btn => {
-            btn.addEventListener('click', () => {
-                genderBtns.forEach(b => b.classList.remove('active'));
-                btn.classList.add('active');
+        // --- Event Listeners Setup ---
+        function attachEventListeners() {
+            searchExecBtn.addEventListener('click', performSearch);
+            searchInput.addEventListener('keypress', e => { if (e.key === 'Enter') { performSearch(); e.preventDefault(); } });
+            searchClearBtn.addEventListener('click', () => { searchInput.value = ''; performSearch(); });
+            searchHistoryBtn.addEventListener('click', (e) => { e.stopPropagation(); toggleHistoryDropdown(); });
+            document.addEventListener('click', (e) => { if (searchHistoryBtn && !searchHistoryBtn.parentElement.contains(e.target)) { searchHistoryDropdown.classList.add('hidden'); } });
+            searchNextBtn.addEventListener('click', () => { if (highlightedElements.length > 0) navigateToHighlight((currentHighlightIndex + 1) % highlightedElements.length); });
+            searchPrevBtn.addEventListener('click', () => { if (highlightedElements.length > 0) navigateToHighlight((currentHighlightIndex - 1 + highlightedElements.length) % highlightedElements.length); });
+            settingsBtn.addEventListener('click', () => settingsModal.classList.remove('hidden'));
+            settingsModalCloseBtn.addEventListener('click', () => settingsModal.classList.add('hidden'));
+            exportDataBtn.addEventListener('click', exportDataAsJSON);
+            importDataBtn.addEventListener('click', () => importFileInput.click());
+            importFileInput.addEventListener('change', handleFileSelect);
+            filterFavoritesBtn.addEventListener('click', () => {
+                isFavoritesFilterActive = !isFavoritesFilterActive;
+                filterFavoritesBtn.classList.toggle('active', isFavoritesFilterActive);
+                render();
             });
-        });
-        
-        dobBtn.addEventListener('click', () => dobEraModal.classList.remove('hidden'));
-        dobEraCancelBtn.addEventListener('click', () => dobEraModal.classList.add('hidden'));
-        dobEraOkBtn.addEventListener('click', () => {
-            const era = eraSelect.value;
-            const year = parseInt(eraYearInput.value, 10);
-            const month = parseInt(eraMonthInput.value, 10);
-            const day = parseInt(eraDayInput.value, 10);
+            compareModalCloseBtn.addEventListener('click', () => compareModal.classList.add('hidden'));
+            stopwatchEl.addEventListener('click', handleStopwatchClick);
+            toggleKeywordsBtn.addEventListener('click', () => {
+                selectedKeywordsArea.classList.toggle('hidden');
+                toggleKeywordsBtn.querySelector('.toggle-chevron').classList.toggle('collapsed');
+            });
+            toggleVitalsSummaryBtn.addEventListener('click', () => {
+                 vitalsSummaryArea.classList.toggle('hidden');
+                 toggleVitalsSummaryBtn.querySelector('.toggle-chevron').classList.toggle('collapsed');
+            });
 
-            if (!year || !month || !day) {
-                customAlert("年、月、日をすべて入力してください。");
-                return;
-            }
-            
-            const eraData = {
-                reiwa: { startYear: 2019, max: 20 },
-                heisei: { startYear: 1989, max: 31 },
-                showa: { startYear: 1926, max: 64 },
-                meiji: { startYear: 1868, max: 45 }
-            };
-
-            if (year > eraData[era].max) {
-                 customAlert(`${eraSelect.options[eraSelect.selectedIndex].text}は${eraData[era].max}年までです。`);
-                 return;
-            }
-
-            let adYear;
-            if(era === 'reiwa') adYear = year + 2018;
-            else if(era === 'heisei') adYear = year + 1988;
-            else if(era === 'showa') adYear = year + 1925;
-            else if(era === 'meiji') adYear = year + 1867;
-
-
-            const birthDate = new Date(adYear, month - 1, day);
-            const today = new Date();
-            let age = today.getFullYear() - birthDate.getFullYear();
-            const m = today.getMonth() - birthDate.getMonth();
-            if (m < 0 || (m === 0 && today.getDate() < birthDate.getDate())) {
-                age--;
-            }
-            ageInput.value = age >= 0 ? age : '';
-            dobEraModal.classList.add('hidden');
-        });
-        vitalsBtn.addEventListener('click', () => vitalsModal.classList.remove('hidden'));
-        vitalsModalCloseBtn.addEventListener('click', () => vitalsModal.classList.add('hidden'));
-        
-        vitalsClearBtn.addEventListener('click', () => {
-             vitalsClearClickCount++;
-            if (vitalsClearClickTimer) {
-                clearTimeout(vitalsClearClickTimer);
-            }
-            vitalsClearClickTimer = setTimeout(() => {
-                vitalsClearClickCount = 0;
-            }, 400); 
-
-            if (vitalsClearClickCount === 3) {
-                clearTimeout(vitalsClearClickTimer);
-                vitalsForm.querySelectorAll('input, textarea').forEach(el => el.value = '');
-                vitalsForm.querySelectorAll('.vitals-btn.active').forEach(b => b.classList.remove('active'));
-                vitalsClearClickCount = 0;
-            }
-        });
-
-        vitalsForm.addEventListener('click', e => {
-            const target = e.target;
-            if (target.classList.contains('vitals-btn')) {
-                const parentGroup = target.parentElement;
-                 if(parentGroup.id === 'vitals-appearance-tags'){
-                    target.classList.toggle('active');
-                } else {
-                    parentGroup.querySelectorAll('.vitals-btn').forEach(btn => btn.classList.remove('active'));
-                    target.classList.add('active');
+            randomBtn.addEventListener('click', () => {
+                const allComplaintCards = document.querySelectorAll('.content-card');
+                if (allComplaintCards.length > 0) {
+                    const randomIndex = Math.floor(Math.random() * allComplaintCards.length);
+                    allComplaintCards[randomIndex].scrollIntoView({ behavior: 'smooth', block: 'center' });
                 }
-            }
-        });
+            });
+            
+            showRandomBtnToggle.addEventListener('change', (e) => {
+                const isVisible = e.target.checked;
+                randomBtn.classList.toggle('hidden', !isVisible);
+                localStorage.setItem(SHOW_RANDOM_BTN_KEY, isVisible);
+            });
+            
+            contentArea.addEventListener('click', (e) => {
+                const editBtn = e.target.closest('.edit-btn');
+                const favoriteBtn = e.target.closest('.favorite-btn');
+                const favoriteDiseaseBtn = e.target.closest('.favorite-disease-btn');
+                
+                if (editBtn) { handleEdit(editBtn.dataset.id); return; }
+                if (favoriteBtn) { handleFavoriteClick(favoriteBtn.dataset.id); return; }
+                if (favoriteDiseaseBtn) { handleDiseaseFavoriteClick(favoriteDiseaseBtn.dataset.complaintId, favoriteDiseaseBtn.dataset.diseaseName); return; }
+                if (e.target.classList.contains('content-keyword-tag')) { handleKeywordTagClick(e.target.textContent); }
+            });
+            contentArea.addEventListener('change', handleCheckboxChange);
+            jumpNav.addEventListener('change', handleCheckboxChange);
+
+            genderBtns.forEach(btn => {
+                btn.addEventListener('click', () => {
+                    genderBtns.forEach(b => b.classList.remove('active'));
+                    btn.classList.add('active');
+                });
+            });
+            
+            dobBtn.addEventListener('click', () => dobEraModal.classList.remove('hidden'));
+            dobEraCancelBtn.addEventListener('click', () => dobEraModal.classList.add('hidden'));
+            dobEraOkBtn.addEventListener('click', () => {
+                const era = eraSelect.value;
+                const year = parseInt(eraYearInput.value, 10);
+                const month = parseInt(eraMonthInput.value, 10);
+                const day = parseInt(eraDayInput.value, 10);
+
+                if (!year || !month || !day) {
+                    customAlert("年、月、日をすべて入力してください。");
+                    return;
+                }
+                
+                const eraData = {
+                    reiwa: { startYear: 2019, max: new Date().getFullYear() - 2018 },
+                    heisei: { startYear: 1989, max: 31 },
+                    showa: { startYear: 1926, max: 64 },
+                    meiji: { startYear: 1868, max: 45 }
+                };
+
+                if (year > eraData[era].max) {
+                     customAlert(`${eraSelect.options[eraSelect.selectedIndex].text}は${eraData[era].max}年までです。`);
+                     return;
+                }
+
+                let adYear;
+                if(era === 'reiwa') adYear = year + 2018;
+                else if(era === 'heisei') adYear = year + 1988;
+                else if(era === 'showa') adYear = year + 1925;
+                else if(era === 'meiji') adYear = year + 1867;
+
+
+                const birthDate = new Date(adYear, month - 1, day);
+                const today = new Date();
+                let age = today.getFullYear() - birthDate.getFullYear();
+                const m = today.getMonth() - birthDate.getMonth();
+                if (m < 0 || (m === 0 && today.getDate() < birthDate.getDate())) {
+                    age--;
+                }
+                ageInput.value = age >= 0 ? age : '';
+                dobEraModal.classList.add('hidden');
+            });
+            vitalsBtn.addEventListener('click', () => vitalsModal.classList.remove('hidden'));
+            vitalsModalCloseBtn.addEventListener('click', () => vitalsModal.classList.add('hidden'));
+            
+            vitalsClearBtn.addEventListener('click', () => {
+                 vitalsClearClickCount++;
+                if (vitalsClearClickTimer) {
+                    clearTimeout(vitalsClearClickTimer);
+                }
+                vitalsClearClickTimer = setTimeout(() => {
+                    vitalsClearClickCount = 0;
+                }, 400); 
+
+                if (vitalsClearClickCount === 3) {
+                    clearTimeout(vitalsClearClickTimer);
+                    vitalsForm.querySelectorAll('input, textarea').forEach(el => el.value = '');
+                    vitalsForm.querySelectorAll('.vitals-btn.active').forEach(b => b.classList.remove('active'));
+                    vitalsClearClickCount = 0;
+                }
+            });
+
+            vitalsForm.addEventListener('click', e => {
+                const target = e.target;
+                if (target.classList.contains('vitals-btn')) {
+                    const parentGroup = target.parentElement;
+                     if(parentGroup.id === 'vitals-appearance-tags'){
+                        target.classList.toggle('active');
+                    } else {
+                        // Deselect if already active
+                        if (target.classList.contains('active')) {
+                           target.classList.remove('active');
+                        } else {
+                           parentGroup.querySelectorAll('.vitals-btn').forEach(btn => btn.classList.remove('active'));
+                           target.classList.add('active');
+                        }
+                    }
+                }
+            });
+
+            // Data Modal Listeners
+            addNewBtn.addEventListener('click', () => {
+                modalTitle.textContent = '新規主訴の追加';
+                entryIdInput.value = '';
+                dataForm.reset();
+                diseasesContainer.innerHTML = '';
+                addDiseaseForm();
+                deleteBtn.classList.add('hidden');
+                dataModal.classList.remove('hidden');
+            });
+            
+            modalCloseBtn.addEventListener('click', () => dataModal.classList.add('hidden'));
+            addDiseaseBtn.addEventListener('click', () => {
+                 addDiseaseForm();
+            });
+            dataForm.addEventListener('submit', handleFormSubmit);
+            deleteBtn.addEventListener('click', handleDelete);
+        }
 
         // --- Data Management Functions ---
         function exportDataAsJSON() {
@@ -1210,31 +1238,6 @@
         }
 
         // --- Data Editing and Modals (Full Code) ---
-        const modal = document.getElementById('data-modal');
-        const modalTitle = document.getElementById('modal-title');
-        const form = document.getElementById('data-form');
-        const entryIdInput = document.getElementById('entry-id');
-        const chiefComplaintInput = document.getElementById('chiefComplaint');
-        const descriptionInput = document.getElementById('description');
-        const chiefComplaintMemoInput = document.getElementById('chiefComplaintMemo');
-        const diseasesContainer = document.getElementById('diseases-container');
-        const deleteBtn = document.getElementById('delete-btn');
-
-        document.getElementById('add-new-btn').addEventListener('click', () => {
-            modalTitle.textContent = '新規主訴の追加';
-            entryIdInput.value = '';
-            form.reset();
-            diseasesContainer.innerHTML = '';
-            addDiseaseForm();
-            deleteBtn.classList.add('hidden');
-            modal.classList.remove('hidden');
-        });
-        
-        document.getElementById('modal-close-btn').addEventListener('click', () => modal.classList.add('hidden'));
-        document.getElementById('add-disease-btn').addEventListener('click', () => {
-             addDiseaseForm();
-        });
-
         function addDiseaseForm(disease = { name: '', description: '', isFavorite: false, keywords: [], pitfalls: [], memo: '' }) {
             const diseaseDiv = document.createElement('div');
             diseaseDiv.className = 'disease-form-group border-2 border-gray-700 rounded-lg p-4 mb-4';
@@ -1254,11 +1257,11 @@
                     </div>
                   <div class="mb-2">
                       <label class="block text-gray-400 text-xs font-bold mb-1">キーワード（カンマ区切り）</label>
-                      <input type="text" class="disease-keywords w-full bg-gray-700 text-white rounded-md py-1 px-2 focus:outline-none focus:ring-1 focus:ring-blue-500" value="${disease.keywords ? disease.keywords.join(', ') : ''}">
+                      <input type="text" class="disease-keywords w-full bg-gray-700 text-white rounded-md py-1 px-2 focus:outline-none focus:ring-1 focus:ring-blue-500" value="${(disease.keywords || []).join(', ')}">
                   </div>
                   <div>
                       <label class="block text-gray-400 text-xs font-bold mb-1">落とし穴（カンマ区切り）</label>
-                      <input type="text" class="disease-pitfalls w-full bg-gray-700 text-white rounded-md py-1 px-2 focus:outline-none focus:ring-1 focus:ring-blue-500" value="${disease.pitfalls ? disease.pitfalls.join(', ') : ''}">
+                      <input type="text" class="disease-pitfalls w-full bg-gray-700 text-white rounded-md py-1 px-2 focus:outline-none focus:ring-1 focus:ring-blue-500" value="${(disease.pitfalls || []).join(', ')}">
                   </div>
                    <div class="mt-2">
                         <label class="block text-gray-400 text-xs font-bold mb-1">個人メモ (この疾患)</label>
@@ -1281,20 +1284,20 @@
             descriptionInput.value = entry.description || '';
             chiefComplaintMemoInput.value = entry.memo || '';
             diseasesContainer.innerHTML = '';
-            entry.diseases.forEach(addDiseaseForm);
+            (entry.diseases || []).forEach(addDiseaseForm);
             deleteBtn.classList.remove('hidden');
-            modal.classList.remove('hidden');
+            dataModal.classList.remove('hidden');
         }
-
-        form.addEventListener('submit', async (e) => {
-            e.preventDefault();
+        
+        async function handleFormSubmit(e) {
+             e.preventDefault();
             const id = entryIdInput.value;
             
             const existingEntry = id ? dataStore.find(e => e.id === id) : { isFavorite: false, diseases: [] };
 
             const diseases = Array.from(document.querySelectorAll('.disease-form-group')).map(group => {
                 const name = group.querySelector('.disease-name').value.trim();
-                const existingDisease = existingEntry.diseases.find(d => d.name === name);
+                const existingDisease = (existingEntry.diseases || []).find(d => d.name === name);
                 return {
                     name: name,
                     description: group.querySelector('.disease-description').value.trim(),
@@ -1319,33 +1322,28 @@
                 } else {
                     await addDoc(dataCollectionRef, entryData);
                 }
-                modal.classList.add('hidden');
+                dataModal.classList.add('hidden');
             } catch (error) {
                 console.error("Error saving data: ", error);
                 await customAlert("データの保存に失敗しました。");
             }
-        });
+        }
 
-        deleteBtn.addEventListener('click', async () => {
+        async function handleDelete() {
             const id = entryIdInput.value;
             const confirmed = await customConfirm('この主訴データを本当に削除しますか？');
             if (id && confirmed) {
                 try {
                     await deleteDoc(doc(dataCollectionRef, id));
-                    modal.classList.add('hidden');
+                    dataModal.classList.add('hidden');
                 } catch (error) {
                     console.error("Error deleting data: ", error);
                     await customAlert("データの削除に失敗しました。");
                 }
             }
-        });
-
-        const confirmModal = document.getElementById('confirm-modal');
-        const confirmTitle = document.getElementById('confirm-title');
-        const confirmMessage = document.getElementById('confirm-message');
-        const confirmButtons = document.getElementById('confirm-buttons');
-        const alertIcon = document.getElementById('alert-icon');
-
+        }
+        
+        // --- Utility Functions ---
         function customAlert(message, title = '情報') {
             return new Promise((resolve) => {
                 confirmTitle.textContent = title;
@@ -1371,15 +1369,19 @@
             });
         }
         
-        // --- Initialize ---
+        // --- App Initialization ---
         function initializeAppUI() {
             const showRandom = localStorage.getItem(SHOW_RANDOM_BTN_KEY) === 'true';
-            showRandomBtnToggle.checked = showRandom;
-            randomBtn.classList.toggle('hidden', !showRandom);
+            if (showRandomBtnToggle && randomBtn) {
+                showRandomBtnToggle.checked = showRandom;
+                randomBtn.classList.toggle('hidden', !showRandom);
+            }
         }
         
+        // --- START APP ---
         initializeAppUI();
-        loadInitialData();
+        startApp();
+        attachEventListeners();
 
     </script>
 </body>
