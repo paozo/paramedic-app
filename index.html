@@ -44,7 +44,7 @@
             opacity: 0.5;
             cursor: not-allowed;
         }
-        .item-checkbox {
+        .item-checkbox, .nav-item-checkbox {
             transform: scale(1.2);
             margin-right: 12px;
             accent-color: #3b82f6;
@@ -61,6 +61,11 @@
             white-space: nowrap;
             overflow: hidden;
             text-overflow: ellipsis;
+            transition: background-color 0.2s ease-in-out, color 0.2s ease-in-out;
+        }
+        .nav-item.active-nav {
+            background-color: #2563eb;
+            color: white;
         }
         /* AND/OR Toggle Switch */
         #logic-switch-container {
@@ -109,21 +114,60 @@
         #stopwatch.running {
              background-color: #166534; /* green-800 */
         }
+        .gender-btn.active, .vitals-btn-base.active {
+            background-color: #3b82f6;
+            color: white;
+        }
+        #toggle-keywords-btn, #toggle-vitals-summary-btn {
+            transition: transform 0.2s ease-in-out;
+        }
+        #toggle-keywords-btn.collapsed, #toggle-vitals-summary-btn.collapsed {
+            transform: rotate(180deg);
+        }
+         @keyframes flash-red-bg {
+          0%, 100% { background-color: transparent; }
+          50% { background-color: rgba(220, 38, 38, 0.4); } /* red-600 with opacity */
+        }
+         @keyframes flash-red-text {
+          0%, 100% { color: inherit; }
+          50% { color: #f87171; } /* red-400 */
+        }
+        .vitals-alert-bg {
+          animation: flash-red-bg 1.5s infinite;
+        }
+         .vitals-alert-text {
+          animation: flash-red-text 1.5s infinite;
+        }
     </style>
 </head>
 <body class="bg-gray-900 text-gray-100">
 
     <div id="app" class="flex h-screen overflow-hidden">
-        <nav id="jump-nav" class="w-24 bg-gray-800 p-2 overflow-y-auto hidden md:block"></nav>
+        <nav id="jump-nav" class="w-28 bg-gray-800 p-2 overflow-y-auto hidden md:block"></nav>
 
         <main class="flex-1 flex flex-col">
             <header class="bg-gray-800/50 backdrop-blur-sm p-4 sticky top-0 z-20 shadow-lg">
                 <div class="flex items-center flex-wrap gap-2 md:gap-4 mb-3">
-                    <div id="stopwatch" class="bg-gray-700 text-white font-mono text-xl p-2 rounded-lg cursor-pointer" title="クリック: スタート/ストップ | 長押し: リセット">
+                    <div id="stopwatch" class="bg-gray-700 text-white font-mono text-xl p-2 rounded-lg cursor-pointer flex-shrink-0" title="クリック: スタート/ストップ | トリプルクリック: リセット">
                         00:00
                     </div>
+                    
+                    <div class="flex items-center space-x-2 bg-gray-700 p-1 rounded-lg flex-shrink-0">
+                        <input type="number" id="age-input" placeholder="年齢" min="0" max="130" class="w-16 bg-gray-600 text-white placeholder-gray-400 text-center rounded-md p-1 focus:outline-none focus:ring-2 focus:ring-blue-500">
+                        <button id="dob-btn" class="p-1 text-white hover:text-blue-400"><i class="fas fa-calendar-alt"></i></button>
+                        <div class="flex">
+                           <button class="gender-btn bg-gray-600 hover:bg-gray-500 text-white font-bold py-1 px-3 rounded-l-md" data-gender="male">男</button>
+                           <button class="gender-btn bg-gray-600 hover:bg-gray-500 text-white font-bold py-1 px-3 rounded-r-md" data-gender="female">女</button>
+                        </div>
+                    </div>
+                     <button id="vitals-btn" class="bg-cyan-600 hover:bg-cyan-700 text-white font-bold py-2 px-3 rounded-lg flex-shrink-0" title="バイタル入力">
+                        <i class="fas fa-wave-square"></i>
+                    </button>
+                    
+                    <input type="text" id="temp-memo" placeholder="一時メモ..." class="flex-grow min-w-[150px] bg-gray-700 text-white placeholder-gray-400 rounded-lg p-2 focus:outline-none focus:ring-2 focus:ring-blue-500">
+                    
                     <div class="flex-grow flex items-center bg-gray-700 rounded-lg relative">
-                        <input type="text" id="search-input" placeholder="検索..." class="flex-grow bg-transparent text-white placeholder-gray-400 rounded-lg py-2 px-4 focus:outline-none">
+                        <input type="text" id="search-input" placeholder="鑑別検索..." class="flex-grow bg-transparent text-white placeholder-gray-400 rounded-lg py-2 px-4 focus:outline-none">
                         <button id="search-history-btn" class="text-gray-400 hover:text-white px-2" title="検索履歴の表示">
                             <i class="fas fa-history"></i>
                         </button>
@@ -145,6 +189,9 @@
                          <button id="filter-favorites-btn" class="bg-gray-600 hover:bg-gray-500 text-white font-bold py-2 px-3 rounded-lg flex-shrink-0" title="お気に入りフィルター">
                             <i class="fas fa-star"></i>
                         </button>
+                        <button id="random-btn" class="bg-purple-600 hover:bg-purple-700 text-white font-bold py-2 px-3 rounded-lg flex-shrink-0" title="ランダム表示">
+                            <i class="fas fa-dice"></i>
+                        </button>
                         <button id="add-new-btn" class="bg-green-600 hover:bg-green-700 text-white font-bold py-2 px-3 rounded-lg flex-shrink-0">
                             <i class="fas fa-plus"></i> <span class="hidden lg:inline">新規</span>
                         </button>
@@ -153,7 +200,21 @@
                         </button>
                     </div>
                 </div>
-                <div id="selected-keywords-area" class="flex flex-wrap gap-2 items-center mt-3 min-h-[30px]">
+                 <div id="vitals-summary-container" class="w-full">
+                     <div class="flex items-start">
+                        <div id="vitals-summary-area" class="flex flex-wrap gap-x-4 gap-y-1 items-center flex-grow text-sm text-gray-300 bg-gray-900/50 p-2 rounded-lg border border-gray-700">
+                        </div>
+                         <button id="toggle-vitals-summary-btn" class="ml-2 text-gray-400 hover:text-white p-2" title="バイタル概要表示を切り替え">
+                            <i class="fas fa-chevron-up"></i>
+                        </button>
+                    </div>
+                 </div>
+                <div class="flex items-start mt-3">
+                    <div id="selected-keywords-area" class="flex flex-wrap gap-2 items-center flex-grow">
+                    </div>
+                     <button id="toggle-keywords-btn" class="ml-2 text-gray-400 hover:text-white p-2" title="キーワード表示を切り替え">
+                        <i class="fas fa-chevron-up"></i>
+                    </button>
                 </div>
             </header>
 
@@ -170,6 +231,119 @@
     </div>
 
     <!-- Modals -->
+    <div id="dob-era-modal" class="modal hidden fixed inset-0 bg-black bg-opacity-70 flex items-center justify-center z-50 p-4">
+        <div class="bg-gray-800 rounded-lg shadow-xl w-full max-w-sm">
+            <div class="p-6">
+                <h3 class="text-lg font-medium text-white mb-4">生年月日（和暦）</h3>
+                <div class="grid grid-cols-4 gap-2 items-center">
+                    <select id="era-select" class="col-span-2 bg-gray-700 text-white p-2 rounded-md">
+                        <option value="reiwa">令和</option>
+                        <option value="heisei">平成</option>
+                        <option value="showa">昭和</option>
+                        <option value="meiji">明治</option>
+                    </select>
+                    <input type="number" id="era-year-input" placeholder="年" min="1" class="bg-gray-700 text-white p-2 rounded-md text-center">
+                    <label class="text-gray-300">年</label>
+                    
+                    <input type="number" id="era-month-input" placeholder="月" min="1" max="12" class="col-start-2 bg-gray-700 text-white p-2 rounded-md text-center">
+                     <label class="text-gray-300">月</label>
+                    <div></div>
+                    
+                    <input type="number" id="era-day-input" placeholder="日" min="1" max="31" class="col-start-2 bg-gray-700 text-white p-2 rounded-md text-center">
+                    <label class="text-gray-300">日</label>
+                </div>
+                <div class="mt-6 flex justify-end space-x-2">
+                     <button id="dob-era-cancel-btn" class="bg-gray-600 hover:bg-gray-500 text-white font-bold py-2 px-4 rounded-md">キャンセル</button>
+                     <button id="dob-era-ok-btn" class="bg-blue-600 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded-md">OK</button>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div id="vitals-modal" class="modal hidden fixed inset-0 bg-black bg-opacity-80 flex items-center justify-center z-50 p-4">
+        <div class="bg-gray-800 rounded-2xl shadow-xl w-full max-w-4xl max-h-[90vh] flex flex-col">
+             <div class="p-4 border-b border-gray-700 flex justify-between items-center">
+                <h2 class="text-2xl font-bold text-white">バイタルサイン記録</h2>
+                <button id="vitals-modal-close-btn" class="text-gray-400 hover:text-white text-2xl">&times;</button>
+            </div>
+            <div id="vitals-form" class="flex-grow p-6 overflow-auto space-y-4">
+                 <div>
+                    <label id="vitals-appearance-label" class="block text-gray-300 text-sm font-bold mb-2">外観・様子</label>
+                    <div id="vitals-appearance-tags" class="flex flex-wrap gap-2 mb-2">
+                        <button type="button" class="vitals-btn bg-gray-600 hover:bg-gray-500 text-sm py-1 px-3 rounded-full">起坐呼吸</button>
+                        <button type="button" class="vitals-btn bg-gray-600 hover:bg-gray-500 text-sm py-1 px-3 rounded-full">喘鳴</button>
+                        <button type="button" class="vitals-btn bg-gray-600 hover:bg-gray-500 text-sm py-1 px-3 rounded-full">顔面蒼白</button>
+                        <button type="button" class="vitals-btn bg-gray-600 hover:bg-gray-500 text-sm py-1 px-3 rounded-full">頸静脈怒張</button>
+                        <button type="button" class="vitals-btn bg-gray-600 hover:bg-gray-500 text-sm py-1 px-3 rounded-full">冷や汗</button>
+                    </div>
+                    <textarea id="vitals-appearance" rows="2" placeholder="その他特記事項..." class="w-full bg-gray-700 text-white rounded-lg p-2 focus:outline-none focus:ring-2 focus:ring-blue-500"></textarea>
+                </div>
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div>
+                         <label id="vitals-jcs-label" class="block text-gray-300 text-sm font-bold mb-2">JCS</label>
+                         <div id="vitals-jcs-group" class="grid grid-cols-3 gap-2">
+                            <button type="button" class="vitals-btn bg-gray-600 p-2 rounded-md">1</button>
+                            <button type="button" class="vitals-btn bg-gray-600 p-2 rounded-md">2</button>
+                            <button type="button" class="vitals-btn bg-gray-600 p-2 rounded-md">3</button>
+                            <button type="button" class="vitals-btn bg-gray-600 p-2 rounded-md">10</button>
+                            <button type="button" class="vitals-btn bg-gray-600 p-2 rounded-md">20</button>
+                            <button type="button" class="vitals-btn bg-gray-600 p-2 rounded-md">30</button>
+                            <button type="button" class="vitals-btn bg-gray-600 p-2 rounded-md">100</button>
+                            <button type="button" class="vitals-btn bg-gray-600 p-2 rounded-md">200</button>
+                            <button type="button" class="vitals-btn bg-gray-600 p-2 rounded-md">300</button>
+                         </div>
+                    </div>
+                     <div>
+                        <label id="vitals-gcs-label" class="block text-gray-300 text-sm font-bold mb-2">GCS: <span id="gcs-total" class="text-white font-mono"></span></label>
+                        <div class="space-y-2">
+                             <div id="gcs-e-group"><span id="gcs-e-label" class="font-bold inline-block w-6">E:</span> <button type="button" class="vitals-btn bg-gray-600 p-1 px-2 rounded-md" data-gcs-type="E" data-gcs-val="4">4</button> <button type="button" class="vitals-btn bg-gray-600 p-1 px-2 rounded-md" data-gcs-type="E" data-gcs-val="3">3</button> <button type="button" class="vitals-btn bg-gray-600 p-1 px-2 rounded-md" data-gcs-type="E" data-gcs-val="2">2</button> <button type="button" class="vitals-btn bg-gray-600 p-1 px-2 rounded-md" data-gcs-type="E" data-gcs-val="1">1</button></div>
+                             <div id="gcs-v-group"><span id="gcs-v-label" class="font-bold inline-block w-6">V:</span> <button type="button" class="vitals-btn bg-gray-600 p-1 px-2 rounded-md" data-gcs-type="V" data-gcs-val="5">5</button> <button type="button" class="vitals-btn bg-gray-600 p-1 px-2 rounded-md" data-gcs-type="V" data-gcs-val="4">4</button> <button type="button" class="vitals-btn bg-gray-600 p-1 px-2 rounded-md" data-gcs-type="V" data-gcs-val="3">3</button> <button type="button" class="vitals-btn bg-gray-600 p-1 px-2 rounded-md" data-gcs-type="V" data-gcs-val="2">2</button> <button type="button" class="vitals-btn bg-gray-600 p-1 px-2 rounded-md" data-gcs-type="V" data-gcs-val="1">1</button></div>
+                             <div id="gcs-m-group"><span id="gcs-m-label" class="font-bold inline-block w-6">M:</span> <button type="button" class="vitals-btn bg-gray-600 p-1 px-2 rounded-md" data-gcs-type="M" data-gcs-val="6">6</button> <button type="button" class="vitals-btn bg-gray-600 p-1 px-2 rounded-md" data-gcs-type="M" data-gcs-val="5">5</button> <button type="button" class="vitals-btn bg-gray-600 p-1 px-2 rounded-md" data-gcs-type="M" data-gcs-val="4">4</button> <button type="button" class="vitals-btn bg-gray-600 p-1 px-2 rounded-md" data-gcs-type="M" data-gcs-val="3">3</button> <button type="button" class="vitals-btn bg-gray-600 p-1 px-2 rounded-md" data-gcs-type="M" data-gcs-val="2">2</button> <button type="button" class="vitals-btn bg-gray-600 p-1 px-2 rounded-md" data-gcs-type="M" data-gcs-val="1">1</button></div>
+                        </div>
+                    </div>
+                </div>
+                <div class="grid grid-cols-2 md:grid-cols-4 gap-4">
+                    <div>
+                        <label id="vitals-resp-label" for="vitals-resp" class="block text-gray-300 text-sm font-bold mb-2">呼吸 (回/分)</label>
+                        <input type="number" id="vitals-resp" inputmode="numeric" pattern="[0-9]*" class="w-full bg-gray-700 text-white rounded-lg p-2 focus:outline-none focus:ring-2 focus:ring-blue-500">
+                    </div>
+                    <div>
+                        <label id="vitals-spo2-label" for="vitals-spo2" class="block text-gray-300 text-sm font-bold mb-2">SpO2 (%)</label>
+                        <input type="number" id="vitals-spo2" inputmode="numeric" pattern="[0-9]*" class="w-full bg-gray-700 text-white rounded-lg p-2 focus:outline-none focus:ring-2 focus:ring-blue-500">
+                    </div>
+                     <div>
+                        <label id="vitals-pulse-label" for="vitals-pulse" class="block text-gray-300 text-sm font-bold mb-2">脈拍 (回/分)</label>
+                        <input type="number" id="vitals-pulse" inputmode="numeric" pattern="[0-9]*" class="w-full bg-gray-700 text-white rounded-lg p-2 focus:outline-none focus:ring-2 focus:ring-blue-500">
+                    </div>
+                    <div>
+                        <label id="vitals-temp-label" for="vitals-temp" class="block text-gray-300 text-sm font-bold mb-2">体温 (°C)</label>
+                        <input type="number" id="vitals-temp" step="0.1" inputmode="decimal" class="w-full bg-gray-700 text-white rounded-lg p-2 focus:outline-none focus:ring-2 focus:ring-blue-500">
+                    </div>
+                </div>
+                 <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                     <div>
+                        <label id="vitals-bp-label" class="block text-gray-300 text-sm font-bold mb-2">血圧 (mmHg)</label>
+                        <div class="flex items-center">
+                             <input type="number" id="vitals-bp-sys" inputmode="numeric" pattern="[0-9]*" class="w-full bg-gray-700 text-white rounded-l-lg p-2 focus:outline-none focus:ring-2 focus:ring-blue-500">
+                             <span class="bg-gray-600 p-2">/</span>
+                             <input type="number" id="vitals-bp-dia" inputmode="numeric" pattern="[0-9]*" class="w-full bg-gray-700 text-white rounded-r-lg p-2 focus:outline-none focus:ring-2 focus:ring-blue-500">
+                        </div>
+                    </div>
+                    <div>
+                        <label id="pupil-label" class="block text-gray-300 text-sm font-bold mb-2">瞳孔</label>
+                        <div class="grid grid-cols-2 gap-2">
+                             <input type="text" id="pupil-r" placeholder="右" readonly class="w-full bg-gray-700 text-white rounded-lg p-2 text-center">
+                             <input type="text" id="pupil-l" placeholder="左" readonly class="w-full bg-gray-700 text-white rounded-lg p-2 text-center">
+                             <div id="pupil-size-group" class="col-span-2 grid grid-cols-5 gap-1"></div>
+                             <div id="pupil-reflex-group" class="col-span-2 grid grid-cols-3 gap-1"></div>
+                        </div>
+                    </div>
+                 </div>
+            </div>
+             <div class="p-4 border-t border-gray-700 flex justify-end space-x-3">
+                <button type="button" id="vitals-clear-btn" title="トリプルクリックでクリア" class="bg-gray-600 hover:bg-gray-500 text-white font-bold py-2 px-4 rounded-lg">クリア</button>
+            </div>
+        </div>
+    </div>
     <div id="data-modal" class="modal hidden fixed inset-0 bg-black bg-opacity-70 flex items-center justify-center z-50 p-4">
         <div class="bg-gray-800 rounded-2xl shadow-xl w-full max-w-2xl max-h-full overflow-y-auto">
             <form id="data-form" class="p-6">
@@ -227,6 +401,14 @@
                         <button id="import-data-btn" class="w-full bg-red-600 hover:bg-red-700 text-white font-bold py-2 px-4 rounded-lg"><i class="fas fa-upload mr-2"></i>データをインポート</button>
                         <input type="file" id="import-file-input" class="hidden" accept="application/json">
                     </div>
+                     <div class="border-t border-gray-700 my-4"></div>
+                    <div>
+                        <h3 class="text-lg font-semibold text-gray-300 mb-2">表示設定</h3>
+                         <label class="flex items-center">
+                            <input type="checkbox" id="show-random-btn-toggle" class="h-4 w-4 text-blue-600 bg-gray-700 border-gray-600 rounded focus:ring-blue-500">
+                            <span class="ml-2 text-sm text-gray-300">ランダムボタンを表示する</span>
+                        </label>
+                    </div>
                 </div>
             </div>
         </div>
@@ -260,16 +442,19 @@
         import { getAuth, signInAnonymously, onAuthStateChanged, signInWithCustomToken } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
 
         // --- Firebase Config and Initial Data ---
-        const firebaseConfig = {
-  apiKey: "AIzaSyCI3_n-mnjPZH2hcPhXlLtAy07A0kN0FbY",
-  authDomain: "paramedic-app-paozo-83fc6.firebaseapp.com",
-  projectId: "paramedic-app-paozo-83fc6",
-  storageBucket: "paramedic-app-paozo-83fc6.firebasestorage.app",
-  messagingSenderId: "895736725014",
-  appId: "1:895736725014:web:e26526cdc9dc98ee6abf37",
-  measurementId: "G-MG651F0SCK"
-};
-        const appId = typeof __app_id !== 'undefined' ? __app_id : 'default-paramedic-app';
+        const paozoFirebaseConfig = {
+          apiKey: "AIzaSyD03fkrzGL0nosVHf-Sm2bIL8PsHqKJARU",
+          authDomain: "paramedic-app-paozo.firebaseapp.com",
+          projectId: "paramedic-app-paozo",
+          storageBucket: "paramedic-app-paozo.firebasestorage.app",
+          messagingSenderId: "646996057722",
+          appId: "1:646996057722:web:7e14e135b81faea5cee5c3",
+          measurementId: "G-WS7375ELMT"
+        };
+        
+        const firebaseConfig = typeof __firebase_config !== 'undefined' ? JSON.parse(__firebase_config) : paozoFirebaseConfig;
+        const appId = typeof __app_id !== 'undefined' ? __app_id : firebaseConfig.projectId;
+        
         const app = initializeApp(firebaseConfig);
         const db = getFirestore(app);
         const auth = getAuth(app);
@@ -302,6 +487,25 @@
         const compareModalCloseBtn = document.getElementById('compare-modal-close-btn');
         const compareContentArea = document.getElementById('compare-content-area');
         const stopwatchEl = document.getElementById('stopwatch');
+        const genderBtns = document.querySelectorAll('.gender-btn');
+        const ageInput = document.getElementById('age-input');
+        const dobBtn = document.getElementById('dob-btn');
+        const dobEraModal = document.getElementById('dob-era-modal');
+        const dobEraOkBtn = document.getElementById('dob-era-ok-btn');
+        const dobEraCancelBtn = document.getElementById('dob-era-cancel-btn');
+        const eraSelect = document.getElementById('era-select');
+        const eraYearInput = document.getElementById('era-year-input');
+        const eraMonthInput = document.getElementById('era-month-input');
+        const eraDayInput = document.getElementById('era-day-input');
+        const toggleKeywordsBtn = document.getElementById('toggle-keywords-btn');
+        const randomBtn = document.getElementById('random-btn');
+        const showRandomBtnToggle = document.getElementById('show-random-btn-toggle');
+        const vitalsBtn = document.getElementById('vitals-btn');
+        const vitalsModal = document.getElementById('vitals-modal');
+        const vitalsModalCloseBtn = document.getElementById('vitals-modal-close-btn');
+        const vitalsClearBtn = document.getElementById('vitals-clear-btn');
+        const vitalsForm = document.getElementById('vitals-form');
+        const gcsTotalEl = document.getElementById('gcs-total');
         
         // --- State Variables ---
         let selectedItems = new Set();
@@ -313,16 +517,58 @@
         let timerInterval = null;
         let timerRunning = false;
         let elapsedSeconds = 0;
-        let longPressTimer = null;
-        const MAX_HISTORY_ITEMS = 15;
+        let stopwatchClickCount = 0;
+        let stopwatchClickTimer = null;
+        let vitalsClearClickCount = 0;
+        let vitalsClearClickTimer = null;
+        let intersectionObserver = null;
+        const DATA_CACHE_KEY = `paramedic_data_cache_${appId}`;
         const HISTORY_STORAGE_KEY = `paramedic_app_search_history_${appId}`;
+        const SHOW_RANDOM_BTN_KEY = `paramedic_app_show_random_button`;
+        let gcs = { E: 0, V: 0, M: 0 };
+        let pupilSize = { r: '', l: '' };
+        let pupilReflex = { r: '', l: '' };
 
         // --- Auth & Data Loading ---
         onAuthStateChanged(auth, async (user) => { if (user) { userId = user.uid; document.getElementById('user-id-display').textContent = userId; dataCollectionRef = collection(db, 'artifacts', appId, 'users', userId, collectionName); setupSnapshotListener(); } else { document.getElementById('user-id-display').textContent = "匿名ログイン中..."; } });
         async function signIn() { try { if (typeof __initial_auth_token !== 'undefined' && __initial_auth_token) { await signInWithCustomToken(auth, __initial_auth_token); } else { await signInAnonymously(auth); } } catch (error) { console.error("Authentication failed:", error); const loadingEl = document.getElementById('loading'); if (loadingEl) { loadingEl.innerHTML = '<p class="text-red-500">Authentication Failed.</p>'; } } }
-        function setupSnapshotListener() { onSnapshot(dataCollectionRef, (snapshot) => { if (snapshot.empty) { seedInitialData(); return; } const serverData = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() })); dataStore = serverData; const loadingEl = document.getElementById('loading'); if (loadingEl) { loadingEl.style.display = 'none'; } render(); renderSelectedKeywords(); }, (error) => { console.error("Error fetching data:", error); const loadingEl = document.getElementById('loading'); if (loadingEl) { loadingEl.innerHTML = '<p class="text-red-500">Data loading failed.</p>'; } }); }
+        
+        function setupSnapshotListener() {
+            onSnapshot(dataCollectionRef, (snapshot) => {
+                const loadingEl = document.getElementById('loading');
+                if (loadingEl) { loadingEl.style.display = 'none'; }
+                
+                if (snapshot.empty && dataStore.length === 0) { 
+                    seedInitialData(); 
+                    return; 
+                }
+                const serverData = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+                dataStore = serverData;
+                localStorage.setItem(DATA_CACHE_KEY, JSON.stringify(dataStore)); // Cache data
+                render(); 
+                renderSelectedKeywords();
+            }, (error) => {
+                console.error("Error fetching data:", error);
+                const loadingEl = document.getElementById('loading');
+                if (loadingEl) {
+                    loadingEl.innerHTML = '<p class="text-red-500">オフラインです。キャッシュからデータを表示します。</p>';
+                }
+            });
+        }
+        
         async function seedInitialData() { try { for (const item of initialData) { await addDoc(dataCollectionRef, item); } } catch (error) { console.error("Error seeding data:", error); } }
 
+        function loadInitialData() {
+            const cachedData = localStorage.getItem(DATA_CACHE_KEY);
+            if (cachedData) {
+                dataStore = JSON.parse(cachedData);
+                const loadingEl = document.getElementById('loading');
+                if (loadingEl) loadingEl.style.display = 'none';
+                render();
+            }
+            signIn();
+        }
+        
         // --- Rendering ---
         function render() {
             unhighlight();
@@ -391,8 +637,9 @@
                     navItem.href = `#${complaintId}`;
                     navItem.className = 'nav-item block text-center text-gray-300 hover:bg-blue-600 hover:text-white font-bold py-3 px-1 rounded-lg transition-colors text-sm flex items-center';
                     const starIcon = entry.isFavorite ? `<i class="fas fa-star text-yellow-400 mr-2"></i>` : '';
-                    navItem.innerHTML = `${starIcon}${(index + 1).toString().padStart(2, '0')}. ${entry.chiefComplaint.substring(0, 4)}`;
+                    navItem.innerHTML = `<input type="checkbox" class="nav-item-checkbox" data-type="complaint" data-id="${entry.id}"> ${starIcon}${(index + 1).toString().padStart(2, '0')}. ${entry.chiefComplaint.substring(0, 4)}`;
                     navItem.title = entry.chiefComplaint;
+                    navItem.querySelector('.nav-item-checkbox').addEventListener('click', e => e.stopPropagation()); // prevent navigation on checkbox click
                     navItem.onclick = (e) => { e.preventDefault(); document.getElementById(complaintId)?.scrollIntoView({ behavior: 'smooth' }); };
                     jumpNav.appendChild(navItem);
 
@@ -453,6 +700,27 @@
                 currentHighlightIndex = 0;
                 navigateToHighlight(currentHighlightIndex);
             }
+        }
+        
+        function setupIntersectionObserver() {
+            if (intersectionObserver) {
+                intersectionObserver.disconnect();
+            }
+            const options = {
+                root: contentArea,
+                rootMargin: '-50% 0px -50% 0px',
+                threshold: 0
+            };
+            intersectionObserver = new IntersectionObserver((entries) => {
+                entries.forEach(entry => {
+                    const navLink = jumpNav.querySelector(`a[href="#${entry.target.id}"]`);
+                    if (entry.isIntersecting && navLink) {
+                         document.querySelectorAll('.nav-item').forEach(link => link.classList.remove('active-nav'));
+                         navLink.classList.add('active-nav');
+                    }
+                });
+            }, options);
+            document.querySelectorAll('.content-card').forEach(card => intersectionObserver.observe(card));
         }
         
         function renderSelectedKeywords() {
@@ -528,15 +796,28 @@
         }
         
         function handleCheckboxChange(e) {
-            const checkbox = e.target; if (!checkbox.classList.contains('item-checkbox')) return;
-            const { type, id, name } = checkbox.dataset; const uniqueId = type === 'complaint' ? `c_${id}` : `d_${id}_${name.replace(/\s/g, '_')}`;
-            if (checkbox.checked) { selectedItems.add(uniqueId); } else { selectedItems.delete(uniqueId); }
+            const checkbox = e.target; 
+            if (!checkbox.classList.contains('item-checkbox') && !checkbox.classList.contains('nav-item-checkbox')) return;
+            
+            const isNavCheckbox = checkbox.classList.contains('nav-item-checkbox');
+            const { type, id, name } = checkbox.dataset; 
+            const uniqueId = type === 'complaint' ? `c_${id}` : `d_${id}_${name.replace(/\s/g, '_')}`;
+            
+            if (checkbox.checked) { selectedItems.add(uniqueId); } 
+            else { selectedItems.delete(uniqueId); }
+            
+            // Sync checkboxes
+            const mainCheckbox = contentArea.querySelector(`.item-checkbox[data-id='${id}'][data-type='${type}']`);
+            const navCheckbox = jumpNav.querySelector(`.nav-item-checkbox[data-id='${id}'][data-type='${type}']`);
+            if (mainCheckbox && mainCheckbox.checked !== checkbox.checked) mainCheckbox.checked = checkbox.checked;
+            if (navCheckbox && navCheckbox.checked !== checkbox.checked) navCheckbox.checked = checkbox.checked;
+
             renderSelectedKeywords();
         }
 
         function clearAllSelections() {
             selectedItems.clear();
-            render();
+            document.querySelectorAll('.item-checkbox, .nav-item-checkbox').forEach(cb => cb.checked = false);
             renderSelectedKeywords();
         }
 
@@ -685,9 +966,27 @@
             elapsedSeconds++;
             stopwatchEl.textContent = formatTime(elapsedSeconds);
         }
-        function handleStopwatchClick() {
-            if(longPressTimer) clearTimeout(longPressTimer);
-            if (timerRunning) {
+        function handleStopwatchClick(e) {
+            e.preventDefault();
+            stopwatchClickCount++;
+            if (stopwatchClickTimer) {
+                clearTimeout(stopwatchClickTimer);
+            }
+            stopwatchClickTimer = setTimeout(() => {
+                if (stopwatchClickCount === 1) {
+                    toggleTimer();
+                }
+                stopwatchClickCount = 0;
+            }, 300); 
+
+            if (stopwatchClickCount === 3) {
+                clearTimeout(stopwatchClickTimer);
+                resetTimer();
+                stopwatchClickCount = 0;
+            }
+        }
+        function toggleTimer() {
+             if (timerRunning) {
                 clearInterval(timerInterval);
                 timerRunning = false;
                 stopwatchEl.classList.remove('running');
@@ -724,9 +1023,24 @@
             render();
         });
         compareModalCloseBtn.addEventListener('click', () => compareModal.classList.add('hidden'));
-        stopwatchEl.addEventListener('mousedown', () => { longPressTimer = setTimeout(resetTimer, 1000); });
-        stopwatchEl.addEventListener('mouseup', () => { clearTimeout(longPressTimer); });
         stopwatchEl.addEventListener('click', handleStopwatchClick);
+        toggleKeywordsBtn.addEventListener('click', () => {
+            selectedKeywordsArea.classList.toggle('hidden');
+            toggleKeywordsBtn.classList.toggle('collapsed');
+        });
+        randomBtn.addEventListener('click', () => {
+            const allComplaintCards = document.querySelectorAll('.content-card');
+            if (allComplaintCards.length > 0) {
+                const randomIndex = Math.floor(Math.random() * allComplaintCards.length);
+                allComplaintCards[randomIndex].scrollIntoView({ behavior: 'smooth', block: 'center' });
+            }
+        });
+        
+        showRandomBtnToggle.addEventListener('change', (e) => {
+            const isVisible = e.target.checked;
+            randomBtn.classList.toggle('hidden', !isVisible);
+            localStorage.setItem(SHOW_RANDOM_BTN_KEY, isVisible);
+        });
         
         contentArea.addEventListener('click', (e) => {
             const editBtn = e.target.closest('.edit-btn');
@@ -739,6 +1053,89 @@
             if (e.target.classList.contains('content-keyword-tag')) { handleKeywordTagClick(e.target.textContent); }
         });
         contentArea.addEventListener('change', handleCheckboxChange);
+        jumpNav.addEventListener('change', handleCheckboxChange);
+
+        genderBtns.forEach(btn => {
+            btn.addEventListener('click', () => {
+                genderBtns.forEach(b => b.classList.remove('active'));
+                btn.classList.add('active');
+            });
+        });
+        
+        dobBtn.addEventListener('click', () => dobEraModal.classList.remove('hidden'));
+        dobEraCancelBtn.addEventListener('click', () => dobEraModal.classList.add('hidden'));
+        dobEraOkBtn.addEventListener('click', () => {
+            const era = eraSelect.value;
+            const year = parseInt(eraYearInput.value, 10);
+            const month = parseInt(eraMonthInput.value, 10);
+            const day = parseInt(eraDayInput.value, 10);
+
+            if (!year || !month || !day) {
+                customAlert("年、月、日をすべて入力してください。");
+                return;
+            }
+            
+            const eraData = {
+                reiwa: { startYear: 2019, max: 20 },
+                heisei: { startYear: 1989, max: 31 },
+                showa: { startYear: 1926, max: 64 },
+                meiji: { startYear: 1868, max: 45 }
+            };
+
+            if (year > eraData[era].max) {
+                 customAlert(`${eraSelect.options[eraSelect.selectedIndex].text}は${eraData[era].max}年までです。`);
+                 return;
+            }
+
+            let adYear;
+            if(era === 'reiwa') adYear = year + 2018;
+            else if(era === 'heisei') adYear = year + 1988;
+            else if(era === 'showa') adYear = year + 1925;
+            else if(era === 'meiji') adYear = year + 1867;
+
+
+            const birthDate = new Date(adYear, month - 1, day);
+            const today = new Date();
+            let age = today.getFullYear() - birthDate.getFullYear();
+            const m = today.getMonth() - birthDate.getMonth();
+            if (m < 0 || (m === 0 && today.getDate() < birthDate.getDate())) {
+                age--;
+            }
+            ageInput.value = age >= 0 ? age : '';
+            dobEraModal.classList.add('hidden');
+        });
+        vitalsBtn.addEventListener('click', () => vitalsModal.classList.remove('hidden'));
+        vitalsModalCloseBtn.addEventListener('click', () => vitalsModal.classList.add('hidden'));
+        
+        vitalsClearBtn.addEventListener('click', () => {
+             vitalsClearClickCount++;
+            if (vitalsClearClickTimer) {
+                clearTimeout(vitalsClearClickTimer);
+            }
+            vitalsClearClickTimer = setTimeout(() => {
+                vitalsClearClickCount = 0;
+            }, 400); 
+
+            if (vitalsClearClickCount === 3) {
+                clearTimeout(vitalsClearClickTimer);
+                vitalsForm.querySelectorAll('input, textarea').forEach(el => el.value = '');
+                vitalsForm.querySelectorAll('.vitals-btn.active').forEach(b => b.classList.remove('active'));
+                vitalsClearClickCount = 0;
+            }
+        });
+
+        vitalsForm.addEventListener('click', e => {
+            const target = e.target;
+            if (target.classList.contains('vitals-btn')) {
+                const parentGroup = target.parentElement;
+                 if(parentGroup.id === 'vitals-appearance-tags'){
+                    target.classList.toggle('active');
+                } else {
+                    parentGroup.querySelectorAll('.vitals-btn').forEach(btn => btn.classList.remove('active'));
+                    target.classList.add('active');
+                }
+            }
+        });
 
         // --- Data Management Functions ---
         function exportDataAsJSON() {
@@ -970,7 +1367,14 @@
         }
         
         // --- Initialize ---
-        signIn();
+        function initializeAppUI() {
+            const showRandom = localStorage.getItem(SHOW_RANDOM_BTN_KEY) === 'true';
+            showRandomBtnToggle.checked = showRandom;
+            randomBtn.classList.toggle('hidden', !showRandom);
+        }
+        
+        initializeAppUI();
+        loadInitialData();
 
     </script>
 </body>
