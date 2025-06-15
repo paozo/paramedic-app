@@ -155,104 +155,7 @@
     </div>
 
     <!-- Modals -->
-    <div id="vitals-modal" class="modal hidden fixed inset-0 bg-black bg-opacity-80 flex items-center justify-center z-50 p-4">
-        <div class="bg-gray-800 rounded-2xl shadow-xl w-full max-w-4xl max-h-[90vh] flex flex-col">
-             <div class="p-4 border-b border-gray-700 flex justify-between items-center">
-                <h2 class="text-2xl font-bold text-white">バイタルサイン記録</h2>
-                <button id="vitals-modal-close-btn" class="text-gray-400 hover:text-white text-2xl" aria-label="閉じる">&times;</button>
-            </div>
-            <div id="vitals-form" class="flex-grow p-4 md:p-6 overflow-auto space-y-4">
-                 <div>
-                    <label class="block text-gray-300 font-bold mb-2">外観・様子</label>
-                    <div id="vitals-appearance-tags" class="flex flex-wrap gap-2 mb-2"></div>
-                    <textarea id="vitals-appearance" rows="2" placeholder="その他特記事項..." class="w-full bg-gray-700 text-white rounded-lg p-2 focus:outline-none focus:ring-2 focus:ring-blue-500"></textarea>
-                </div>
-                <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-                    <div>
-                         <label class="block text-gray-300 font-bold mb-2">JCS</label>
-                         <div id="vitals-jcs-group" class="grid grid-cols-3 gap-2"></div>
-                    </div>
-                     <div>
-                        <label class="block text-gray-300 font-bold mb-2">GCS: <span id="gcs-total" class="text-white font-mono">3</span></label>
-                        <div class="space-y-2">
-                             <div class="flex items-center gap-2"><span class="font-bold inline-block w-6">E:</span><select id="gcs-e-select" class="gcs-select w-full bg-gray-700 text-white rounded-md p-2 focus:outline-none focus:ring-2 focus:ring-blue-500"></select></div>
-                             <div class="flex items-center gap-2"><span class="font-bold inline-block w-6">V:</span><select id="gcs-v-select" class="gcs-select w-full bg-gray-700 text-white rounded-md p-2 focus:outline-none focus:ring-2 focus:ring-blue-500"></select></div>
-                             <div class="flex items-center gap-2"><span class="font-bold inline-block w-6">M:</span><select id="gcs-m-select" class="gcs-select w-full bg-gray-700 text-white rounded-md p-2 focus:outline-none focus:ring-2 focus:ring-blue-500"></select></div>
-                        </div>
-                    </div>
-                </div>
-                 <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-                    <div>
-                        <label for="vitals-bp-sys-r" class="block text-gray-300 font-bold mb-2">血圧 (右)</label>
-                        <div class="flex items-center">
-                            <input type="number" id="vitals-bp-sys-r" placeholder="収縮期" aria-label="右腕の収縮期血圧" inputmode="numeric" class="w-full bg-gray-700 text-white rounded-l-lg p-2 focus:outline-none focus:ring-2 focus:ring-blue-500">
-                            <span class="bg-gray-600 p-2">/</span>
-                            <input type="number" id="vitals-bp-dia-r" placeholder="拡張期" aria-label="右腕の拡張期血圧" inputmode="numeric" class="w-full bg-gray-700 text-white rounded-r-lg p-2 focus:outline-none focus:ring-2 focus:ring-blue-500">
-                        </div>
-                    </div>
-                    <div>
-                        <label for="vitals-bp-sys-l" class="block text-gray-300 font-bold mb-2">血圧 (左)</label>
-                        <div class="flex items-center">
-                            <input type="number" id="vitals-bp-sys-l" placeholder="収縮期" aria-label="左腕の収縮期血圧" inputmode="numeric" class="w-full bg-gray-700 text-white rounded-l-lg p-2 focus:outline-none focus:ring-2 focus:ring-blue-500">
-                            <span class="bg-gray-600 p-2">/</span>
-                            <input type="number" id="vitals-bp-dia-l" placeholder="拡張期" aria-label="左腕の拡張期血圧" inputmode="numeric" class="w-full bg-gray-700 text-white rounded-r-lg p-2 focus:outline-none focus:ring-2 focus:ring-blue-500">
-                        </div>
-                    </div>
-                </div>
-                <div class="grid grid-cols-2 md:grid-cols-4 gap-4">
-                    <div>
-                        <label for="vitals-resp" class="block text-gray-300 font-bold mb-2">呼吸</label>
-                        <input type="number" id="vitals-resp" placeholder="回/分" inputmode="numeric" class="w-full bg-gray-700 text-white rounded-lg p-2 focus:outline-none focus:ring-2 focus:ring-blue-500">
-                    </div>
-                    <div>
-                        <label for="vitals-spo2" class="block text-gray-300 font-bold mb-2">SpO2</label>
-                        <input type="number" id="vitals-spo2" placeholder="%" inputmode="numeric" class="w-full bg-gray-700 text-white rounded-lg p-2 focus:outline-none focus:ring-2 focus:ring-blue-500">
-                    </div>
-                     <div>
-                        <label for="vitals-pulse" class="block text-gray-300 font-bold mb-2">脈拍</label>
-                        <input type="number" id="vitals-pulse" placeholder="回/分" inputmode="numeric" class="w-full bg-gray-700 text-white rounded-lg p-2 focus:outline-none focus:ring-2 focus:ring-blue-500">
-                    </div>
-                    <div>
-                        <label for="vitals-temp" class="block text-gray-300 font-bold mb-2">体温</label>
-                        <input type="number" id="vitals-temp" placeholder="°C" step="0.1" inputmode="decimal" class="w-full bg-gray-700 text-white rounded-lg p-2 focus:outline-none focus:ring-2 focus:ring-blue-500">
-                    </div>
-                </div>
-                <div>
-                    <label class="block text-gray-300 font-bold mb-2">瞳孔</label>
-                    <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                        <!-- Right Pupil -->
-                        <div>
-                            <label class="block text-gray-400 text-sm mb-1">右(R): <input type="text" id="pupil-r" readonly class="bg-gray-800 text-white text-sm w-20 inline-block text-center"></label>
-                            <div class="mt-1">
-                                <label class="block text-xs text-gray-500">サイズ (mm)</label>
-                                <div id="pupil-size-group-r" class="flex flex-wrap gap-1"></div>
-                            </div>
-                            <div class="mt-2">
-                                <label class="block text-xs text-gray-500">対光反射</label>
-                                <div id="pupil-reflex-group-r" class="flex flex-wrap gap-1"></div>
-                            </div>
-                        </div>
-                        <!-- Left Pupil -->
-                        <div>
-                            <label class="block text-gray-400 text-sm mb-1">左(L): <input type="text" id="pupil-l" readonly class="bg-gray-800 text-white text-sm w-20 inline-block text-center"></label>
-                            <div class="mt-1">
-                                <label class="block text-xs text-gray-500">サイズ (mm)</label>
-                                <div id="pupil-size-group-l" class="flex flex-wrap gap-1"></div>
-                            </div>
-                            <div class="mt-2">
-                                <label class="block text-xs text-gray-500">対光反射</label>
-                                <div id="pupil-reflex-group-l" class="flex flex-wrap gap-1"></div>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-            </div>
-             <div class="p-4 border-t border-gray-700 flex justify-between items-center">
-                <button type="button" id="vitals-clear-btn" title="長押しで全クリア" class="bg-gray-600 hover:bg-gray-500 text-white font-bold py-2 px-4 rounded-lg">クリア</button>
-                <button type="button" id="vitals-save-btn" class="bg-blue-600 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded-lg">保存して閉じる</button>
-            </div>
-        </div>
-    </div>
+    <div id="vitals-modal" class="modal hidden fixed inset-0 bg-black bg-opacity-80 flex items-center justify-center z-50 p-4">...</div>
     <div id="settings-modal" class="modal hidden fixed inset-0 bg-black bg-opacity-70 flex items-center justify-center z-50 p-4">...</div>
     <div id="data-modal" class="modal hidden fixed inset-0 bg-black bg-opacity-70 flex items-center justify-center z-50 p-4">...</div>
     <div id="confirm-modal" class="modal hidden fixed inset-0 bg-black bg-opacity-80 flex items-center justify-center z-50 p-4">...</div>
@@ -1046,17 +949,13 @@
                             App.elements.vitalsAppearanceTags.innerHTML = '';
                             appearanceOptions.forEach(val => App.elements.vitalsAppearanceTags.appendChild(App.utils.createButton(val, 'vitals-btn bg-gray-600 hover:bg-gray-500 text-sm py-1 px-3 rounded-full', e => e.target.classList.toggle('active'))));
                             
-                            App.elements.pupilSizeGroupR.innerHTML = '';
-                            App.elements.pupilReflexGroupR.innerHTML = '';
-                            App.elements.pupilSizeGroupL.innerHTML = '';
-                            App.elements.pupilReflexGroupL.innerHTML = '';
-                            pupilSizeOptions.forEach(val => {
-                                App.elements.pupilSizeGroupR.appendChild(App.utils.createButton(val, 'pupil-btn bg-gray-700 w-8 h-8 rounded-full', e => this.handlePupilClick(e, 'size', 'r')));
-                                App.elements.pupilSizeGroupL.appendChild(App.utils.createButton(val, 'pupil-btn bg-gray-700 w-8 h-8 rounded-full', e => this.handlePupilClick(e, 'size', 'l')));
-                            });
-                            pupilReflexOptions.forEach(val => {
-                                App.elements.pupilReflexGroupR.appendChild(App.utils.createButton(val, 'pupil-reflex-btn bg-gray-700 h-8 px-2 rounded-md', e => this.handlePupilClick(e, 'reflex', 'r')));
-                                App.elements.pupilReflexGroupL.appendChild(App.utils.createButton(val, 'pupil-reflex-btn bg-gray-700 h-8 px-2 rounded-md', e => this.handlePupilClick(e, 'reflex', 'l')));
+                            ['R', 'L'].forEach(side => {
+                                const sizeGroup = App.elements[`pupilSizeGroup${side}`];
+                                const reflexGroup = App.elements[`pupilReflexGroup${side}`];
+                                sizeGroup.innerHTML = '';
+                                reflexGroup.innerHTML = '';
+                                pupilSizeOptions.forEach(val => sizeGroup.appendChild(App.utils.createButton(val, 'pupil-btn bg-gray-700 w-8 h-8 rounded-full', e => this.handlePupilClick(e, 'size', side.toLowerCase()))));
+                                pupilReflexOptions.forEach(val => reflexGroup.appendChild(App.utils.createButton(val, 'pupil-reflex-btn bg-gray-700 h-8 px-2 rounded-md', e => this.handlePupilClick(e, 'reflex', side.toLowerCase()))));
                             });
                         },
                         handleJcsClick(e) {
@@ -1084,15 +983,13 @@
                              vitals.gcs_e = App.elements.gcsESelect.value;
                              vitals.gcs_v = App.elements.gcsVSelect.value;
                              vitals.gcs_m = App.elements.gcsMSelect.value;
-                             
-                             const r_size = form.querySelector('#pupil-size-group-r .active')?.textContent.trim() || null;
-                             const r_reflex = form.querySelector('#pupil-reflex-group-r .active')?.textContent.trim() || null;
-                             const l_size = form.querySelector('#pupil-size-group-l .active')?.textContent.trim() || null;
-                             const l_reflex = form.querySelector('#pupil-reflex-group-l .active')?.textContent.trim() || null;
-                             
-                             vitals.pupil_r = [r_size, r_reflex].filter(Boolean).join('/') || null;
-                             vitals.pupil_l = [l_size, l_reflex].filter(Boolean).join('/') || null;
 
+                             ['r', 'l'].forEach(side => {
+                                const size = form.querySelector(`#pupil-size-group-${side} .active`)?.textContent.trim() || null;
+                                const reflex = form.querySelector(`#pupil-reflex-group-${side} .active`)?.textContent.trim() || null;
+                                vitals[`pupil_${side}`] = [size, reflex].filter(Boolean).join('/') || null;
+                             });
+                             
                              this.updatePupilDisplay();
                         },
                         updateFormFromState() {
@@ -1107,11 +1004,11 @@
                             App.elements.pupilL.value = App.state.vitals.pupil_l || '';
                         },
                         updatePupilSelectors(side) {
-                             const [size, reflex] = (App.state.vitals[`pupil_${side}`] || '').split('/');
+                             const [size, reflex] = (App.state.vitals[`pupil_${side}`] || '/').split('/');
                              const sizeGroup = App.elements[`pupilSizeGroup${side.toUpperCase()}`];
                              const reflexGroup = App.elements[`pupilReflexGroup${side.toUpperCase()}`];
-                             sizeGroup.querySelectorAll('button').forEach(b => b.classList.toggle('active', b.textContent === size));
-                             reflexGroup.querySelectorAll('button').forEach(b => b.classList.toggle('active', b.textContent === reflex));
+                             if (sizeGroup) sizeGroup.querySelectorAll('button').forEach(b => b.classList.toggle('active', b.textContent === size));
+                             if (reflexGroup) reflexGroup.querySelectorAll('button').forEach(b => b.classList.toggle('active', b.textContent === reflex));
                         },
                         saveAndClose() {
                             this.updateStateFromForm();
@@ -1141,8 +1038,8 @@
                              this.applyFontSize(fontSize);
                         },
                         bindEventListeners() {
+                           App.elements.addNewBtn.addEventListener('click', () => App.components.dataModal.openForNew());
                            App.elements.settingsBtn.addEventListener('click', () => App.utils.showModal(App.elements.settingsModal));
-                           App.elements.mobileSettingsBtn.addEventListener('click', (e) => { e.preventDefault(); App.utils.showModal(App.elements.settingsModal); App.utils.hide(App.elements.mobileMenu); });
                            App.elements.settingsModalCloseBtn.addEventListener('click', () => App.utils.hideModal(App.elements.settingsModal));
                            App.elements.exportDataBtn.addEventListener('click', () => this.exportData());
                            App.elements.importDataBtn.addEventListener('click', () => App.elements.importFileInput.click());
@@ -1221,10 +1118,13 @@
                             const el = App.elements;
                             el.addNewBtn.addEventListener('click', () => this.openForNew());
                             el.mobileAddNewBtn.addEventListener('click', (e) => { e.preventDefault(); this.openForNew(); App.utils.hide(el.mobileMenu); });
-                            el.dataModal.querySelector('#modal-close-btn').addEventListener('click', () => App.utils.hideModal(el.dataModal));
-                            el.dataModal.querySelector('#add-disease-btn').addEventListener('click', () => this.addDiseaseForm());
-                            el.dataModal.querySelector('#data-form').addEventListener('submit', e => { e.preventDefault(); this.submit(); });
-                            el.dataModal.querySelector('#delete-btn').addEventListener('click', () => this.delete());
+                            const modal = el.dataModal;
+                            if(modal) {
+                                modal.querySelector('#modal-close-btn').addEventListener('click', () => App.utils.hideModal(modal));
+                                modal.querySelector('#add-disease-btn').addEventListener('click', () => this.addDiseaseForm());
+                                modal.querySelector('#data-form').addEventListener('submit', e => { e.preventDefault(); this.submit(); });
+                                modal.querySelector('#delete-btn').addEventListener('click', () => this.delete());
+                            }
                         },
                         openForNew() {
                              const { dataModal, modalTitle, dataForm, diseasesContainer, deleteBtn } = App.elements;
