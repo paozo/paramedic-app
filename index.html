@@ -5,13 +5,15 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>救急隊員向け臨床推論サポートアプリ</title>
     
-    <!-- PWA Manifest and iOS PWA Tags -->
+    <!-- PWA Manifest and iOS PWA Tags (Temporarily Disabled) -->
+    <!-- 
     <link rel="manifest" href="manifest.json">
     <meta name="theme-color" content="#1f2937">
     <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
     <meta name="apple-mobile-web-app-title" content="救急推論">
     <link rel="apple-touch-icon" href="icon-192.png">
+    -->
 
     <!-- Styles and Fonts -->
     <script src="https://cdn.tailwindcss.com"></script>
@@ -27,49 +29,37 @@
         ::-webkit-scrollbar-thumb { background: #4b5563; border-radius: 4px; }
         ::-webkit-scrollbar-thumb:hover { background: #6b7280; }
         
-        /* Smooth transitions for modals and cards */
         .modal, .content-card { transition: all 0.3s ease-in-out; }
         .modal.hidden { opacity: 0; transform: scale(0.95); pointer-events: none; }
         
-        /* Highlighting styles */
         .highlight { background-color: yellow; color: #1f2937; padding: 0 2px; border-radius: 2px; }
         .current-highlight { outline: 2px solid #f97316; scroll-margin-top: 150px; }
         
-        /* Consistent disabled state */
         .search-nav-btn:disabled, button:disabled { opacity: 0.5; cursor: not-allowed; }
         
-        /* Checkbox styling */
         .item-checkbox, .nav-item-checkbox { transform: scale(1.2); margin-right: 12px; accent-color: #3b82f6; }
         
-        /* Keyword tags styling */
         .keyword-tag, .content-keyword-tag { cursor: pointer; transition: background-color 0.2s ease, color 0.2s ease; }
         .keyword-tag.active { background-color: yellow; color: #1f2937; font-weight: bold; }
         
-        /* Navigation item styles */
         .nav-item { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; transition: background-color 0.2s ease, color 0.2s ease; }
         .nav-item.active-nav { background-color: #2563eb; color: white; }
         
-        /* AND/OR Toggle Switch */
         #logic-switch-container { position: relative; display: inline-flex; background-color: #374151; border-radius: 9999px; padding: 2px; cursor: pointer; }
         .switch-label { padding: 2px 10px; font-size: 0.75rem; font-weight: 500; color: #d1d5db; transition: color 0.2s ease-in-out; z-index: 10; }
         .switch-label.active-logic { color: #111827; }
         #switch-bg { position: absolute; top: 2px; bottom: 2px; left: 2px; width: calc(50% - 2px); background-color: #fBBF24; border-radius: 9999px; transition: transform 0.2s ease-in-out; }
         #logic-switch-container[data-mode="AND"] #switch-bg { transform: translateX(100%); }
         
-        /* Favorite button styles */
-        #filter-favorites-btn.active { color: #fBBF24; background-color: #374151; }
+        #filter-favorites-btn.active, #mobile-filter-favorites-btn.active { color: #fBBF24; background-color: #374151; }
         
-        /* Stopwatch running state */
         #stopwatch.running { background-color: #166534; }
         
-        /* Active button state */
         .gender-btn.active, .vitals-btn.active { background-color: #3b82f6; color: white; }
         
-        /* Chevron icon rotation */
         .toggle-chevron { transition: transform 0.2s ease-in-out; }
         .toggle-chevron.collapsed { transform: rotate(180deg); }
 
-        /* Animation for vital alerts */
         @keyframes flash-red-bg { 0%, 100% { background-color: transparent; } 50% { background-color: rgba(220, 38, 38, 0.4); } }
         @keyframes flash-red-text { 0%, 100% { color: inherit; } 50% { color: #f87171; } }
         .vitals-alert-bg { animation: flash-red-bg 1.5s infinite; }
@@ -79,56 +69,77 @@
 <body class="bg-gray-900 text-gray-100 antialiased">
 
     <div id="app" class="flex h-screen overflow-hidden">
-        <nav id="jump-nav" class="w-28 bg-gray-800 p-2 overflow-y-auto hidden md:block flex-shrink-0"></nav>
+        <nav id="jump-nav" class="w-48 bg-gray-800 p-2 overflow-y-auto fixed top-0 left-0 h-full z-40 transform -translate-x-full transition-transform md:relative md:w-28 md:translate-x-0"></nav>
+        <div id="sidebar-backdrop" class="hidden fixed inset-0 bg-black bg-opacity-50 z-30 md:hidden"></div>
 
         <main class="flex-1 flex flex-col">
-            <header class="bg-gray-800/50 backdrop-blur-sm p-4 sticky top-0 z-20 shadow-lg">
-                <div class="flex items-center flex-wrap gap-2 md:gap-4 mb-3">
-                    <div id="stopwatch" class="bg-gray-700 text-white font-mono text-xl p-2 rounded-lg cursor-pointer flex-shrink-0" title="クリック: スタート/ストップ | トリプルクリック: リセット">00:00</div>
-                    
-                    <div class="flex items-center space-x-2 bg-gray-700 p-1 rounded-lg flex-shrink-0">
-                        <input type="number" id="age-input" placeholder="年齢" min="0" max="130" class="w-16 bg-gray-600 text-white placeholder-gray-400 text-center rounded-md p-1 focus:outline-none focus:ring-2 focus:ring-blue-500" aria-label="年齢">
-                        <button id="dob-btn" class="p-1 text-white hover:text-blue-400" aria-label="生年月日から年齢を計算"><i class="fas fa-calendar-alt"></i></button>
-                        <div class="flex">
-                           <button class="gender-btn bg-gray-600 hover:bg-gray-500 text-white font-bold py-1 px-3 rounded-l-md" data-gender="male">男</button>
-                           <button class="gender-btn bg-gray-600 hover:bg-gray-500 text-white font-bold py-1 px-3 rounded-r-md" data-gender="female">女</button>
+            <header class="bg-gray-800/50 backdrop-blur-sm p-2 md:p-4 sticky top-0 z-20 shadow-lg">
+                <!-- Mobile and Desktop Header -->
+                <div class="flex flex-col gap-2">
+                    <!-- Top row: Vitals, Search -->
+                    <div class="flex flex-wrap items-center gap-2">
+                        <button id="sidebar-toggle-btn" class="p-2 text-white hover:text-blue-400 md:hidden" aria-label="ナビゲーションを開く"><i class="fas fa-bars fa-lg"></i></button>
+                        <div id="stopwatch" class="bg-gray-700 text-white font-mono text-lg md:text-xl p-2 rounded-lg cursor-pointer flex-shrink-0" title="クリック: スタート/ストップ | トリプルクリック: リセット">00:00</div>
+                        
+                        <div class="flex items-center space-x-2 bg-gray-700 p-1 rounded-lg flex-shrink-0">
+                            <input type="number" id="age-input" placeholder="年齢" min="0" max="130" class="w-14 bg-gray-600 text-white placeholder-gray-400 text-center rounded-md p-1 focus:outline-none focus:ring-2 focus:ring-blue-500" aria-label="年齢">
+                            <button id="dob-btn" class="p-1 text-white hover:text-blue-400" aria-label="生年月日から年齢を計算"><i class="fas fa-calendar-alt"></i></button>
+                            <div class="flex">
+                               <button class="gender-btn bg-gray-600 hover:bg-gray-500 text-white font-bold py-1 px-2 md:px-3 rounded-l-md text-sm" data-gender="male">男</button>
+                               <button class="gender-btn bg-gray-600 hover:bg-gray-500 text-white font-bold py-1 px-2 md:px-3 rounded-r-md text-sm" data-gender="female">女</button>
+                            </div>
                         </div>
-                    </div>
-                     <button id="vitals-btn" class="bg-cyan-600 hover:bg-cyan-700 text-white font-bold py-2 px-3 rounded-lg flex-shrink-0" title="バイタル入力" aria-label="バイタル入力モーダルを開く"><i class="fas fa-wave-square"></i></button>
-                    
-                    <input type="text" id="temp-memo" placeholder="一時メモ..." class="flex-grow min-w-[150px] bg-gray-700 text-white placeholder-gray-400 rounded-lg p-2 focus:outline-none focus:ring-2 focus:ring-blue-500" aria-label="一時メモ">
-                    
-                    <div class="flex-grow flex items-center bg-gray-700 rounded-lg relative">
-                        <input type="text" id="search-input" placeholder="鑑別検索..." class="flex-grow bg-transparent text-white placeholder-gray-400 rounded-lg py-2 px-4 focus:outline-none" aria-label="鑑別検索">
-                        <button id="search-history-btn" class="text-gray-400 hover:text-white px-2" title="検索履歴の表示" aria-label="検索履歴の表示"><i class="fas fa-history"></i></button>
-                        <button id="search-clear-btn" class="text-gray-400 hover:text-white pr-2" title="検索文字のクリア" aria-label="検索文字のクリア"><i class="fas fa-times"></i></button>
-                        <div id="search-history-dropdown" class="absolute top-full left-0 mt-2 w-full bg-gray-800 border border-gray-700 rounded-lg shadow-lg z-30 hidden"></div>
+                         <button id="vitals-btn" class="bg-cyan-600 hover:bg-cyan-700 text-white font-bold py-2 px-3 rounded-lg flex-shrink-0" title="バイタル入力" aria-label="バイタル入力モーダルを開く"><i class="fas fa-wave-square"></i></button>
+                        
+                        <input type="text" id="temp-memo" placeholder="一時メモ..." class="flex-grow min-w-[100px] bg-gray-700 text-white placeholder-gray-400 rounded-lg p-2 focus:outline-none focus:ring-2 focus:ring-blue-500" aria-label="一時メモ">
                     </div>
 
-                     <div class="flex items-center space-x-2">
+                    <!-- Second row: Search and Actions -->
+                    <div class="flex items-center gap-2">
+                        <div class="flex-grow flex items-center bg-gray-700 rounded-lg relative">
+                            <input type="text" id="search-input" placeholder="鑑別検索..." class="flex-grow bg-transparent text-white placeholder-gray-400 rounded-lg py-2 px-4 focus:outline-none" aria-label="鑑別検索">
+                            <button id="search-history-btn" class="text-gray-400 hover:text-white px-2" title="検索履歴の表示" aria-label="検索履歴の表示"><i class="fas fa-history"></i></button>
+                            <button id="search-clear-btn" class="text-gray-400 hover:text-white pr-2" title="検索文字のクリア" aria-label="検索文字のクリア"><i class="fas fa-times"></i></button>
+                        </div>
                         <button id="search-exec-btn" class="bg-blue-600 hover:bg-blue-700 text-white p-2 rounded-lg flex-shrink-0 w-10 h-10 flex items-center justify-center" title="検索実行" aria-label="検索実行"><i class="fas fa-search"></i></button>
-                        <div class="flex items-center space-x-2 bg-gray-700 p-2 rounded-lg">
-                             <span id="search-count" class="text-sm font-mono text-gray-300 w-16 text-center" aria-live="polite">0 / 0</span>
+                        
+                        <div class="hidden sm:flex items-center space-x-2 bg-gray-700 p-1 rounded-lg">
+                             <span id="search-count" class="text-sm font-mono text-gray-300 w-14 text-center" aria-live="polite">0/0</span>
                              <button id="search-prev-btn" class="search-nav-btn text-white hover:bg-gray-600 p-1 rounded-md" disabled title="前のハイライトへ" aria-label="前のハイライトへ"><i class="fas fa-arrow-up"></i></button>
                              <button id="search-next-btn" class="search-nav-btn text-white hover:bg-gray-600 p-1 rounded-md" disabled title="次のハイライトへ" aria-label="次のハイライトへ"><i class="fas fa-arrow-down"></i></button>
                         </div>
-                         <button id="filter-favorites-btn" class="bg-gray-600 hover:bg-gray-500 text-white font-bold py-2 px-3 rounded-lg flex-shrink-0" title="お気に入りフィルター" aria-label="お気に入りフィルター"><i class="fas fa-star"></i></button>
-                        <button id="random-btn" class="bg-purple-600 hover:bg-purple-700 text-white font-bold py-2 px-3 rounded-lg flex-shrink-0" title="ランダム表示" aria-label="ランダム表示"><i class="fas fa-dice"></i></button>
-                        <button id="add-new-btn" class="bg-green-600 hover:bg-green-700 text-white font-bold py-2 px-3 rounded-lg flex-shrink-0"><i class="fas fa-plus"></i> <span class="hidden lg:inline">新規</span></button>
-                        <button id="settings-btn" class="bg-gray-600 hover:bg-gray-500 text-white font-bold py-2 px-3 rounded-lg flex-shrink-0" title="データ管理" aria-label="データ管理"><i class="fas fa-cog"></i></button>
+                        
+                        <!-- Hamburger Menu Button -->
+                        <div class="relative md:hidden">
+                             <button id="menu-btn" class="bg-gray-600 hover:bg-gray-500 text-white font-bold p-2 rounded-lg w-10 h-10 flex items-center justify-center" aria-label="メニューを開く"><i class="fas fa-ellipsis-v"></i></button>
+                             <div id="mobile-menu" class="hidden absolute right-0 mt-2 w-48 bg-gray-800 rounded-lg shadow-xl z-30">
+                                 <a href="#" id="mobile-add-new-btn" class="block px-4 py-2 text-white hover:bg-gray-700"><i class="fas fa-plus w-6"></i> 新規追加</a>
+                                 <a href="#" id="mobile-filter-favorites-btn" class="block px-4 py-2 text-white hover:bg-gray-700"><i class="fas fa-star w-6"></i> お気に入り</a>
+                                 <a href="#" id="mobile-random-btn" class="block px-4 py-2 text-white hover:bg-gray-700"><i class="fas fa-dice w-6"></i> ランダム表示</a>
+                                 <a href="#" id="mobile-settings-btn" class="block px-4 py-2 text-white hover:bg-gray-700"><i class="fas fa-cog w-6"></i> 設定</a>
+                             </div>
+                        </div>
+
+                         <!-- Desktop Buttons -->
+                        <div class="hidden md:flex items-center space-x-2">
+                            <button id="filter-favorites-btn" class="bg-gray-600 hover:bg-gray-500 text-white font-bold py-2 px-3 rounded-lg flex-shrink-0" title="お気に入りフィルター" aria-label="お気に入りフィルター"><i class="fas fa-star"></i></button>
+                            <button id="random-btn" class="bg-purple-600 hover:bg-purple-700 text-white font-bold py-2 px-3 rounded-lg flex-shrink-0" title="ランダム表示" aria-label="ランダム表示"><i class="fas fa-dice"></i></button>
+                            <button id="add-new-btn" class="bg-green-600 hover:bg-green-700 text-white font-bold py-2 px-3 rounded-lg flex-shrink-0"><i class="fas fa-plus"></i> <span class="hidden lg:inline">新規</span></button>
+                            <button id="settings-btn" class="bg-gray-600 hover:bg-gray-500 text-white font-bold py-2 px-3 rounded-lg flex-shrink-0" title="データ管理" aria-label="データ管理"><i class="fas fa-cog"></i></button>
+                        </div>
                     </div>
                 </div>
                 
-                <div id="vitals-summary-container" class="w-full">
+                <div id="vitals-summary-container" class="w-full mt-2">
                      <div class="flex items-start">
                         <div id="vitals-summary-area" class="flex flex-wrap gap-x-4 gap-y-1 items-center flex-grow text-sm text-gray-300 bg-gray-900/50 p-2 rounded-lg border border-gray-700"></div>
                          <button id="toggle-vitals-summary-btn" class="ml-2 text-gray-400 hover:text-white p-2 flex-shrink-0" title="バイタル概要の表示切替" aria-label="バイタル概要の表示切替"><i class="fas fa-chevron-up toggle-chevron"></i></button>
                     </div>
                  </div>
 
-                <div class="flex items-start mt-3">
-                    <div id="selected-keywords-area" class="flex flex-wrap gap-2 items-center flex-grow"></div>
-                     <button id="toggle-keywords-btn" class="ml-2 text-gray-400 hover:text-white p-2 flex-shrink-0" title="キーワード表示の切替" aria-label="キーワード表示の切替"><i class="fas fa-chevron-up toggle-chevron"></i></button>
+                <div class="flex items-start mt-2">
+                    <div id="selected-keywords-area" class="flex-wrap gap-2 items-center flex-grow hidden"></div>
+                     <button id="toggle-keywords-btn" class="ml-auto text-gray-400 hover:text-white p-2 flex-shrink-0" title="キーワード表示の切替" aria-label="キーワード表示の切替"><i class="fas fa-chevron-down toggle-chevron"></i></button>
                 </div>
             </header>
 
@@ -145,6 +156,7 @@
         </main>
     </div>
 
+    <!-- Modals -->
     <div id="dob-era-modal" class="modal hidden fixed inset-0 bg-black bg-opacity-70 flex items-center justify-center z-50 p-4">
         <div class="bg-gray-800 rounded-lg shadow-xl w-full max-w-sm">
             <div class="p-6">
@@ -338,6 +350,7 @@
         </div>
     </div>
 
+    <!--
     <script>
       if ('serviceWorker' in navigator) {
         window.addEventListener('load', () => {
@@ -349,812 +362,791 @@
         });
       }
     </script>
+    -->
 
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
         import { getFirestore, collection, onSnapshot, doc, addDoc, setDoc, deleteDoc, getDocs, writeBatch, updateDoc } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
         import { getAuth, signInAnonymously, onAuthStateChanged, signInWithCustomToken } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
 
-        // --- Firebase & App Variables ---
-        let db, auth, dataCollectionRef;
-        let userId = null;
-        let dataStore = [];
-        const collectionName = 'clinical_cases';
-        let appId;
-        
-        // --- DOM Elements ---
-        const contentArea = document.getElementById('content-area');
-        const jumpNav = document.getElementById('jump-nav');
-        const searchInput = document.getElementById('search-input');
-        const searchExecBtn = document.getElementById('search-exec-btn');
-        const searchClearBtn = document.getElementById('search-clear-btn');
-        const searchHistoryBtn = document.getElementById('search-history-btn');
-        const searchHistoryDropdown = document.getElementById('search-history-dropdown');
-        const searchCount = document.getElementById('search-count');
-        const searchPrevBtn = document.getElementById('search-prev-btn');
-        const searchNextBtn = document.getElementById('search-next-btn');
-        const selectedKeywordsArea = document.getElementById('selected-keywords-area');
-        const settingsBtn = document.getElementById('settings-btn');
-        const settingsModal = document.getElementById('settings-modal');
-        const settingsModalCloseBtn = document.getElementById('settings-modal-close-btn');
-        const exportDataBtn = document.getElementById('export-data-btn');
-        const importDataBtn = document.getElementById('import-data-btn');
-        const importFileInput = document.getElementById('import-file-input');
-        const filterFavoritesBtn = document.getElementById('filter-favorites-btn');
-        const compareModal = document.getElementById('compare-modal');
-        const compareModalCloseBtn = document.getElementById('compare-modal-close-btn');
-        const compareContentArea = document.getElementById('compare-content-area');
-        const stopwatchEl = document.getElementById('stopwatch');
-        const genderBtns = document.querySelectorAll('.gender-btn');
-        const ageInput = document.getElementById('age-input');
-        const dobBtn = document.getElementById('dob-btn');
-        const dobEraModal = document.getElementById('dob-era-modal');
-        const dobEraOkBtn = document.getElementById('dob-era-ok-btn');
-        const dobEraCancelBtn = document.getElementById('dob-era-cancel-btn');
-        const eraSelect = document.getElementById('era-select');
-        const eraYearInput = document.getElementById('era-year-input');
-        const eraMonthInput = document.getElementById('era-month-input');
-        const eraDayInput = document.getElementById('era-day-input');
-        const toggleKeywordsBtn = document.getElementById('toggle-keywords-btn');
-        const randomBtn = document.getElementById('random-btn');
-        const showRandomBtnToggle = document.getElementById('show-random-btn-toggle');
-        const vitalsBtn = document.getElementById('vitals-btn');
-        const vitalsModal = document.getElementById('vitals-modal');
-        const vitalsModalCloseBtn = document.getElementById('vitals-modal-close-btn');
-        const vitalsClearBtn = document.getElementById('vitals-clear-btn');
-        const vitalsForm = document.getElementById('vitals-form');
-        const gcsTotalEl = document.getElementById('gcs-total');
-        const vitalsSummaryContainer = document.getElementById('vitals-summary-container');
-        const vitalsSummaryArea = document.getElementById('vitals-summary-area');
-        const toggleVitalsSummaryBtn = document.getElementById('toggle-vitals-summary-btn');
-        const dataModal = document.getElementById('data-modal');
-        const modalTitle = document.getElementById('modal-title');
-        const dataForm = document.getElementById('data-form');
-        const entryIdInput = document.getElementById('entry-id');
-        const chiefComplaintInput = document.getElementById('chiefComplaint');
-        const descriptionInput = document.getElementById('description');
-        const chiefComplaintMemoInput = document.getElementById('chiefComplaintMemo');
-        const diseasesContainer = document.getElementById('diseases-container');
-        const deleteBtn = document.getElementById('delete-btn');
-        const addNewBtn = document.getElementById('add-new-btn');
-        const modalCloseBtn = document.getElementById('modal-close-btn');
-        const addDiseaseBtn = document.getElementById('add-disease-btn');
-        const confirmModal = document.getElementById('confirm-modal');
-        const confirmTitle = document.getElementById('confirm-title');
-        const confirmMessage = document.getElementById('confirm-message');
-        const confirmButtons = document.getElementById('confirm-buttons');
-        const alertIcon = document.getElementById('alert-icon');
-
-
-        // --- State Variables ---
-        let selectedItems = new Set();
-        let highlightedElements = [];
-        let currentHighlightIndex = -1;
-        let activeKeywordFilters = new Set();
-        let keywordFilterMode = 'OR'; // 'OR' or 'AND'
-        let isFavoritesFilterActive = false;
-        let timerInterval = null;
-        let timerRunning = false;
-        let elapsedSeconds = 0;
-        let stopwatchClickCount = 0;
-        let stopwatchClickTimer = null;
-        let vitalsClearClickCount = 0;
-        let vitalsClearClickTimer = null;
-        let intersectionObserver = null;
-        const MAX_HISTORY_ITEMS = 15;
-        const SHOW_RANDOM_BTN_KEY = `paramedic_app_show_random_button`;
-        let gcs = { E: 0, V: 0, M: 0 };
-        let pupilSize = { r: '', l: '' };
-        let pupilReflex = { r: '', l: '' };
-
-        // --- Auth & Data Loading ---
-        function startApp() {
-            try {
-                let firebaseConfig;
-                // Check if the global config variable exists (for production/Canvas environment)
-                if (typeof __firebase_config !== 'undefined' && __firebase_config) {
-                    firebaseConfig = JSON.parse(__firebase_config);
-                } else {
-                    // Fallback for local development.
-                    console.warn("Firebase config not found globally. Using fallback local config. DO NOT use this in production.");
-                    firebaseConfig = {
-                        apiKey: "AIzaSyC6umJXFGulRAkwdhx-Hoj1_5DbEbSdBOQ",
-                        authDomain: "paramedic-app-df696.firebaseapp.com",
-                        projectId: "paramedic-app-df696",
-                        storageBucket: "paramedic-app-df696.firebasestorage.app",
-                        messagingSenderId: "950566286423",
-                        appId: "1:950566286423:web:8086a8eb31b63008465f12",
-                        measurementId: "G-GHKF63GY9X"
-                    };
-                }
-
-                appId = typeof __app_id !== 'undefined' ? __app_id : 'default-app-id';
-                const app = initializeApp(firebaseConfig);
-                db = getFirestore(app);
-                auth = getAuth(app);
-
-                onAuthStateChanged(auth, async (user) => {
-                    if (user) {
-                        userId = user.uid;
-                        document.getElementById('user-id-display').textContent = userId;
-                        dataCollectionRef = collection(db, 'artifacts', appId, 'users', userId, collectionName);
-                        setupSnapshotListener();
+        document.addEventListener('DOMContentLoaded', () => {
+            // --- ALL APP LOGIC IS WRAPPED IN DOMCONTENTLOADED ---
+            
+            // --- Firebase & App Variables ---
+            let db, auth, dataCollectionRef;
+            let userId = null;
+            let dataStore = [];
+            const collectionName = 'clinical_cases';
+            let appId;
+            
+            // --- DOM Elements (declared globally, assigned after DOM load) ---
+            let contentArea, jumpNav, searchInput, searchExecBtn, searchClearBtn, searchHistoryBtn, searchHistoryDropdown, searchCount, searchPrevBtn, searchNextBtn, selectedKeywordsArea, settingsBtn, settingsModal, settingsModalCloseBtn, exportDataBtn, importDataBtn, importFileInput, filterFavoritesBtn, compareModal, compareModalCloseBtn, compareContentArea, stopwatchEl, genderBtns, ageInput, dobBtn, dobEraModal, dobEraOkBtn, dobEraCancelBtn, eraSelect, eraYearInput, eraMonthInput, eraDayInput, toggleKeywordsBtn, randomBtn, showRandomBtnToggle, vitalsBtn, vitalsModal, vitalsModalCloseBtn, vitalsClearBtn, vitalsForm, gcsTotalEl, vitalsSummaryContainer, vitalsSummaryArea, toggleVitalsSummaryBtn, dataModal, modalTitle, dataForm, entryIdInput, chiefComplaintInput, descriptionInput, chiefComplaintMemoInput, diseasesContainer, deleteBtn, addNewBtn, modalCloseBtn, addDiseaseBtn, confirmModal, confirmTitle, confirmMessage, confirmButtons, alertIcon, menuBtn, mobileMenu, sidebarToggleBtn, sidebarBackdrop;
+    
+            // --- State Variables ---
+            let selectedItems = new Set();
+            let highlightedElements = [];
+            let currentHighlightIndex = -1;
+            let activeKeywordFilters = new Set();
+            let keywordFilterMode = 'OR'; // 'OR' or 'AND'
+            let isFavoritesFilterActive = false;
+            let timerInterval = null;
+            let timerRunning = false;
+            let elapsedSeconds = 0;
+            let stopwatchClickCount = 0;
+            let stopwatchClickTimer = null;
+            let vitalsClearClickCount = 0;
+            let vitalsClearClickTimer = null;
+            let intersectionObserver = null;
+            const MAX_HISTORY_ITEMS = 15;
+            const SHOW_RANDOM_BTN_KEY = `paramedic_app_show_random_button`;
+            let gcs = { E: 0, V: 0, M: 0 };
+            let pupilSize = { r: '', l: '' };
+            let pupilReflex = { r: '', l: '' };
+    
+            // --- Auth & Data Loading ---
+            function startApp() {
+                try {
+                    let firebaseConfig;
+                    if (typeof __firebase_config !== 'undefined' && __firebase_config) {
+                        firebaseConfig = JSON.parse(__firebase_config);
                     } else {
-                        document.getElementById('user-id-display').textContent = "匿名ログイン中...";
-                        await signIn();
+                        console.warn("Firebase config not found globally. Using fallback local config. DO NOT use this in production.");
+                        firebaseConfig = {
+                            apiKey: "AIzaSyC6umJXFGulRAkwdhx-Hoj1_5DbEbSdBOQ",
+                            authDomain: "paramedic-app-df696.firebaseapp.com",
+                            projectId: "paramedic-app-df696",
+                            storageBucket: "paramedic-app-df696.firebasestorage.app",
+                            messagingSenderId: "950566286423",
+                            appId: "1:950566286423:web:8086a8eb31b63008465f12",
+                            measurementId: "G-GHKF63GY9X"
+                        };
                     }
-                });
-
-            } catch (error) {
-                console.error("Firebase Initialization Failed:", error);
-                document.getElementById('loading').innerHTML = `<p class="text-red-500 p-8">アプリケーションの初期化に失敗しました。設定を確認してください。</p>`;
-            }
-        }
-
-        async function signIn() {
-            try {
-                if (typeof __initial_auth_token !== 'undefined' && __initial_auth_token) {
-                    await signInWithCustomToken(auth, __initial_auth_token);
-                } else {
-                    await signInAnonymously(auth);
-                }
-            } catch (error) {
-                console.error("Authentication failed:", error);
-                const loadingEl = document.getElementById('loading');
-                if (loadingEl) {
-                    loadingEl.innerHTML = '<p class="text-red-500">Authentication Failed.</p>';
-                }
-            }
-        }
-        
-        function setupSnapshotListener() {
-            onSnapshot(dataCollectionRef, (snapshot) => {
-                const loadingEl = document.getElementById('loading');
-                if (loadingEl) { loadingEl.style.display = 'none'; }
-                
-                const serverData = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
-                dataStore = serverData;
-
-                if (snapshot.empty && dataStore.length === 0) { 
-                    seedInitialData(); 
-                    return; 
-                }
-                
-                render(); 
-                renderSelectedKeywords();
-                setupIntersectionObserver();
-            }, (error) => {
-                console.error("Error fetching data:", error);
-                const loadingEl = document.getElementById('loading');
-                if (loadingEl) {
-                    loadingEl.innerHTML = '<p class="text-red-500">オフラインです。キャッシュからデータを表示します。</p>';
-                }
-            });
-        }
-        
-        async function seedInitialData() {
-            const initialData = [ { chiefComplaint: "気分不良", description: "身体的な不調や精神的な落ち込みなど、主観的な不快感全般。", memo: "", isFavorite: false, diseases: [ { name: "脳血管障害", description: "脳の血管が詰まったり破れたりすることで脳細胞が障害される病気。", memo: "", isFavorite: false, keywords: ["突然の片麻痺", "顔面神経麻痺", "言語障害", "意識障害", "激しい頭痛", "嘔吐", "めまい"], pitfalls: ["非典型症状（高齢者、後方循環系）", "頭痛軽微なくも膜下出血の見逃し", "TIAの見過ごし"] }, { name: "急性冠症候群", description: "心臓の血管が急に詰まり、心筋に血液が供給されなくなる危険な状態。", memo: "", isFavorite: false, keywords: ["胸痛", "放散痛", "冷や汗", "呼吸困難", "吐き気"], pitfalls: ["非典型的な胸痛（糖尿病患者、高齢者）", "心電図変化がない場合の見逃し", "消化器症状との誤認"] }, { name: "低血糖", description: "血糖値が異常に低くなることで様々な症状を引き起こす状態。", memo: "", isFavorite: false, keywords: ["冷や汗", "動悸", "意識障害", "痙攣", "空腹感"], pitfalls: ["高齢者の非典型的症状", "インスリン・経口血糖降下薬の使用歴確認漏れ", "アルコール摂取後の低血糖"] } ] }, { chiefComplaint: "呼吸困難", description: "息が苦しい、息切れがする、十分に息が吸えないといった主観的な感覚。", memo: "", isFavorite: false, diseases: [ { name: "心不全", description: "心臓のポンプ機能が低下し、全身に必要な血液を送れなくなった状態。", memo: "", isFavorite: false, keywords: ["起坐呼吸", "発作性夜間呼吸困難", "下腿浮腫", "頸静脈怒張", "ピンク色泡沫状痰"], pitfalls: ["喘息との鑑別困難", "右心不全のみの場合の呼吸困難感の欠如", "腎不全との合併"] }, { name: "気管支喘息", description: "気道が慢性的に炎症を起こし、様々な刺激で狭くなる病気。", memo: "", isFavorite: false, keywords: ["喘鳴", "呼気性呼吸困難", "夜間・早朝の増悪", "アトピー素因"], pitfalls: ["心臓喘息との鑑別", "重積発作時の喘鳴減弱（silent chest）", "アナフィラキシーの初期症状"] } ] } ];
-            try {
-                const batch = writeBatch(db);
-                initialData.forEach(item => {
-                    const docRef = doc(collection(db, 'artifacts', appId, 'users', userId, collectionName));
-                    batch.set(docRef, item);
-                });
-                await batch.commit();
-            } catch (error) {
-                console.error("Error seeding data:", error);
-            }
-        }
-
-        
-        // --- Rendering ---
-        function render() {
-            unhighlight();
-            const searchTerm = searchInput.value.trim();
-            let dataToRender;
-            let termToHighlight;
-
-            let processedData = [...dataStore];
-
-            if (isFavoritesFilterActive) {
-                processedData = processedData.map(entry => {
-                    const favoriteDiseases = entry.diseases.filter(d => d.isFavorite);
-                    if (entry.isFavorite) {
-                        return entry;
-                    }
-                    if (favoriteDiseases.length > 0) {
-                        return { ...entry, diseases: favoriteDiseases };
-                    }
-                    return null;
-                }).filter(Boolean);
-            }
-
-            processedData.sort((a, b) => {
-                if (a.isFavorite && !b.isFavorite) return -1;
-                if (!a.isFavorite && b.isFavorite) return 1;
-                return a.chiefComplaint.localeCompare(b.chiefComplaint, 'ja');
-            });
-
-            if (activeKeywordFilters.size > 0) {
-                const filters = Array.from(activeKeywordFilters);
-                dataToRender = processedData.map(entry => {
-                    const matchingDiseases = entry.diseases.filter(d => {
-                        const keywords = d.keywords || [];
-                        if (keywordFilterMode === 'OR') {
-                            return filters.some(filter => keywords.includes(filter));
-                        } else { // AND
-                            return filters.every(filter => keywords.includes(filter));
+    
+                    appId = typeof __app_id !== 'undefined' ? __app_id : 'default-app-id';
+                    const app = initializeApp(firebaseConfig);
+                    db = getFirestore(app);
+                    auth = getAuth(app);
+    
+                    onAuthStateChanged(auth, async (user) => {
+                        if (user) {
+                            userId = user.uid;
+                            document.getElementById('user-id-display').textContent = userId;
+                            dataCollectionRef = collection(db, 'artifacts', appId, 'users', userId, collectionName);
+                            setupSnapshotListener();
+                        } else {
+                            document.getElementById('user-id-display').textContent = "匿名ログイン中...";
+                            await signIn();
                         }
                     });
-                    if (matchingDiseases.length > 0) {
-                        return { ...entry, diseases: matchingDiseases };
-                    }
-                    return null;
-                }).filter(Boolean);
-                termToHighlight = filters;
-            } else if (searchTerm) {
-                const regex = new RegExp(searchTerm.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'), 'i');
-                dataToRender = processedData.filter(entry => 
-                    regex.test(entry.chiefComplaint) || 
-                    entry.diseases.some(d => regex.test(d.name) || (d.keywords && d.keywords.some(k => regex.test(k))) || (d.pitfalls && d.pitfalls.some(p => regex.test(p))))
-                );
-                termToHighlight = [searchTerm];
-            } else {
-                dataToRender = processedData;
-                termToHighlight = [];
-            }
-
-            contentArea.innerHTML = '';
-            jumpNav.innerHTML = '';
-
-            if(dataToRender.length === 0){
-                contentArea.innerHTML = `<div class="text-center p-8 text-gray-400"><i class="fas fa-search-minus fa-3x mb-4"></i><p>該当するデータが見つかりませんでした。</p></div>`;
-            } else {
-                 dataToRender.forEach((entry, index) => {
-                    const complaintId = `complaint-${entry.id}`;
-                    const navItem = document.createElement('a');
-                    navItem.href = `#${complaintId}`;
-                    navItem.className = 'nav-item block text-center text-gray-300 hover:bg-blue-600 hover:text-white font-bold py-3 px-1 rounded-lg transition-colors text-sm flex items-center';
-                    const starIcon = entry.isFavorite ? `<i class="fas fa-star text-yellow-400 mr-2"></i>` : '';
-                    navItem.innerHTML = `<input type="checkbox" class="nav-item-checkbox" data-type="complaint" data-id="${entry.id}"> ${starIcon}${(index + 1).toString().padStart(2, '0')}. ${entry.chiefComplaint.substring(0, 4)}`;
-                    navItem.title = entry.chiefComplaint;
-                    navItem.querySelector('.nav-item-checkbox').addEventListener('click', e => e.stopPropagation()); // prevent navigation on checkbox click
-                    navItem.onclick = (e) => { e.preventDefault(); document.getElementById(complaintId)?.scrollIntoView({ behavior: 'smooth' }); };
-                    jumpNav.appendChild(navItem);
-
-                    const isComplaintChecked = selectedItems.has(`c_${entry.id}`);
-                    const entryDiv = document.createElement('div');
-                    entryDiv.className = 'content-card mb-6 bg-gray-800 rounded-xl shadow-md p-5';
-                    entryDiv.id = complaintId;
-                    
-                    const memoHTML = entry.memo ? `<div class="mt-4 pl-6 text-sm text-amber-300 bg-gray-900/50 p-3 rounded-lg border-l-4 border-amber-400"><div class="font-bold mb-1 flex items-center"><i class="fas fa-pencil-alt mr-2"></i>主訴メモ</div><div>${entry.memo.replace(/\n/g, '<br>')}</div></div>` : '';
-                    const favoriteClass = entry.isFavorite ? 'fas text-yellow-400' : 'far text-gray-500';
-
-                    let contentHTML = `
-                        <div class="flex justify-between items-center">
-                            <div class="flex items-center">
-                                <input type="checkbox" class="item-checkbox" data-type="complaint" data-id="${entry.id}" ${isComplaintChecked ? 'checked' : ''}>
-                                <h2 class="text-2xl font-bold text-blue-400">${(index + 1).toString().padStart(2, '0')}. ${entry.chiefComplaint}</h2>
-                            </div>
-                            <div class="flex items-center">
-                                <button class="favorite-btn text-xl mr-4" data-id="${entry.id}" title="お気に入り登録"><i class="${favoriteClass} fa-star"></i></button>
-                                <button class="edit-btn text-gray-400 hover:text-white" data-id="${entry.id}"><i class="fas fa-edit"></i></button>
-                            </div>
-                        </div>
-                         <p class="text-sm text-gray-400 mt-1 ml-10">${entry.description || ''}</p>
-                        ${memoHTML}
-                        <div class="mt-4 space-y-4 pl-6">${(entry.diseases || []).map(disease => { 
-                            const isDiseaseChecked = selectedItems.has(`d_${entry.id}_${disease.name.replace(/\s/g, '_')}`);
-                             const diseaseFavoriteClass = disease.isFavorite ? 'fas text-yellow-400' : 'far text-gray-500';
-                            const diseaseMemoHTML = disease.memo ? `<div class="mt-3 text-sm text-amber-300 bg-gray-900/50 p-2 rounded-lg"><div class="font-bold mb-1 flex items-center"><i class="fas fa-pencil-alt mr-2"></i>疾患メモ</div><div>${disease.memo.replace(/\n/g, '<br>')}</div></div>` : '';
-                            return `
-                                <div class="pl-4 border-l-4 border-gray-700">
-                                    <div class="flex items-center justify-between">
-                                        <div class="flex items-center">
-                                          <input type="checkbox" class="item-checkbox" data-type="disease" data-id="${entry.id}" data-name="${disease.name}" ${isDiseaseChecked ? 'checked' : ''}>
-                                          <h3 class="text-lg font-semibold text-teal-400">${disease.name}</h3>
-                                        </div>
-                                        <button class="favorite-disease-btn text-lg" data-complaint-id="${entry.id}" data-disease-name="${disease.name}" title="お気に入り登録"><i class="${diseaseFavoriteClass} fa-star"></i></button>
-                                    </div>
-                                    <div class="mt-2 pl-8">
-                                        <p class="text-sm text-gray-400 mt-1">${disease.description || ''}</p>
-                                        ${diseaseMemoHTML}
-                                        <h4 class="font-bold text-sm text-gray-300 mt-3"><i class="fas fa-lightbulb text-yellow-400 mr-2"></i>キーワード</h4><div class="flex flex-wrap gap-2 mt-1">${(disease.keywords || []).map(k => `<span class="content-keyword-tag bg-gray-700 text-sm text-gray-200 rounded-full px-3 py-1 hover:bg-gray-500">${k}</span>`).join('')}</div>
-                                        <h4 class="font-bold text-sm text-gray-300 mt-3"><i class="fas fa-exclamation-triangle text-red-400 mr-2"></i>落とし穴</h4><ul class="list-disc list-inside mt-1 text-sm text-gray-300 space-y-1">${(disease.pitfalls || []).map(p => `<li>${p}</li>`).join('')}</ul>
-                                    </div>
-                                </div>`
-                        }).join('')}</div>`;
-                    
-                    if (termToHighlight && termToHighlight.length > 0) {
-                        const regex = new RegExp(`(${termToHighlight.map(t => t.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')).join('|')})`, 'gi');
-                        contentHTML = contentHTML.replace(regex, `<mark class="highlight">$1</mark>`);
-                    }
-                    entryDiv.innerHTML = contentHTML;
-                    contentArea.appendChild(entryDiv);
-                });
-            }
-            highlightedElements = contentArea.querySelectorAll('.highlight');
-            updateSearchNav();
-            if(highlightedElements.length > 0) {
-                currentHighlightIndex = 0;
-                navigateToHighlight(currentHighlightIndex);
-            }
-        }
-        
-        function setupIntersectionObserver() {
-            if (intersectionObserver) {
-                intersectionObserver.disconnect();
-            }
-            const options = {
-                root: contentArea,
-                rootMargin: '-50% 0px -50% 0px',
-                threshold: 0
-            };
-            intersectionObserver = new IntersectionObserver((entries) => {
-                entries.forEach(entry => {
-                    const navLink = jumpNav.querySelector(`a[href="#${entry.target.id}"]`);
-                    if (entry.isIntersecting && navLink) {
-                         document.querySelectorAll('.nav-item').forEach(link => link.classList.remove('active-nav'));
-                         navLink.classList.add('active-nav');
-                    }
-                });
-            }, options);
-            document.querySelectorAll('.content-card').forEach(card => intersectionObserver.observe(card));
-        }
-        
-        function renderSelectedKeywords() {
-            selectedKeywordsArea.innerHTML = '';
-            const keywords = new Set();
-            
-            if (selectedItems.size === 0) {
-                dataStore.forEach(entry => (entry.diseases || []).forEach(d => (d.keywords || []).forEach(k => keywords.add(k))));
-            } else {
-                selectedItems.forEach(itemId => {
-                    const parts = itemId.split('_'); const type = parts[0]; const entryId = parts[1];
-                    const entry = dataStore.find(e => e.id === entryId); if (!entry) return;
-                    if (type === 'c') { (entry.diseases || []).forEach(d => (d.keywords || []).forEach(k => keywords.add(k))); } 
-                    else if (type === 'd') { const diseaseName = parts.slice(2).join(' ').replace(/_/g, ' '); const disease = (entry.diseases || []).find(d => d.name === diseaseName); if (disease) { (disease.keywords || []).forEach(k => keywords.add(k)); } }
-                });
-            }
-            
-            [...keywords].sort((a,b) => a.localeCompare(b, 'ja')).forEach(keyword => { 
-                const tag = document.createElement('span'); 
-                tag.className = 'keyword-tag bg-gray-700 hover:bg-gray-600 text-sm py-1 px-3 rounded-full transition-colors'; 
-                if (activeKeywordFilters.has(keyword)) {
-                    tag.classList.add('active');
+    
+                } catch (error) {
+                    console.error("Firebase Initialization Failed:", error);
+                    document.getElementById('loading').innerHTML = `<p class="text-red-500 p-8">アプリケーションの初期化に失敗しました。設定を確認してください。</p>`;
                 }
-                tag.textContent = keyword; 
-                tag.onclick = () => handleKeywordTagClick(keyword);
-                selectedKeywordsArea.appendChild(tag); 
-            });
-
-            const controlsContainer = document.createElement('div');
-            controlsContainer.className = "ml-4 flex items-center space-x-3";
-            selectedKeywordsArea.appendChild(controlsContainer);
+            }
+    
+            async function signIn() {
+                try {
+                    if (typeof __initial_auth_token !== 'undefined' && __initial_auth_token) {
+                        await signInWithCustomToken(auth, __initial_auth_token);
+                    } else {
+                        await signInAnonymously(auth);
+                    }
+                } catch (error) {
+                    console.error("Authentication failed:", error);
+                    const loadingEl = document.getElementById('loading');
+                    if (loadingEl) {
+                        loadingEl.innerHTML = '<p class="text-red-500">Authentication Failed.</p>';
+                    }
+                }
+            }
             
-            if (activeKeywordFilters.size > 0) {
-                if (activeKeywordFilters.size > 1) {
-                    const switchContainer = document.createElement('div');
-                    switchContainer.id = 'logic-switch-container';
-                    switchContainer.dataset.mode = keywordFilterMode;
-                    switchContainer.title = "検索ロジックを切り替え";
-                    switchContainer.innerHTML = `<div id="switch-bg"></div><span class="switch-label ${keywordFilterMode === 'OR' ? 'active-logic' : ''}">OR</span><span class="switch-label ${keywordFilterMode === 'AND' ? 'active-logic' : ''}">AND</span>`;
-                    switchContainer.onclick = toggleLogicMode;
-                    controlsContainer.appendChild(switchContainer);
+            function setupSnapshotListener() {
+                onSnapshot(dataCollectionRef, (snapshot) => {
+                    const loadingEl = document.getElementById('loading');
+                    if (loadingEl) { loadingEl.style.display = 'none'; }
+                    
+                    const serverData = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+                    dataStore = serverData;
+    
+                    if (snapshot.empty && dataStore.length === 0) { 
+                        seedInitialData(); 
+                        return; 
+                    }
+                    
+                    render(); 
+                    renderSelectedKeywords();
+                    setupIntersectionObserver();
+                }, (error) => {
+                    console.error("Error fetching data:", error);
+                    const loadingEl = document.getElementById('loading');
+                    if (loadingEl) {
+                        loadingEl.innerHTML = '<p class="text-red-500">オフラインです。キャッシュからデータを表示します。</p>';
+                    }
+                });
+            }
+            
+            async function seedInitialData() {
+                const initialData = [ { chiefComplaint: "気分不良", description: "身体的な不調や精神的な落ち込みなど、主観的な不快感全般。", memo: "", isFavorite: false, diseases: [ { name: "脳血管障害", description: "脳の血管が詰まったり破れたりすることで脳細胞が障害される病気。", memo: "", isFavorite: false, keywords: ["突然の片麻痺", "顔面神経麻痺", "言語障害", "意識障害", "激しい頭痛", "嘔吐", "めまい"], pitfalls: ["非典型症状（高齢者、後方循環系）", "頭痛軽微なくも膜下出血の見逃し", "TIAの見過ごし"] }, { name: "急性冠症候群", description: "心臓の血管が急に詰まり、心筋に血液が供給されなくなる危険な状態。", memo: "", isFavorite: false, keywords: ["胸痛", "放散痛", "冷や汗", "呼吸困難", "吐き気"], pitfalls: ["非典型的な胸痛（糖尿病患者、高齢者）", "心電図変化がない場合の見逃し", "消化器症状との誤認"] }, { name: "低血糖", description: "血糖値が異常に低くなることで様々な症状を引き起こす状態。", memo: "", isFavorite: false, keywords: ["冷や汗", "動悸", "意識障害", "痙攣", "空腹感"], pitfalls: ["高齢者の非典型的症状", "インスリン・経口血糖降下薬の使用歴確認漏れ", "アルコール摂取後の低血糖"] } ] }, { chiefComplaint: "呼吸困難", description: "息が苦しい、息切れがする、十分に息が吸えないといった主観的な感覚。", memo: "", isFavorite: false, diseases: [ { name: "心不全", description: "心臓のポンプ機能が低下し、全身に必要な血液を送れなくなった状態。", memo: "", isFavorite: false, keywords: ["起坐呼吸", "発作性夜間呼吸困難", "下腿浮腫", "頸静脈怒張", "ピンク色泡沫状痰"], pitfalls: ["喘息との鑑別困難", "右心不全のみの場合の呼吸困難感の欠如", "腎不全との合併"] }, { name: "気管支喘息", description: "気道が慢性的に炎症を起こし、様々な刺激で狭くなる病気。", memo: "", isFavorite: false, keywords: ["喘鳴", "呼気性呼吸困難", "夜間・早朝の増悪", "アトピー素因"], pitfalls: ["心臓喘息との鑑別", "重積発作時の喘鳴減弱（silent chest）", "アナフィラキシーの初期症状"] } ] } ];
+                try {
+                    const batch = writeBatch(db);
+                    initialData.forEach(item => {
+                        const docRef = doc(collection(db, 'artifacts', appId, 'users', userId, collectionName));
+                        batch.set(docRef, item);
+                    });
+                    await batch.commit();
+                } catch (error) {
+                    console.error("Error seeding data:", error);
+                }
+            }
+    
+            
+            // --- Rendering ---
+            function render() {
+                unhighlight();
+                const searchTerm = searchInput.value.trim();
+                let dataToRender;
+                let termToHighlight;
+        
+                let processedData = [...dataStore];
+        
+                if (isFavoritesFilterActive) {
+                    processedData = processedData.map(entry => {
+                        const favoriteDiseases = (entry.diseases || []).filter(d => d.isFavorite);
+                        if (entry.isFavorite) {
+                            return entry;
+                        }
+                        if (favoriteDiseases.length > 0) {
+                            return { ...entry, diseases: favoriteDiseases };
+                        }
+                        return null;
+                    }).filter(Boolean);
+                }
+        
+                processedData.sort((a, b) => {
+                    if (a.isFavorite && !b.isFavorite) return -1;
+                    if (!a.isFavorite && b.isFavorite) return 1;
+                    return a.chiefComplaint.localeCompare(b.chiefComplaint, 'ja');
+                });
+        
+                if (activeKeywordFilters.size > 0) {
+                    const filters = Array.from(activeKeywordFilters);
+                    dataToRender = processedData.map(entry => {
+                        const matchingDiseases = (entry.diseases || []).filter(d => {
+                            const keywords = d.keywords || [];
+                            if (keywordFilterMode === 'OR') {
+                                return filters.some(filter => keywords.includes(filter));
+                            } else { // AND
+                                return filters.every(filter => keywords.includes(filter));
+                            }
+                        });
+                        if (matchingDiseases.length > 0) {
+                            return { ...entry, diseases: matchingDiseases };
+                        }
+                        return null;
+                    }).filter(Boolean);
+                    termToHighlight = filters;
+                } else if (searchTerm) {
+                    const regex = new RegExp(searchTerm.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'), 'i');
+                    dataToRender = processedData.filter(entry => 
+                        regex.test(entry.chiefComplaint) || 
+                        (entry.diseases || []).some(d => regex.test(d.name) || (d.keywords && d.keywords.some(k => regex.test(k))) || (d.pitfalls && d.pitfalls.some(p => regex.test(p))))
+                    );
+                    termToHighlight = [searchTerm];
+                } else {
+                    dataToRender = processedData;
+                    termToHighlight = [];
+                }
+        
+                contentArea.innerHTML = '';
+                jumpNav.innerHTML = '';
+        
+                if(dataToRender.length === 0){
+                    contentArea.innerHTML = `<div class="text-center p-8 text-gray-400"><i class="fas fa-search-minus fa-3x mb-4"></i><p>該当するデータが見つかりませんでした。</p></div>`;
+                } else {
+                     dataToRender.forEach((entry, index) => {
+                        const complaintId = `complaint-${entry.id}`;
+                        const navItem = document.createElement('a');
+                        navItem.href = `#${complaintId}`;
+                        navItem.className = 'nav-item block text-gray-300 hover:bg-blue-600 hover:text-white font-bold py-3 px-2 rounded-lg transition-colors text-sm flex items-center';
+                        const starIcon = entry.isFavorite ? `<i class="fas fa-star text-yellow-400 mr-2"></i>` : '';
+                        navItem.innerHTML = `<input type="checkbox" class="nav-item-checkbox" data-type="complaint" data-id="${entry.id}"> ${starIcon}${(index + 1).toString().padStart(2, '0')}. ${entry.chiefComplaint}`;
+                        navItem.title = entry.chiefComplaint;
+                        navItem.querySelector('.nav-item-checkbox').addEventListener('click', e => e.stopPropagation());
+                        navItem.onclick = (e) => { 
+                            e.preventDefault(); 
+                            document.getElementById(complaintId)?.scrollIntoView({ behavior: 'smooth' }); 
+                            jumpNav.classList.add('-translate-x-full');
+                            sidebarBackdrop.classList.add('hidden');
+                        };
+                        jumpNav.appendChild(navItem);
+        
+                        const isComplaintChecked = selectedItems.has(`c_${entry.id}`);
+                        const entryDiv = document.createElement('div');
+                        entryDiv.className = 'content-card mb-6 bg-gray-800 rounded-xl shadow-md p-5';
+                        entryDiv.id = complaintId;
+                        
+                        const memoHTML = entry.memo ? `<div class="mt-4 pl-6 text-sm text-amber-300 bg-gray-900/50 p-3 rounded-lg border-l-4 border-amber-400"><div class="font-bold mb-1 flex items-center"><i class="fas fa-pencil-alt mr-2"></i>主訴メモ</div><div>${entry.memo.replace(/\n/g, '<br>')}</div></div>` : '';
+                        const favoriteClass = entry.isFavorite ? 'fas text-yellow-400' : 'far text-gray-500';
+        
+                        let contentHTML = `
+                            <div class="flex justify-between items-center">
+                                <div class="flex items-center">
+                                    <input type="checkbox" class="item-checkbox" data-type="complaint" data-id="${entry.id}" ${isComplaintChecked ? 'checked' : ''}>
+                                    <h2 class="text-xl md:text-2xl font-bold text-blue-400">${(index + 1).toString().padStart(2, '0')}. ${entry.chiefComplaint}</h2>
+                                </div>
+                                <div class="flex items-center">
+                                    <button class="favorite-btn text-xl mr-4" data-id="${entry.id}" title="お気に入り登録"><i class="${favoriteClass} fa-star"></i></button>
+                                    <button class="edit-btn text-gray-400 hover:text-white" data-id="${entry.id}"><i class="fas fa-edit"></i></button>
+                                </div>
+                            </div>
+                             <p class="text-sm text-gray-400 mt-1 ml-10">${entry.description || ''}</p>
+                            ${memoHTML}
+                            <div class="mt-4 space-y-4 pl-6">${(entry.diseases || []).map(disease => { 
+                                const isDiseaseChecked = selectedItems.has(`d_${entry.id}_${disease.name.replace(/\s/g, '_')}`);
+                                 const diseaseFavoriteClass = disease.isFavorite ? 'fas text-yellow-400' : 'far text-gray-500';
+                                const diseaseMemoHTML = disease.memo ? `<div class="mt-3 text-sm text-amber-300 bg-gray-900/50 p-2 rounded-lg"><div class="font-bold mb-1 flex items-center"><i class="fas fa-pencil-alt mr-2"></i>疾患メモ</div><div>${disease.memo.replace(/\n/g, '<br>')}</div></div>` : '';
+                                return `
+                                    <div class="pl-4 border-l-4 border-gray-700">
+                                        <div class="flex items-center justify-between">
+                                            <div class="flex items-center">
+                                              <input type="checkbox" class="item-checkbox" data-type="disease" data-id="${entry.id}" data-name="${disease.name}" ${isDiseaseChecked ? 'checked' : ''}>
+                                              <h3 class="text-lg font-semibold text-teal-400">${disease.name}</h3>
+                                            </div>
+                                            <button class="favorite-disease-btn text-lg" data-complaint-id="${entry.id}" data-disease-name="${disease.name}" title="お気に入り登録"><i class="${diseaseFavoriteClass} fa-star"></i></button>
+                                        </div>
+                                        <div class="mt-2 pl-8">
+                                            <p class="text-sm text-gray-400 mt-1">${disease.description || ''}</p>
+                                            ${diseaseMemoHTML}
+                                            <h4 class="font-bold text-sm text-gray-300 mt-3"><i class="fas fa-lightbulb text-yellow-400 mr-2"></i>キーワード</h4><div class="flex flex-wrap gap-2 mt-1">${(disease.keywords || []).map(k => `<span class="content-keyword-tag bg-gray-700 text-sm text-gray-200 rounded-full px-3 py-1 hover:bg-gray-500">${k}</span>`).join('')}</div>
+                                            <h4 class="font-bold text-sm text-gray-300 mt-3"><i class="fas fa-exclamation-triangle text-red-400 mr-2"></i>落とし穴</h4><ul class="list-disc list-inside mt-1 text-sm text-gray-300 space-y-1">${(disease.pitfalls || []).map(p => `<li>${p}</li>`).join('')}</ul>
+                                        </div>
+                                    </div>`
+                            }).join('')}</div>`;
+                        
+                        if (termToHighlight && termToHighlight.length > 0) {
+                            const regex = new RegExp(`(${termToHighlight.map(t => t.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')).join('|')})`, 'gi');
+                            contentHTML = contentHTML.replace(regex, `<mark class="highlight">$1</mark>`);
+                        }
+                        entryDiv.innerHTML = contentHTML;
+                        contentArea.appendChild(entryDiv);
+                    });
+                }
+                highlightedElements = contentArea.querySelectorAll('.highlight');
+                updateSearchNav();
+                if(highlightedElements.length > 0) {
+                    currentHighlightIndex = 0;
+                    navigateToHighlight(currentHighlightIndex);
+                }
+            }
+            
+            function setupIntersectionObserver() {
+                if (intersectionObserver) {
+                    intersectionObserver.disconnect();
+                }
+                const options = {
+                    root: contentArea,
+                    rootMargin: '-50% 0px -50% 0px',
+                    threshold: 0
+                };
+                intersectionObserver = new IntersectionObserver((entries) => {
+                    entries.forEach(entry => {
+                        const navLink = jumpNav.querySelector(`a[href="#${entry.target.id}"]`);
+                        if (entry.isIntersecting && navLink) {
+                             document.querySelectorAll('.nav-item').forEach(link => link.classList.remove('active-nav'));
+                             navLink.classList.add('active-nav');
+                        }
+                    });
+                }, options);
+                document.querySelectorAll('.content-card').forEach(card => intersectionObserver.observe(card));
+            }
+            
+            function renderSelectedKeywords() {
+                selectedKeywordsArea.innerHTML = '';
+                const keywords = new Set();
+                
+                if (selectedItems.size === 0) {
+                    dataStore.forEach(entry => (entry.diseases || []).forEach(d => (d.keywords || []).forEach(k => keywords.add(k))));
+                } else {
+                    selectedItems.forEach(itemId => {
+                        const parts = itemId.split('_'); const type = parts[0]; const entryId = parts[1];
+                        const entry = dataStore.find(e => e.id === entryId); if (!entry) return;
+                        if (type === 'c') { (entry.diseases || []).forEach(d => (d.keywords || []).forEach(k => keywords.add(k))); } 
+                        else if (type === 'd') { const diseaseName = parts.slice(2).join(' ').replace(/_/g, ' '); const disease = (entry.diseases || []).find(d => d.name === diseaseName); if (disease) { (disease.keywords || []).forEach(k => keywords.add(k)); } }
+                    });
                 }
                 
-                const clearBtn = document.createElement('button');
-                clearBtn.className = "text-sm text-red-500 hover:text-red-400 flex items-center";
-                clearBtn.innerHTML = `<i class="fas fa-times-circle mr-1"></i> フィルター解除`;
-                clearBtn.onclick = clearKeywordFilter;
-                controlsContainer.appendChild(clearBtn);
+                [...keywords].sort((a,b) => a.localeCompare(b, 'ja')).forEach(keyword => { 
+                    const tag = document.createElement('span'); 
+                    tag.className = 'keyword-tag bg-gray-700 hover:bg-gray-600 text-sm py-1 px-3 rounded-full transition-colors'; 
+                    if (activeKeywordFilters.has(keyword)) {
+                        tag.classList.add('active');
+                    }
+                    tag.textContent = keyword; 
+                    tag.onclick = () => handleKeywordTagClick(keyword);
+                    selectedKeywordsArea.appendChild(tag); 
+                });
+    
+                const controlsContainer = document.createElement('div');
+                controlsContainer.className = "ml-4 flex items-center space-x-3";
+                selectedKeywordsArea.appendChild(controlsContainer);
+                
+                if (activeKeywordFilters.size > 0) {
+                    if (activeKeywordFilters.size > 1) {
+                        const switchContainer = document.createElement('div');
+                        switchContainer.id = 'logic-switch-container';
+                        switchContainer.dataset.mode = keywordFilterMode;
+                        switchContainer.title = "検索ロジックを切り替え";
+                        switchContainer.innerHTML = `<div id="switch-bg"></div><span class="switch-label ${keywordFilterMode === 'OR' ? 'active-logic' : ''}">OR</span><span class="switch-label ${keywordFilterMode === 'AND' ? 'active-logic' : ''}">AND</span>`;
+                        switchContainer.onclick = toggleLogicMode;
+                        controlsContainer.appendChild(switchContainer);
+                    }
+                    
+                    const clearBtn = document.createElement('button');
+                    clearBtn.className = "text-sm text-red-500 hover:text-red-400 flex items-center";
+                    clearBtn.innerHTML = `<i class="fas fa-times-circle mr-1"></i> フィルター解除`;
+                    clearBtn.onclick = clearKeywordFilter;
+                    controlsContainer.appendChild(clearBtn);
+                }
+                
+                let diseaseCount = 0;
+                selectedItems.forEach(itemId => {
+                    if(itemId.startsWith('d_')) diseaseCount++;
+                });
+    
+                if (diseaseCount >= 2) {
+                    const compareBtn = document.createElement('button');
+                    compareBtn.id = 'compare-btn';
+                    compareBtn.className = 'ml-auto text-sm bg-indigo-600 hover:bg-indigo-700 text-white font-bold py-1 px-3 rounded-lg flex items-center';
+                    compareBtn.innerHTML = `<i class="fas fa-exchange-alt mr-2"></i>選択した疾患を比較`;
+                    compareBtn.onclick = renderComparison;
+                    controlsContainer.appendChild(compareBtn);
+                }
+    
+                if(selectedItems.size > 0){
+                    const clearSelectionBtn = document.createElement('button');
+                    clearSelectionBtn.id = 'clear-selection-btn';
+                    clearSelectionBtn.className = 'ml-auto text-sm bg-gray-500 hover:bg-gray-600 text-white font-bold py-1 px-3 rounded-lg flex items-center';
+                    clearSelectionBtn.innerHTML = `<i class="fas fa-times mr-2"></i>選択をすべて解除`;
+                    clearSelectionBtn.onclick = clearAllSelections;
+                    controlsContainer.appendChild(clearSelectionBtn);
+                }
             }
             
-            let diseaseCount = 0;
-            selectedItems.forEach(itemId => {
-                if(itemId.startsWith('d_')) diseaseCount++;
-            });
-
-            if (diseaseCount >= 2) {
-                const compareBtn = document.createElement('button');
-                compareBtn.id = 'compare-btn';
-                compareBtn.className = 'ml-auto text-sm bg-indigo-600 hover:bg-indigo-700 text-white font-bold py-1 px-3 rounded-lg flex items-center';
-                compareBtn.innerHTML = `<i class="fas fa-exchange-alt mr-2"></i>選択した疾患を比較`;
-                compareBtn.onclick = renderComparison;
-                controlsContainer.appendChild(compareBtn);
-            }
-
-            if(selectedItems.size > 0){
-                const clearSelectionBtn = document.createElement('button');
-                clearSelectionBtn.id = 'clear-selection-btn';
-                clearSelectionBtn.className = 'ml-auto text-sm bg-gray-500 hover:bg-gray-600 text-white font-bold py-1 px-3 rounded-lg flex items-center';
-                clearSelectionBtn.innerHTML = `<i class="fas fa-times mr-2"></i>選択をすべて解除`;
-                clearSelectionBtn.onclick = clearAllSelections;
-                controlsContainer.appendChild(clearSelectionBtn);
-            }
-        }
-        
-        function handleCheckboxChange(e) {
-            const checkbox = e.target; 
-            if (!checkbox.classList.contains('item-checkbox') && !checkbox.classList.contains('nav-item-checkbox')) return;
-            
-            const isNavCheckbox = checkbox.classList.contains('nav-item-checkbox');
-            const { type, id, name } = checkbox.dataset; 
-            const uniqueId = type === 'complaint' ? `c_${id}` : `d_${id}_${name.replace(/\s/g, '_')}`;
-            
-            if (checkbox.checked) { selectedItems.add(uniqueId); } 
-            else { selectedItems.delete(uniqueId); }
-            
-            // Sync checkboxes
-            const mainCheckbox = contentArea.querySelector(`.item-checkbox[data-id='${id}'][data-type='${type}']`);
-            const navCheckbox = jumpNav.querySelector(`.nav-item-checkbox[data-id='${id}'][data-type='${type}']`);
-            if (mainCheckbox && mainCheckbox.checked !== checkbox.checked) mainCheckbox.checked = checkbox.checked;
-            if (navCheckbox && navCheckbox.checked !== checkbox.checked) navCheckbox.checked = checkbox.checked;
-
-            renderSelectedKeywords();
-        }
-
-        function clearAllSelections() {
-            selectedItems.clear();
-            document.querySelectorAll('.item-checkbox, .nav-item-checkbox').forEach(cb => cb.checked = false);
-            renderSelectedKeywords();
-        }
-
-        function handleKeywordTagClick(keyword) {
-            if (activeKeywordFilters.has(keyword)) {
-                activeKeywordFilters.delete(keyword);
-            } else {
-                activeKeywordFilters.add(keyword);
-            }
-
-            if (activeKeywordFilters.size === 0) {
-                clearKeywordFilter();
-            } else {
-                searchInput.value = '';
-                render(); 
+            function handleCheckboxChange(e) {
+                const checkbox = e.target; 
+                if (!checkbox.classList.contains('item-checkbox') && !checkbox.classList.contains('nav-item-checkbox')) return;
+                
+                const isNavCheckbox = checkbox.classList.contains('nav-item-checkbox');
+                const { type, id, name } = checkbox.dataset; 
+                const uniqueId = type === 'complaint' ? `c_${id}` : `d_${id}_${name.replace(/\s/g, '_')}`;
+                
+                if (checkbox.checked) { selectedItems.add(uniqueId); } 
+                else { selectedItems.delete(uniqueId); }
+                
+                const mainCheckbox = contentArea.querySelector(`.item-checkbox[data-id='${id}'][data-type='${type}']`);
+                const navCheckbox = jumpNav.querySelector(`.nav-item-checkbox[data-id='${id}'][data-type='${type}']`);
+                if (mainCheckbox && mainCheckbox.checked !== checkbox.checked) mainCheckbox.checked = checkbox.checked;
+                if (navCheckbox && navCheckbox.checked !== checkbox.checked) navCheckbox.checked = checkbox.checked;
+    
                 renderSelectedKeywords();
             }
-        }
-
-        async function handleFavoriteClick(id) {
-            const entryIndex = dataStore.findIndex(e => e.id === id);
-            if (entryIndex === -1) return;
-            
-            const originalStatus = dataStore[entryIndex].isFavorite;
-            const newFavoriteStatus = !originalStatus;
-
-            dataStore[entryIndex].isFavorite = newFavoriteStatus;
-            render(); 
-
-            try {
-                const docRef = doc(dataCollectionRef, id);
-                await updateDoc(docRef, { isFavorite: newFavoriteStatus });
-            } catch (error) {
-                console.error("Error updating favorite status:", error);
-                dataStore[entryIndex].isFavorite = originalStatus;
+    
+            function clearAllSelections() {
+                selectedItems.clear();
+                document.querySelectorAll('.item-checkbox, .nav-item-checkbox').forEach(cb => cb.checked = false);
+                renderSelectedKeywords();
+            }
+    
+            function handleKeywordTagClick(keyword) {
+                if (activeKeywordFilters.has(keyword)) {
+                    activeKeywordFilters.delete(keyword);
+                } else {
+                    activeKeywordFilters.add(keyword);
+                }
+    
+                if (activeKeywordFilters.size === 0) {
+                    clearKeywordFilter();
+                } else {
+                    searchInput.value = '';
+                    render(); 
+                    renderSelectedKeywords();
+                }
+            }
+    
+            async function handleFavoriteClick(id) {
+                const entryIndex = dataStore.findIndex(e => e.id === id);
+                if (entryIndex === -1) return;
+                
+                const originalStatus = dataStore[entryIndex].isFavorite;
+                const newFavoriteStatus = !originalStatus;
+    
+                dataStore[entryIndex].isFavorite = newFavoriteStatus;
+                render(); 
+    
+                try {
+                    const docRef = doc(dataCollectionRef, id);
+                    await updateDoc(docRef, { isFavorite: newFavoriteStatus });
+                } catch (error) {
+                    console.error("Error updating favorite status:", error);
+                    dataStore[entryIndex].isFavorite = originalStatus;
+                    render();
+                    await customAlert("お気に入り状態の更新に失敗しました。");
+                }
+            }
+    
+            async function handleDiseaseFavoriteClick(complaintId, diseaseName) {
+                const entryIndex = dataStore.findIndex(e => e.id === complaintId);
+                if (entryIndex === -1) return;
+    
+                const originalEntry = JSON.parse(JSON.stringify(dataStore[entryIndex]));
+                const diseaseIndex = originalEntry.diseases.findIndex(d => d.name === diseaseName);
+                if (diseaseIndex === -1) return;
+    
+                const newFavoriteStatus = !originalEntry.diseases[diseaseIndex].isFavorite;
+                
+                dataStore[entryIndex].diseases[diseaseIndex].isFavorite = newFavoriteStatus;
                 render();
-                await customAlert("お気に入り状態の更新に失敗しました。");
+                
+                try {
+                    const docRef = doc(dataCollectionRef, complaintId);
+                    await updateDoc(docRef, { diseases: dataStore[entryIndex].diseases });
+                } catch (error) {
+                     console.error("Error updating disease favorite status:", error);
+                     dataStore[entryIndex] = originalEntry;
+                     render();
+                     await customAlert("お気に入り状態の更新に失敗しました。");
+                }
             }
-        }
-
-        async function handleDiseaseFavoriteClick(complaintId, diseaseName) {
-            const entryIndex = dataStore.findIndex(e => e.id === complaintId);
-            if (entryIndex === -1) return;
-
-            const originalEntry = JSON.parse(JSON.stringify(dataStore[entryIndex]));
-            const diseaseIndex = originalEntry.diseases.findIndex(d => d.name === diseaseName);
-            if (diseaseIndex === -1) return;
-
-            const newFavoriteStatus = !originalEntry.diseases[diseaseIndex].isFavorite;
-            
-            dataStore[entryIndex].diseases[diseaseIndex].isFavorite = newFavoriteStatus;
-            render();
-            
-            try {
-                const docRef = doc(dataCollectionRef, complaintId);
-                await updateDoc(docRef, { diseases: dataStore[entryIndex].diseases });
-            } catch (error) {
-                 console.error("Error updating disease favorite status:", error);
-                 dataStore[entryIndex] = originalEntry;
-                 render();
-                 await customAlert("お気に入り状態の更新に失敗しました。");
+    
+            function toggleLogicMode() {
+                keywordFilterMode = keywordFilterMode === 'OR' ? 'AND' : 'OR';
+                render();
+                renderSelectedKeywords();
             }
-        }
-
-        function toggleLogicMode() {
-            keywordFilterMode = keywordFilterMode === 'OR' ? 'AND' : 'OR';
-            render();
-            renderSelectedKeywords();
-        }
-
-        function clearKeywordFilter() {
-            activeKeywordFilters.clear();
-            keywordFilterMode = 'OR';
-            render();
-            renderSelectedKeywords();
-        }
-
-        function performSearch() { 
-            clearKeywordFilter();
-            const term = searchInput.value.trim(); 
-            const HISTORY_STORAGE_KEY = `paramedic_app_search_history_${appId}`;
-            saveSearchTerm(term, HISTORY_STORAGE_KEY); 
-            render(); 
-        }
-
-        function renderComparison() {
-            compareContentArea.innerHTML = '';
-            const selectedDiseases = [];
-            selectedItems.forEach(itemId => {
-                if (itemId.startsWith('d_')) {
-                    const parts = itemId.split('_');
-                    const entryId = parts[1];
-                    const diseaseName = parts.slice(2).join(' ').replace(/_/g, ' ');
-                    const entry = dataStore.find(e => e.id === entryId);
-                    if(entry) {
-                        const disease = (entry.diseases || []).find(d => d.name === diseaseName);
-                        if (disease) {
-                            selectedDiseases.push(disease);
+    
+            function clearKeywordFilter() {
+                activeKeywordFilters.clear();
+                keywordFilterMode = 'OR';
+                render();
+                renderSelectedKeywords();
+            }
+    
+            function performSearch() { 
+                clearKeywordFilter();
+                const term = searchInput.value.trim(); 
+                const HISTORY_STORAGE_KEY = `paramedic_app_search_history_${appId}`;
+                saveSearchTerm(term, HISTORY_STORAGE_KEY); 
+                render(); 
+            }
+    
+            function renderComparison() {
+                compareContentArea.innerHTML = '';
+                const selectedDiseases = [];
+                selectedItems.forEach(itemId => {
+                    if (itemId.startsWith('d_')) {
+                        const parts = itemId.split('_');
+                        const entryId = parts[1];
+                        const diseaseName = parts.slice(2).join(' ').replace(/_/g, ' ');
+                        const entry = dataStore.find(e => e.id === entryId);
+                        if(entry) {
+                            const disease = (entry.diseases || []).find(d => d.name === diseaseName);
+                            if (disease) {
+                                selectedDiseases.push(disease);
+                            }
                         }
                     }
-                }
-            });
-
-            selectedDiseases.forEach(disease => {
-                const column = document.createElement('div');
-                column.className = 'flex-1 min-w-[250px] bg-gray-800 p-4 rounded-lg';
-                
-                const keywordsHTML = (disease.keywords || []).map(k => `<li>${k}</li>`).join('') || '<li>なし</li>';
-                const pitfallsHTML = (disease.pitfalls || []).map(p => `<li>${p}</li>`).join('') || '<li>なし</li>';
-                
-                column.innerHTML = `
-                    <h3 class="text-xl font-bold text-teal-400 mb-3 border-b border-teal-500 pb-2">${disease.name}</h3>
-                    <h4 class="font-bold text-md text-yellow-400 mb-2 mt-4">キーワード</h4>
-                    <ul class="list-disc list-inside text-sm space-y-1 mb-4 text-gray-300">
-                        ${keywordsHTML}
-                    </ul>
-                    <h4 class="font-bold text-md text-red-400 mb-2 mt-4">落とし穴</h4>
-                    <ul class="list-disc list-inside text-sm space-y-1 text-gray-300">
-                        ${pitfallsHTML}
-                    </ul>
-                `;
-                compareContentArea.appendChild(column);
-            });
-
-            compareModal.classList.remove('hidden');
-        }
-
-
-        function unhighlight() { contentArea.querySelectorAll('mark.highlight').forEach(el => { el.outerHTML = el.innerHTML; }); highlightedElements = []; currentHighlightIndex = -1; }
-        function updateSearchNav() { const count = highlightedElements.length; searchCount.textContent = `${count > 0 ? currentHighlightIndex + 1 : 0} / ${count}`; searchPrevBtn.disabled = count === 0; searchNextBtn.disabled = count === 0; }
-        function navigateToHighlight(index) { if (index < 0 || index >= highlightedElements.length) return; highlightedElements.forEach(el => el.classList.remove('current-highlight')); const currentEl = highlightedElements[index]; currentEl.classList.add('current-highlight'); currentEl.scrollIntoView({ behavior: 'smooth', block: 'center' }); currentHighlightIndex = index; updateSearchNav(); }
-
-        // --- Search History ---
-        function getSearchHistory(key) { return JSON.parse(localStorage.getItem(key)) || []; }
-        function saveSearchTerm(term, key) { if (!term) return; let history = getSearchHistory(key); history = history.filter(item => item !== term); history.unshift(term); if (history.length > MAX_HISTORY_ITEMS) { history.pop(); } localStorage.setItem(key, JSON.stringify(history)); }
-        function clearSearchHistory(key) { localStorage.removeItem(key); renderSearchHistory(); }
-        function renderSearchHistory() {
-            const HISTORY_STORAGE_KEY = `paramedic_app_search_history_${appId}`;
-            const history = getSearchHistory(HISTORY_STORAGE_KEY);
-            searchHistoryDropdown.innerHTML = '';
-            if (history.length === 0) {
-                searchHistoryDropdown.innerHTML = '<div class="p-3 text-sm text-gray-500 text-center">検索履歴はありません。</div>';
-                return;
-            }
-            const list = document.createElement('ul');
-            history.forEach(term => {
-                const item = document.createElement('li');
-                item.className = 'px-4 py-2 hover:bg-gray-700 cursor-pointer text-gray-200';
-                item.textContent = term;
-                item.addEventListener('click', () => { searchInput.value = term; performSearch(); searchHistoryDropdown.classList.add('hidden'); });
-                list.appendChild(item);
-            });
-            searchHistoryDropdown.appendChild(list);
-            const footer = document.createElement('div');
-            footer.className = 'p-2 border-t border-gray-700 text-center';
-            const clearButton = document.createElement('button');
-            clearButton.className = 'text-sm text-red-500 hover:text-red-400';
-            clearButton.textContent = '履歴を消去';
-            clearButton.addEventListener('click', (e) => { e.stopPropagation(); clearSearchHistory(HISTORY_STORAGE_KEY); });
-            footer.appendChild(clearButton);
-            searchHistoryDropdown.appendChild(footer);
-        }
-        function toggleHistoryDropdown() { if (searchHistoryDropdown.classList.contains('hidden')) { renderSearchHistory(); searchHistoryDropdown.classList.remove('hidden'); } else { searchHistoryDropdown.classList.add('hidden'); } }
-
-        // --- Stopwatch ---
-        function formatTime(seconds) {
-            const mins = Math.floor(seconds / 60).toString().padStart(2, '0');
-            const secs = (seconds % 60).toString().padStart(2, '0');
-            return `${mins}:${secs}`;
-        }
-        function updateTimer() {
-            elapsedSeconds++;
-            stopwatchEl.textContent = formatTime(elapsedSeconds);
-        }
-        function handleStopwatchClick(e) {
-            e.preventDefault();
-            stopwatchClickCount++;
-            if (stopwatchClickTimer) {
-                clearTimeout(stopwatchClickTimer);
-            }
-            stopwatchClickTimer = setTimeout(() => {
-                if (stopwatchClickCount === 1) {
-                    toggleTimer();
-                }
-                stopwatchClickCount = 0;
-            }, 300); 
-
-            if (stopwatchClickCount === 3) {
-                clearTimeout(stopwatchClickTimer);
-                resetTimer();
-                stopwatchClickCount = 0;
-            }
-        }
-        function toggleTimer() {
-             if (timerRunning) {
-                clearInterval(timerInterval);
-                timerRunning = false;
-                stopwatchEl.classList.remove('running');
-            } else {
-                timerInterval = setInterval(updateTimer, 1000);
-                timerRunning = true;
-                stopwatchEl.classList.add('running');
-            }
-        }
-        function resetTimer() {
-            clearInterval(timerInterval);
-            timerRunning = false;
-            elapsedSeconds = 0;
-            stopwatchEl.textContent = "00:00";
-            stopwatchEl.classList.remove('running');
-        }
-
-        // --- Event Listeners Setup ---
-        function attachEventListeners() {
-            searchExecBtn.addEventListener('click', performSearch);
-            searchInput.addEventListener('keypress', e => { if (e.key === 'Enter') { performSearch(); e.preventDefault(); } });
-            searchClearBtn.addEventListener('click', () => { searchInput.value = ''; performSearch(); });
-            searchHistoryBtn.addEventListener('click', (e) => { e.stopPropagation(); toggleHistoryDropdown(); });
-            document.addEventListener('click', (e) => { if (searchHistoryBtn && !searchHistoryBtn.parentElement.contains(e.target)) { searchHistoryDropdown.classList.add('hidden'); } });
-            searchNextBtn.addEventListener('click', () => { if (highlightedElements.length > 0) navigateToHighlight((currentHighlightIndex + 1) % highlightedElements.length); });
-            searchPrevBtn.addEventListener('click', () => { if (highlightedElements.length > 0) navigateToHighlight((currentHighlightIndex - 1 + highlightedElements.length) % highlightedElements.length); });
-            settingsBtn.addEventListener('click', () => settingsModal.classList.remove('hidden'));
-            settingsModalCloseBtn.addEventListener('click', () => settingsModal.classList.add('hidden'));
-            exportDataBtn.addEventListener('click', exportDataAsJSON);
-            importDataBtn.addEventListener('click', () => importFileInput.click());
-            importFileInput.addEventListener('change', handleFileSelect);
-            filterFavoritesBtn.addEventListener('click', () => {
-                isFavoritesFilterActive = !isFavoritesFilterActive;
-                filterFavoritesBtn.classList.toggle('active', isFavoritesFilterActive);
-                render();
-            });
-            compareModalCloseBtn.addEventListener('click', () => compareModal.classList.add('hidden'));
-            stopwatchEl.addEventListener('click', handleStopwatchClick);
-            toggleKeywordsBtn.addEventListener('click', () => {
-                selectedKeywordsArea.classList.toggle('hidden');
-                toggleKeywordsBtn.querySelector('.toggle-chevron').classList.toggle('collapsed');
-            });
-            toggleVitalsSummaryBtn.addEventListener('click', () => {
-                 vitalsSummaryArea.classList.toggle('hidden');
-                 toggleVitalsSummaryBtn.querySelector('.toggle-chevron').classList.toggle('collapsed');
-            });
-
-            randomBtn.addEventListener('click', () => {
-                const allComplaintCards = document.querySelectorAll('.content-card');
-                if (allComplaintCards.length > 0) {
-                    const randomIndex = Math.floor(Math.random() * allComplaintCards.length);
-                    allComplaintCards[randomIndex].scrollIntoView({ behavior: 'smooth', block: 'center' });
-                }
-            });
-            
-            showRandomBtnToggle.addEventListener('change', (e) => {
-                const isVisible = e.target.checked;
-                randomBtn.classList.toggle('hidden', !isVisible);
-                localStorage.setItem(SHOW_RANDOM_BTN_KEY, isVisible);
-            });
-            
-            contentArea.addEventListener('click', (e) => {
-                const editBtn = e.target.closest('.edit-btn');
-                const favoriteBtn = e.target.closest('.favorite-btn');
-                const favoriteDiseaseBtn = e.target.closest('.favorite-disease-btn');
-                
-                if (editBtn) { handleEdit(editBtn.dataset.id); return; }
-                if (favoriteBtn) { handleFavoriteClick(favoriteBtn.dataset.id); return; }
-                if (favoriteDiseaseBtn) { handleDiseaseFavoriteClick(favoriteDiseaseBtn.dataset.complaintId, favoriteDiseaseBtn.dataset.diseaseName); return; }
-                if (e.target.classList.contains('content-keyword-tag')) { handleKeywordTagClick(e.target.textContent); }
-            });
-            contentArea.addEventListener('change', handleCheckboxChange);
-            jumpNav.addEventListener('change', handleCheckboxChange);
-
-            genderBtns.forEach(btn => {
-                btn.addEventListener('click', () => {
-                    genderBtns.forEach(b => b.classList.remove('active'));
-                    btn.classList.add('active');
                 });
-            });
-            
-            dobBtn.addEventListener('click', () => dobEraModal.classList.remove('hidden'));
-            dobEraCancelBtn.addEventListener('click', () => dobEraModal.classList.add('hidden'));
-            dobEraOkBtn.addEventListener('click', () => {
-                const era = eraSelect.value;
-                const year = parseInt(eraYearInput.value, 10);
-                const month = parseInt(eraMonthInput.value, 10);
-                const day = parseInt(eraDayInput.value, 10);
-
-                if (!year || !month || !day) {
-                    customAlert("年、月、日をすべて入力してください。");
+    
+                selectedDiseases.forEach(disease => {
+                    const column = document.createElement('div');
+                    column.className = 'flex-1 min-w-[250px] bg-gray-800 p-4 rounded-lg';
+                    
+                    const keywordsHTML = (disease.keywords || []).map(k => `<li>${k}</li>`).join('') || '<li>なし</li>';
+                    const pitfallsHTML = (disease.pitfalls || []).map(p => `<li>${p}</li>`).join('') || '<li>なし</li>';
+                    
+                    column.innerHTML = `
+                        <h3 class="text-xl font-bold text-teal-400 mb-3 border-b border-teal-500 pb-2">${disease.name}</h3>
+                        <h4 class="font-bold text-md text-yellow-400 mb-2 mt-4">キーワード</h4>
+                        <ul class="list-disc list-inside text-sm space-y-1 mb-4 text-gray-300">
+                            ${keywordsHTML}
+                        </ul>
+                        <h4 class="font-bold text-md text-red-400 mb-2 mt-4">落とし穴</h4>
+                        <ul class="list-disc list-inside text-sm space-y-1 text-gray-300">
+                            ${pitfallsHTML}
+                        </ul>
+                    `;
+                    compareContentArea.appendChild(column);
+                });
+    
+                compareModal.classList.remove('hidden');
+            }
+    
+    
+            function unhighlight() { contentArea.querySelectorAll('mark.highlight').forEach(el => { el.outerHTML = el.innerHTML; }); highlightedElements = []; currentHighlightIndex = -1; }
+            function updateSearchNav() { searchCount.textContent = `${highlightedElements.length > 0 ? currentHighlightIndex + 1 : 0}/${highlightedElements.length}`; searchPrevBtn.disabled = highlightedElements.length === 0; searchNextBtn.disabled = highlightedElements.length === 0; }
+            function navigateToHighlight(index) { if (index < 0 || index >= highlightedElements.length) return; highlightedElements.forEach(el => el.classList.remove('current-highlight')); const currentEl = highlightedElements[index]; currentEl.classList.add('current-highlight'); currentEl.scrollIntoView({ behavior: 'smooth', block: 'center' }); currentHighlightIndex = index; updateSearchNav(); }
+    
+            // --- Search History ---
+            function getSearchHistory(key) { return JSON.parse(localStorage.getItem(key)) || []; }
+            function saveSearchTerm(term, key) { if (!term) return; let history = getSearchHistory(key); history = history.filter(item => item !== term); history.unshift(term); if (history.length > MAX_HISTORY_ITEMS) { history.pop(); } localStorage.setItem(key, JSON.stringify(history)); }
+            function clearSearchHistory(key) { localStorage.removeItem(key); renderSearchHistory(); }
+            function renderSearchHistory() {
+                const HISTORY_STORAGE_KEY = `paramedic_app_search_history_${appId}`;
+                const history = getSearchHistory(HISTORY_STORAGE_KEY);
+                searchHistoryDropdown.innerHTML = '';
+                if (history.length === 0) {
+                    searchHistoryDropdown.innerHTML = '<div class="p-3 text-sm text-gray-500 text-center">検索履歴はありません。</div>';
                     return;
                 }
+                const list = document.createElement('ul');
+                history.forEach(term => {
+                    const item = document.createElement('li');
+                    item.className = 'px-4 py-2 hover:bg-gray-700 cursor-pointer text-gray-200';
+                    item.textContent = term;
+                    item.addEventListener('click', () => { searchInput.value = term; performSearch(); searchHistoryDropdown.classList.add('hidden'); });
+                    list.appendChild(item);
+                });
+                searchHistoryDropdown.appendChild(list);
+                const footer = document.createElement('div');
+                footer.className = 'p-2 border-t border-gray-700 text-center';
+                const clearButton = document.createElement('button');
+                clearButton.className = 'text-sm text-red-500 hover:text-red-400';
+                clearButton.textContent = '履歴を消去';
+                clearButton.addEventListener('click', (e) => { e.stopPropagation(); clearSearchHistory(HISTORY_STORAGE_KEY); });
+                footer.appendChild(clearButton);
+                searchHistoryDropdown.appendChild(footer);
+            }
+            function toggleHistoryDropdown() { if (searchHistoryDropdown.classList.contains('hidden')) { renderSearchHistory(); searchHistoryDropdown.classList.remove('hidden'); } else { searchHistoryDropdown.classList.add('hidden'); } }
+    
+            // --- Stopwatch ---
+            function formatTime(seconds) {
+                const mins = Math.floor(seconds / 60).toString().padStart(2, '0');
+                const secs = (seconds % 60).toString().padStart(2, '0');
+                return `${mins}:${secs}`;
+            }
+            function updateTimer() {
+                elapsedSeconds++;
+                stopwatchEl.textContent = formatTime(elapsedSeconds);
+            }
+            function handleStopwatchClick(e) {
+                e.preventDefault();
+                stopwatchClickCount++;
+                if (stopwatchClickTimer) {
+                    clearTimeout(stopwatchClickTimer);
+                }
+                stopwatchClickTimer = setTimeout(() => {
+                    if (stopwatchClickCount === 1) {
+                        toggleTimer();
+                    }
+                    stopwatchClickCount = 0;
+                }, 300); 
+    
+                if (stopwatchClickCount === 3) {
+                    clearTimeout(stopwatchClickTimer);
+                    resetTimer();
+                    stopwatchClickCount = 0;
+                }
+            }
+            function toggleTimer() {
+                 if (timerRunning) {
+                    clearInterval(timerInterval);
+                    timerRunning = false;
+                    stopwatchEl.classList.remove('running');
+                } else {
+                    timerInterval = setInterval(updateTimer, 1000);
+                    timerRunning = true;
+                    stopwatchEl.classList.add('running');
+                }
+            }
+            function resetTimer() {
+                clearInterval(timerInterval);
+                timerRunning = false;
+                elapsedSeconds = 0;
+                stopwatchEl.textContent = "00:00";
+                stopwatchEl.classList.remove('running');
+            }
+    
+            // --- Event Listeners Setup ---
+            function attachEventListeners() {
+                searchExecBtn.addEventListener('click', performSearch);
+                searchInput.addEventListener('keypress', e => { if (e.key === 'Enter') { performSearch(); e.preventDefault(); } });
+                searchClearBtn.addEventListener('click', () => { searchInput.value = ''; performSearch(); });
+                searchHistoryBtn.addEventListener('click', (e) => { e.stopPropagation(); toggleHistoryDropdown(); });
+                document.addEventListener('click', (e) => { 
+                    if (searchHistoryBtn && !searchHistoryBtn.parentElement.contains(e.target)) {
+                         searchHistoryDropdown.classList.add('hidden'); 
+                    }
+                    if (menuBtn && !menuBtn.contains(e.target) && !mobileMenu.contains(e.target)) {
+                        mobileMenu.classList.add('hidden');
+                    }
+                });
+                searchNextBtn.addEventListener('click', () => { if (highlightedElements.length > 0) navigateToHighlight((currentHighlightIndex + 1) % highlightedElements.length); });
+                searchPrevBtn.addEventListener('click', () => { if (highlightedElements.length > 0) navigateToHighlight((currentHighlightIndex - 1 + highlightedElements.length) % highlightedElements.length); });
+                settingsBtn.addEventListener('click', () => settingsModal.classList.remove('hidden'));
+                settingsModalCloseBtn.addEventListener('click', () => settingsModal.classList.add('hidden'));
+                exportDataBtn.addEventListener('click', exportDataAsJSON);
+                importDataBtn.addEventListener('click', () => importFileInput.click());
+                importFileInput.addEventListener('change', handleFileSelect);
+                filterFavoritesBtn.addEventListener('click', () => {
+                    isFavoritesFilterActive = !isFavoritesFilterActive;
+                    filterFavoritesBtn.classList.toggle('active', isFavoritesFilterActive);
+                    document.getElementById('mobile-filter-favorites-btn').classList.toggle('active', isFavoritesFilterActive);
+                    render();
+                });
+                compareModalCloseBtn.addEventListener('click', () => compareModal.classList.add('hidden'));
+                stopwatchEl.addEventListener('click', handleStopwatchClick);
+                toggleKeywordsBtn.addEventListener('click', () => {
+                    const isHidden = selectedKeywordsArea.classList.toggle('hidden');
+                    const chevron = toggleKeywordsBtn.querySelector('.toggle-chevron');
+                    chevron.classList.toggle('fa-chevron-down', isHidden);
+                    chevron.classList.toggle('fa-chevron-up', !isHidden);
+                });
+                toggleVitalsSummaryBtn.addEventListener('click', () => {
+                     vitalsSummaryArea.classList.toggle('hidden');
+                     toggleVitalsSummaryBtn.querySelector('.toggle-chevron').classList.toggle('collapsed');
+                });
+        
+                randomBtn.addEventListener('click', () => {
+                    const allComplaintCards = document.querySelectorAll('.content-card');
+                    if (allComplaintCards.length > 0) {
+                        const randomIndex = Math.floor(Math.random() * allComplaintCards.length);
+                        allComplaintCards[randomIndex].scrollIntoView({ behavior: 'smooth', block: 'center' });
+                    }
+                });
                 
-                const eraData = {
-                    reiwa: { startYear: 2019, max: new Date().getFullYear() - 2018 },
-                    heisei: { startYear: 1989, max: 31 },
-                    showa: { startYear: 1926, max: 64 },
-                    meiji: { startYear: 1868, max: 45 }
-                };
-
-                if (year > eraData[era].max) {
-                     customAlert(`${eraSelect.options[eraSelect.selectedIndex].text}は${eraData[era].max}年までです。`);
-                     return;
-                }
-
-                let adYear;
-                if(era === 'reiwa') adYear = year + 2018;
-                else if(era === 'heisei') adYear = year + 1988;
-                else if(era === 'showa') adYear = year + 1925;
-                else if(era === 'meiji') adYear = year + 1867;
-
-
-                const birthDate = new Date(adYear, month - 1, day);
-                const today = new Date();
-                let age = today.getFullYear() - birthDate.getFullYear();
-                const m = today.getMonth() - birthDate.getMonth();
-                if (m < 0 || (m === 0 && today.getDate() < birthDate.getDate())) {
-                    age--;
-                }
-                ageInput.value = age >= 0 ? age : '';
-                dobEraModal.classList.add('hidden');
-            });
-            vitalsBtn.addEventListener('click', () => vitalsModal.classList.remove('hidden'));
-            vitalsModalCloseBtn.addEventListener('click', () => vitalsModal.classList.add('hidden'));
-            
-            vitalsClearBtn.addEventListener('click', () => {
-                 vitalsClearClickCount++;
-                if (vitalsClearClickTimer) {
-                    clearTimeout(vitalsClearClickTimer);
-                }
-                vitalsClearClickTimer = setTimeout(() => {
-                    vitalsClearClickCount = 0;
-                }, 400); 
-
-                if (vitalsClearClickCount === 3) {
-                    clearTimeout(vitalsClearClickTimer);
-                    vitalsForm.querySelectorAll('input, textarea').forEach(el => el.value = '');
-                    vitalsForm.querySelectorAll('.vitals-btn.active').forEach(b => b.classList.remove('active'));
-                    vitalsClearClickCount = 0;
-                }
-            });
-
-            vitalsForm.addEventListener('click', e => {
-                const target = e.target;
-                if (target.classList.contains('vitals-btn')) {
-                    const parentGroup = target.parentElement;
-                     if(parentGroup.id === 'vitals-appearance-tags'){
-                        target.classList.toggle('active');
-                    } else {
-                        // Deselect if already active
-                        if (target.classList.contains('active')) {
-                           target.classList.remove('active');
+                showRandomBtnToggle.addEventListener('change', (e) => {
+                    const isVisible = e.target.checked;
+                    randomBtn.classList.toggle('hidden', !isVisible);
+                    localStorage.setItem(SHOW_RANDOM_BTN_KEY, isVisible);
+                });
+                
+                contentArea.addEventListener('click', (e) => {
+                    const editBtn = e.target.closest('.edit-btn');
+                    const favoriteBtn = e.target.closest('.favorite-btn');
+                    const favoriteDiseaseBtn = e.target.closest('.favorite-disease-btn');
+                    
+                    if (editBtn) { handleEdit(editBtn.dataset.id); return; }
+                    if (favoriteBtn) { handleFavoriteClick(favoriteBtn.dataset.id); return; }
+                    if (favoriteDiseaseBtn) { handleDiseaseFavoriteClick(favoriteDiseaseBtn.dataset.complaintId, favoriteDiseaseBtn.dataset.diseaseName); return; }
+                    if (e.target.classList.contains('content-keyword-tag')) { handleKeywordTagClick(e.target.textContent); }
+                });
+                contentArea.addEventListener('change', handleCheckboxChange);
+                jumpNav.addEventListener('change', handleCheckboxChange);
+        
+                genderBtns.forEach(btn => {
+                    btn.addEventListener('click', () => {
+                        genderBtns.forEach(b => b.classList.remove('active'));
+                        btn.classList.add('active');
+                    });
+                });
+                
+                dobBtn.addEventListener('click', () => dobEraModal.classList.remove('hidden'));
+                dobEraCancelBtn.addEventListener('click', () => dobEraModal.classList.add('hidden'));
+                dobEraOkBtn.addEventListener('click', () => {
+                    const era = eraSelect.value;
+                    const year = parseInt(eraYearInput.value, 10);
+                    const month = parseInt(eraMonthInput.value, 10);
+                    const day = parseInt(eraDayInput.value, 10);
+        
+                    if (!year || !month || !day) {
+                        customAlert("年、月、日をすべて入力してください。");
+                        return;
+                    }
+                    
+                    const eraData = {
+                        reiwa: { startYear: 2019, max: new Date().getFullYear() - 2018 },
+                        heisei: { startYear: 1989, max: 31 },
+                        showa: { startYear: 1926, max: 64 },
+                        meiji: { startYear: 1868, max: 45 }
+                    };
+        
+                    if (year > eraData[era].max) {
+                         customAlert(`${eraSelect.options[eraSelect.selectedIndex].text}は${eraData[era].max}年までです。`);
+                         return;
+                    }
+        
+                    let adYear;
+                    if(era === 'reiwa') adYear = year + 2018;
+                    else if(era === 'heisei') adYear = year + 1988;
+                    else if(era === 'showa') adYear = year + 1925;
+                    else if(era === 'meiji') adYear = year + 1867;
+        
+        
+                    const birthDate = new Date(adYear, month - 1, day);
+                    const today = new Date();
+                    let age = today.getFullYear() - birthDate.getFullYear();
+                    const m = today.getMonth() - birthDate.getMonth();
+                    if (m < 0 || (m === 0 && today.getDate() < birthDate.getDate())) {
+                        age--;
+                    }
+                    ageInput.value = age >= 0 ? age : '';
+                    dobEraModal.classList.add('hidden');
+                });
+                vitalsBtn.addEventListener('click', () => vitalsModal.classList.remove('hidden'));
+                vitalsModalCloseBtn.addEventListener('click', () => vitalsModal.classList.add('hidden'));
+                
+                vitalsClearBtn.addEventListener('click', () => {
+                     vitalsClearClickCount++;
+                    if (vitalsClearClickTimer) {
+                        clearTimeout(vitalsClearClickTimer);
+                    }
+                    vitalsClearClickTimer = setTimeout(() => {
+                        vitalsClearClickCount = 0;
+                    }, 400); 
+        
+                    if (vitalsClearClickCount === 3) {
+                        clearTimeout(vitalsClearClickTimer);
+                        vitalsForm.querySelectorAll('input, textarea').forEach(el => el.value = '');
+                        vitalsForm.querySelectorAll('.vitals-btn.active').forEach(b => b.classList.remove('active'));
+                        vitalsClearClickCount = 0;
+                    }
+                });
+        
+                vitalsForm.addEventListener('click', e => {
+                    const target = e.target;
+                    if (target.classList.contains('vitals-btn')) {
+                        const parentGroup = target.parentElement;
+                         if(parentGroup.id === 'vitals-appearance-tags'){
+                            target.classList.toggle('active');
                         } else {
-                           parentGroup.querySelectorAll('.vitals-btn').forEach(btn => btn.classList.remove('active'));
-                           target.classList.add('active');
+                            if (target.classList.contains('active')) {
+                               target.classList.remove('active');
+                            } else {
+                               parentGroup.querySelectorAll('.vitals-btn').forEach(btn => btn.classList.remove('active'));
+                               target.classList.add('active');
+                            }
                         }
                     }
-                }
-            });
-
-            // Data Modal Listeners
-            addNewBtn.addEventListener('click', () => {
+                });
+        
+                addNewBtn.addEventListener('click', openDataModalForNew);
+                modalCloseBtn.addEventListener('click', () => dataModal.classList.add('hidden'));
+                addDiseaseBtn.addEventListener('click', () => addDiseaseForm());
+                dataForm.addEventListener('submit', handleFormSubmit);
+                deleteBtn.addEventListener('click', handleDelete);
+        
+                // Mobile menu listeners
+                menuBtn.addEventListener('click', (e) => {
+                    e.stopPropagation();
+                    mobileMenu.classList.toggle('hidden');
+                });
+                 sidebarToggleBtn.addEventListener('click', () => {
+                    jumpNav.classList.toggle('-translate-x-full');
+                    sidebarBackdrop.classList.toggle('hidden');
+                });
+                sidebarBackdrop.addEventListener('click', () => {
+                    jumpNav.classList.add('-translate-x-full');
+                    sidebarBackdrop.classList.add('hidden');
+                });
+        
+                document.getElementById('mobile-add-new-btn').addEventListener('click', (e) => { e.preventDefault(); openDataModalForNew(); mobileMenu.classList.add('hidden'); });
+                document.getElementById('mobile-filter-favorites-btn').addEventListener('click', (e) => { e.preventDefault(); filterFavoritesBtn.click(); mobileMenu.classList.add('hidden'); });
+                document.getElementById('mobile-random-btn').addEventListener('click', (e) => { e.preventDefault(); randomBtn.click(); mobileMenu.classList.add('hidden'); });
+                document.getElementById('mobile-settings-btn').addEventListener('click', (e) => { e.preventDefault(); settingsBtn.click(); mobileMenu.classList.add('hidden'); });
+            }
+        
+            function openDataModalForNew() {
                 modalTitle.textContent = '新規主訴の追加';
                 entryIdInput.value = '';
                 dataForm.reset();
@@ -1162,229 +1154,291 @@
                 addDiseaseForm();
                 deleteBtn.classList.add('hidden');
                 dataModal.classList.remove('hidden');
-            });
-            
-            modalCloseBtn.addEventListener('click', () => dataModal.classList.add('hidden'));
-            addDiseaseBtn.addEventListener('click', () => {
-                 addDiseaseForm();
-            });
-            dataForm.addEventListener('submit', handleFormSubmit);
-            deleteBtn.addEventListener('click', handleDelete);
-        }
-
-        // --- Data Management Functions ---
-        function exportDataAsJSON() {
-            if (dataStore.length === 0) {
-                customAlert("エクスポートするデータがありません。", "情報");
-                return;
             }
-            const dataToExport = dataStore.map(({ id, ...rest }) => rest);
-            const jsonString = JSON.stringify(dataToExport, null, 2);
-            const blob = new Blob([jsonString], { type: 'application/json' });
-            const url = URL.createObjectURL(blob);
-            const a = document.createElement('a');
-            const date = new Date();
-            const formattedDate = `${date.getFullYear()}-${(date.getMonth() + 1).toString().padStart(2, '0')}-${date.getDate().toString().padStart(2, '0')}`;
-            a.download = `paramedic-data-backup-${formattedDate}.json`;
-            a.href = url;
-            document.body.appendChild(a);
-            a.click();
-            document.body.removeChild(a);
-            URL.revokeObjectURL(url);
-            settingsModal.classList.add('hidden');
-        }
-
-        function handleFileSelect(event) {
-            const file = event.target.files[0];
-            if (!file) { return; }
-            const reader = new FileReader();
-            reader.onload = async (e) => {
-                let importedData;
-                try {
-                    importedData = JSON.parse(e.target.result);
-                } catch (error) {
-                    await customAlert("無効なJSONファイルです。ファイルが破損しているか、形式が正しくありません。", "エラー");
-                    importFileInput.value = ''; return;
-                }
-                if (!Array.isArray(importedData) || importedData.some(item => typeof item.chiefComplaint !== 'string' || !Array.isArray(item.diseases))) {
-                     await customAlert("ファイルのデータ構造が正しくありません。", "エラー");
-                     importFileInput.value = ''; return;
-                }
-                const confirmed = await customConfirm("現在のデータはすべて上書きされます。この操作は元に戻せません。本当に続行しますか？", "データのインポート確認");
-                if (confirmed) {
-                    await importData(importedData);
-                }
-                importFileInput.value = '';
-            };
-            reader.readAsText(file);
-        }
-
-        async function importData(newData) {
-            settingsModal.classList.add('hidden');
-            try {
-                const querySnapshot = await getDocs(dataCollectionRef);
-                const batch = writeBatch(db);
-                querySnapshot.forEach((doc) => {
-                    batch.delete(doc.ref);
-                });
-                newData.forEach(item => {
-                    const newDocRef = doc(collection(db, 'artifacts', appId, 'users', userId, collectionName));
-                    batch.set(newDocRef, item);
-                });
-                await batch.commit();
-                await customAlert("データのインポートが完了しました。", "成功");
-            } catch (error) {
-                console.error("Error importing data: ", error);
-                await customAlert("データのインポート中にエラーが発生しました。", "エラー");
-            }
-        }
-
-        // --- Data Editing and Modals (Full Code) ---
-        function addDiseaseForm(disease = { name: '', description: '', isFavorite: false, keywords: [], pitfalls: [], memo: '' }) {
-            const diseaseDiv = document.createElement('div');
-            diseaseDiv.className = 'disease-form-group border-2 border-gray-700 rounded-lg p-4 mb-4';
-            diseaseDiv.innerHTML = `
-                <div class="flex justify-between items-center mb-2">
-                    <h3 class="disease-heading text-lg font-semibold text-teal-400">新規疾患</h3>
-                    <button type="button" class="remove-disease-btn text-red-500 hover:text-red-400">&times; 削除</button>
-                </div>
-                <div class="ml-2">
-                  <div class="mb-2">
-                      <label class="block text-gray-400 text-xs font-bold mb-1">疾患名</label>
-                      <input type="text" class="disease-name w-full bg-gray-700 text-white rounded-md py-1 px-2 focus:outline-none focus:ring-1 focus:ring-blue-500" value="${disease.name || ''}" required>
-                  </div>
-                   <div class="mb-2">
-                        <label class="block text-gray-400 text-xs font-bold mb-1">疾患の説明</label>
-                        <textarea class="disease-description w-full bg-gray-700 text-white rounded-md py-1 px-2 focus:outline-none focus:ring-1 focus:ring-blue-500" rows="2">${disease.description || ''}</textarea>
-                    </div>
-                  <div class="mb-2">
-                      <label class="block text-gray-400 text-xs font-bold mb-1">キーワード（カンマ区切り）</label>
-                      <input type="text" class="disease-keywords w-full bg-gray-700 text-white rounded-md py-1 px-2 focus:outline-none focus:ring-1 focus:ring-blue-500" value="${(disease.keywords || []).join(', ')}">
-                  </div>
-                  <div>
-                      <label class="block text-gray-400 text-xs font-bold mb-1">落とし穴（カンマ区切り）</label>
-                      <input type="text" class="disease-pitfalls w-full bg-gray-700 text-white rounded-md py-1 px-2 focus:outline-none focus:ring-1 focus:ring-blue-500" value="${(disease.pitfalls || []).join(', ')}">
-                  </div>
-                   <div class="mt-2">
-                        <label class="block text-gray-400 text-xs font-bold mb-1">個人メモ (この疾患)</label>
-                        <textarea class="disease-memo w-full bg-gray-700 text-white rounded-md py-1 px-2 focus:outline-none focus:ring-1 focus:ring-blue-500" rows="2">${disease.memo || ''}</textarea>
-                    </div>
-                </div>`;
-            diseasesContainer.appendChild(diseaseDiv);
-            
-            diseaseDiv.querySelector('.remove-disease-btn').addEventListener('click', () => {
-                diseaseDiv.remove();
-            });
-        }
-
-        function handleEdit(id) {
-            const entry = dataStore.find(e => e.id === id);
-            if (!entry) return;
-            modalTitle.textContent = '主訴の編集';
-            entryIdInput.value = id;
-            chiefComplaintInput.value = entry.chiefComplaint;
-            descriptionInput.value = entry.description || '';
-            chiefComplaintMemoInput.value = entry.memo || '';
-            diseasesContainer.innerHTML = '';
-            (entry.diseases || []).forEach(addDiseaseForm);
-            deleteBtn.classList.remove('hidden');
-            dataModal.classList.remove('hidden');
-        }
         
-        async function handleFormSubmit(e) {
-             e.preventDefault();
-            const id = entryIdInput.value;
-            
-            const existingEntry = id ? dataStore.find(e => e.id === id) : { isFavorite: false, diseases: [] };
-
-            const diseases = Array.from(document.querySelectorAll('.disease-form-group')).map(group => {
-                const name = group.querySelector('.disease-name').value.trim();
-                const existingDisease = (existingEntry.diseases || []).find(d => d.name === name);
-                return {
-                    name: name,
-                    description: group.querySelector('.disease-description').value.trim(),
-                    keywords: group.querySelector('.disease-keywords').value.split(',').map(s => s.trim()).filter(Boolean),
-                    pitfalls: group.querySelector('.disease-pitfalls').value.split(',').map(s => s.trim()).filter(Boolean),
-                    memo: group.querySelector('.disease-memo').value.trim(),
-                    isFavorite: existingDisease ? existingDisease.isFavorite : false
-                };
-            }).filter(d => d.name);
-
-            const entryData = {
-                chiefComplaint: chiefComplaintInput.value.trim(),
-                description: descriptionInput.value.trim(),
-                memo: chiefComplaintMemoInput.value.trim(),
-                diseases: diseases,
-                isFavorite: existingEntry.isFavorite,
-            };
-
-            try {
-                if (id) {
-                    await setDoc(doc(dataCollectionRef, id), entryData);
-                } else {
-                    await addDoc(dataCollectionRef, entryData);
+        
+            // --- Data Management Functions ---
+            function exportDataAsJSON() {
+                if (dataStore.length === 0) {
+                    customAlert("エクスポートするデータがありません。", "情報");
+                    return;
                 }
-                dataModal.classList.add('hidden');
-            } catch (error) {
-                console.error("Error saving data: ", error);
-                await customAlert("データの保存に失敗しました。");
+                const dataToExport = dataStore.map(({ id, ...rest }) => rest);
+                const jsonString = JSON.stringify(dataToExport, null, 2);
+                const blob = new Blob([jsonString], { type: 'application/json' });
+                const url = URL.createObjectURL(blob);
+                const a = document.createElement('a');
+                const date = new Date();
+                const formattedDate = `${date.getFullYear()}-${(date.getMonth() + 1).toString().padStart(2, '0')}-${date.getDate().toString().padStart(2, '0')}`;
+                a.download = `paramedic-data-backup-${formattedDate}.json`;
+                a.href = url;
+                document.body.appendChild(a);
+                a.click();
+                document.body.removeChild(a);
+                URL.revokeObjectURL(url);
+                settingsModal.classList.add('hidden');
             }
-        }
-
-        async function handleDelete() {
-            const id = entryIdInput.value;
-            const confirmed = await customConfirm('この主訴データを本当に削除しますか？');
-            if (id && confirmed) {
+        
+            function handleFileSelect(event) {
+                const file = event.target.files[0];
+                if (!file) { return; }
+                const reader = new FileReader();
+                reader.onload = async (e) => {
+                    let importedData;
+                    try {
+                        importedData = JSON.parse(e.target.result);
+                    } catch (error) {
+                        await customAlert("無効なJSONファイルです。ファイルが破損しているか、形式が正しくありません。", "エラー");
+                        importFileInput.value = ''; return;
+                    }
+                    if (!Array.isArray(importedData) || importedData.some(item => typeof item.chiefComplaint !== 'string' || !Array.isArray(item.diseases))) {
+                         await customAlert("ファイルのデータ構造が正しくありません。", "エラー");
+                         importFileInput.value = ''; return;
+                    }
+                    const confirmed = await customConfirm("現在のデータはすべて上書きされます。この操作は元に戻せません。本当に続行しますか？", "データのインポート確認");
+                    if (confirmed) {
+                        await importData(importedData);
+                    }
+                    importFileInput.value = '';
+                };
+                reader.readAsText(file);
+            }
+        
+            async function importData(newData) {
+                settingsModal.classList.add('hidden');
                 try {
-                    await deleteDoc(doc(dataCollectionRef, id));
+                    const querySnapshot = await getDocs(dataCollectionRef);
+                    const batch = writeBatch(db);
+                    querySnapshot.forEach((doc) => {
+                        batch.delete(doc.ref);
+                    });
+                    newData.forEach(item => {
+                        const newDocRef = doc(collection(db, 'artifacts', appId, 'users', userId, collectionName));
+                        batch.set(newDocRef, item);
+                    });
+                    await batch.commit();
+                    await customAlert("データのインポートが完了しました。", "成功");
+                } catch (error) {
+                    console.error("Error importing data: ", error);
+                    await customAlert("データのインポート中にエラーが発生しました。", "エラー");
+                }
+            }
+        
+            // --- Data Editing and Modals (Full Code) ---
+            function addDiseaseForm(disease = { name: '', description: '', isFavorite: false, keywords: [], pitfalls: [], memo: '' }) {
+                const diseaseDiv = document.createElement('div');
+                diseaseDiv.className = 'disease-form-group border-2 border-gray-700 rounded-lg p-4 mb-4';
+                diseaseDiv.innerHTML = `
+                    <div class="flex justify-between items-center mb-2">
+                        <h3 class="disease-heading text-lg font-semibold text-teal-400">新規疾患</h3>
+                        <button type="button" class="remove-disease-btn text-red-500 hover:text-red-400">&times; 削除</button>
+                    </div>
+                    <div class="ml-2">
+                      <div class="mb-2">
+                          <label class="block text-gray-400 text-xs font-bold mb-1">疾患名</label>
+                          <input type="text" class="disease-name w-full bg-gray-700 text-white rounded-md py-1 px-2 focus:outline-none focus:ring-1 focus:ring-blue-500" value="${disease.name || ''}" required>
+                      </div>
+                       <div class="mb-2">
+                            <label class="block text-gray-400 text-xs font-bold mb-1">疾患の説明</label>
+                            <textarea class="disease-description w-full bg-gray-700 text-white rounded-md py-1 px-2 focus:outline-none focus:ring-1 focus:ring-blue-500" rows="2">${disease.description || ''}</textarea>
+                        </div>
+                      <div class="mb-2">
+                          <label class="block text-gray-400 text-xs font-bold mb-1">キーワード（カンマ区切り）</label>
+                          <input type="text" class="disease-keywords w-full bg-gray-700 text-white rounded-md py-1 px-2 focus:outline-none focus:ring-1 focus:ring-blue-500" value="${(disease.keywords || []).join(', ')}">
+                      </div>
+                      <div>
+                          <label class="block text-gray-400 text-xs font-bold mb-1">落とし穴（カンマ区切り）</label>
+                          <input type="text" class="disease-pitfalls w-full bg-gray-700 text-white rounded-md py-1 px-2 focus:outline-none focus:ring-1 focus:ring-blue-500" value="${(disease.pitfalls || []).join(', ')}">
+                      </div>
+                       <div class="mt-2">
+                            <label class="block text-gray-400 text-xs font-bold mb-1">個人メモ (この疾患)</label>
+                            <textarea class="disease-memo w-full bg-gray-700 text-white rounded-md py-1 px-2 focus:outline-none focus:ring-1 focus:ring-blue-500" rows="2">${disease.memo || ''}</textarea>
+                        </div>
+                    </div>`;
+                diseasesContainer.appendChild(diseaseDiv);
+                
+                diseaseDiv.querySelector('.remove-disease-btn').addEventListener('click', () => {
+                    diseaseDiv.remove();
+                });
+            }
+        
+            function handleEdit(id) {
+                const entry = dataStore.find(e => e.id === id);
+                if (!entry) return;
+                modalTitle.textContent = '主訴の編集';
+                entryIdInput.value = id;
+                chiefComplaintInput.value = entry.chiefComplaint;
+                descriptionInput.value = entry.description || '';
+                chiefComplaintMemoInput.value = entry.memo || '';
+                diseasesContainer.innerHTML = '';
+                (entry.diseases || []).forEach(addDiseaseForm);
+                deleteBtn.classList.remove('hidden');
+                dataModal.classList.remove('hidden');
+            }
+            
+            async function handleFormSubmit(e) {
+                 e.preventDefault();
+                const id = entryIdInput.value;
+                
+                const existingEntry = id ? dataStore.find(e => e.id === id) : { isFavorite: false, diseases: [] };
+        
+                const diseases = Array.from(document.querySelectorAll('.disease-form-group')).map(group => {
+                    const name = group.querySelector('.disease-name').value.trim();
+                    const existingDisease = (existingEntry.diseases || []).find(d => d.name === name);
+                    return {
+                        name: name,
+                        description: group.querySelector('.disease-description').value.trim(),
+                        keywords: group.querySelector('.disease-keywords').value.split(',').map(s => s.trim()).filter(Boolean),
+                        pitfalls: group.querySelector('.disease-pitfalls').value.split(',').map(s => s.trim()).filter(Boolean),
+                        memo: group.querySelector('.disease-memo').value.trim(),
+                        isFavorite: existingDisease ? existingDisease.isFavorite : false
+                    };
+                }).filter(d => d.name);
+        
+                const entryData = {
+                    chiefComplaint: chiefComplaintInput.value.trim(),
+                    description: descriptionInput.value.trim(),
+                    memo: chiefComplaintMemoInput.value.trim(),
+                    diseases: diseases,
+                    isFavorite: existingEntry.isFavorite,
+                };
+        
+                try {
+                    if (id) {
+                        await setDoc(doc(dataCollectionRef, id), entryData);
+                    } else {
+                        await addDoc(dataCollectionRef, entryData);
+                    }
                     dataModal.classList.add('hidden');
                 } catch (error) {
-                    console.error("Error deleting data: ", error);
-                    await customAlert("データの削除に失敗しました。");
+                    console.error("Error saving data: ", error);
+                    await customAlert("データの保存に失敗しました。");
                 }
             }
-        }
         
-        // --- Utility Functions ---
-        function customAlert(message, title = '情報') {
-            return new Promise((resolve) => {
-                confirmTitle.textContent = title;
-                confirmMessage.textContent = message;
-                alertIcon.innerHTML = `<i class="fas fa-info-circle text-blue-400 text-2xl"></i>`;
-                confirmButtons.innerHTML = `<button id="alert-ok-btn" class="w-full inline-flex justify-center rounded-md border border-transparent shadow-sm px-4 py-2 bg-blue-600 text-base font-medium text-white hover:bg-blue-700 focus:outline-none sm:ml-3 sm:w-auto sm:text-sm">OK</button>`;
-                confirmModal.classList.remove('hidden');
-                document.getElementById('alert-ok-btn').onclick = () => { confirmModal.classList.add('hidden'); resolve(true); };
-            });
-        }
-
-        function customConfirm(message, title = '確認') {
-            return new Promise((resolve) => {
-                confirmTitle.textContent = title;
-                confirmMessage.textContent = message;
-                alertIcon.innerHTML = `<i class="fas fa-exclamation-triangle text-yellow-400 text-2xl"></i>`;
-                confirmButtons.innerHTML = `
-                    <button id="confirm-cancel-btn" class="mt-3 w-full inline-flex justify-center rounded-md border border-gray-500 shadow-sm px-4 py-2 bg-gray-600 text-base font-medium text-white hover:bg-gray-500 focus:outline-none sm:mt-0 sm:w-auto sm:text-sm">キャンセル</button>
-                    <button id="confirm-ok-btn" class="w-full inline-flex justify-center rounded-md border border-transparent shadow-sm px-4 py-2 bg-red-600 text-base font-medium text-white hover:bg-red-700 focus:outline-none sm:ml-3 sm:w-auto sm:text-sm">実行</button>`;
-                confirmModal.classList.remove('hidden');
-                document.getElementById('confirm-ok-btn').onclick = () => { confirmModal.classList.add('hidden'); resolve(true); };
-                document.getElementById('confirm-cancel-btn').onclick = () => { confirmModal.classList.add('hidden'); resolve(false); };
-            });
-        }
-        
-        // --- App Initialization ---
-        function initializeAppUI() {
-            const showRandom = localStorage.getItem(SHOW_RANDOM_BTN_KEY) === 'true';
-            if (showRandomBtnToggle && randomBtn) {
-                showRandomBtnToggle.checked = showRandom;
-                randomBtn.classList.toggle('hidden', !showRandom);
+            async function handleDelete() {
+                const id = entryIdInput.value;
+                const confirmed = await customConfirm('この主訴データを本当に削除しますか？');
+                if (id && confirmed) {
+                    try {
+                        await deleteDoc(doc(dataCollectionRef, id));
+                        dataModal.classList.add('hidden');
+                    } catch (error) {
+                        console.error("Error deleting data: ", error);
+                        await customAlert("データの削除に失敗しました。");
+                    }
+                }
             }
-        }
+            
+            // --- Utility Functions ---
+            function customAlert(message, title = '情報') {
+                return new Promise((resolve) => {
+                    confirmTitle.textContent = title;
+                    confirmMessage.textContent = message;
+                    alertIcon.innerHTML = `<i class="fas fa-info-circle text-blue-400 text-2xl"></i>`;
+                    confirmButtons.innerHTML = `<button id="alert-ok-btn" class="w-full inline-flex justify-center rounded-md border border-transparent shadow-sm px-4 py-2 bg-blue-600 text-base font-medium text-white hover:bg-blue-700 focus:outline-none sm:ml-3 sm:w-auto sm:text-sm">OK</button>`;
+                    confirmModal.classList.remove('hidden');
+                    document.getElementById('alert-ok-btn').onclick = () => { confirmModal.classList.add('hidden'); resolve(true); };
+                });
+            }
         
-        // --- START APP ---
-        initializeAppUI();
-        startApp();
-        attachEventListeners();
-
+            function customConfirm(message, title = '確認') {
+                return new Promise((resolve) => {
+                    confirmTitle.textContent = title;
+                    confirmMessage.textContent = message;
+                    alertIcon.innerHTML = `<i class="fas fa-exclamation-triangle text-yellow-400 text-2xl"></i>`;
+                    confirmButtons.innerHTML = `
+                        <button id="confirm-cancel-btn" class="mt-3 w-full inline-flex justify-center rounded-md border border-gray-500 shadow-sm px-4 py-2 bg-gray-600 text-base font-medium text-white hover:bg-gray-500 focus:outline-none sm:mt-0 sm:w-auto sm:text-sm">キャンセル</button>
+                        <button id="confirm-ok-btn" class="w-full inline-flex justify-center rounded-md border border-transparent shadow-sm px-4 py-2 bg-red-600 text-base font-medium text-white hover:bg-red-700 focus:outline-none sm:ml-3 sm:w-auto sm:text-sm">実行</button>`;
+                    confirmModal.classList.remove('hidden');
+                    document.getElementById('confirm-ok-btn').onclick = () => { confirmModal.classList.add('hidden'); resolve(true); };
+                    document.getElementById('confirm-cancel-btn').onclick = () => { confirmModal.classList.add('hidden'); resolve(false); };
+                });
+            }
+            
+            // --- App Initialization ---
+            function initializeAppUI() {
+                const showRandom = localStorage.getItem(SHOW_RANDOM_BTN_KEY) === 'true';
+                if (showRandomBtnToggle && randomBtn) {
+                    showRandomBtnToggle.checked = showRandom;
+                    randomBtn.classList.toggle('hidden', !showRandom);
+                }
+            }
+            
+            function cacheDomElements() {
+                 contentArea = document.getElementById('content-area');
+                 jumpNav = document.getElementById('jump-nav');
+                 searchInput = document.getElementById('search-input');
+                 searchExecBtn = document.getElementById('search-exec-btn');
+                 searchClearBtn = document.getElementById('search-clear-btn');
+                 searchHistoryBtn = document.getElementById('search-history-btn');
+                 searchHistoryDropdown = document.getElementById('search-history-dropdown');
+                 searchCount = document.getElementById('search-count');
+                 searchPrevBtn = document.getElementById('search-prev-btn');
+                 searchNextBtn = document.getElementById('search-next-btn');
+                 selectedKeywordsArea = document.getElementById('selected-keywords-area');
+                 settingsBtn = document.getElementById('settings-btn');
+                 settingsModal = document.getElementById('settings-modal');
+                 settingsModalCloseBtn = document.getElementById('settings-modal-close-btn');
+                 exportDataBtn = document.getElementById('export-data-btn');
+                 importDataBtn = document.getElementById('import-data-btn');
+                 importFileInput = document.getElementById('import-file-input');
+                 filterFavoritesBtn = document.getElementById('filter-favorites-btn');
+                 compareModal = document.getElementById('compare-modal');
+                 compareModalCloseBtn = document.getElementById('compare-modal-close-btn');
+                 compareContentArea = document.getElementById('compare-content-area');
+                 stopwatchEl = document.getElementById('stopwatch');
+                 genderBtns = document.querySelectorAll('.gender-btn');
+                 ageInput = document.getElementById('age-input');
+                 dobBtn = document.getElementById('dob-btn');
+                 dobEraModal = document.getElementById('dob-era-modal');
+                 dobEraOkBtn = document.getElementById('dob-era-ok-btn');
+                 dobEraCancelBtn = document.getElementById('dob-era-cancel-btn');
+                 eraSelect = document.getElementById('era-select');
+                 eraYearInput = document.getElementById('era-year-input');
+                 eraMonthInput = document.getElementById('era-month-input');
+                 eraDayInput = document.getElementById('era-day-input');
+                 toggleKeywordsBtn = document.getElementById('toggle-keywords-btn');
+                 randomBtn = document.getElementById('random-btn');
+                 showRandomBtnToggle = document.getElementById('show-random-btn-toggle');
+                 vitalsBtn = document.getElementById('vitals-btn');
+                 vitalsModal = document.getElementById('vitals-modal');
+                 vitalsModalCloseBtn = document.getElementById('vitals-modal-close-btn');
+                 vitalsClearBtn = document.getElementById('vitals-clear-btn');
+                 vitalsForm = document.getElementById('vitals-form');
+                 gcsTotalEl = document.getElementById('gcs-total');
+                 vitalsSummaryContainer = document.getElementById('vitals-summary-container');
+                 vitalsSummaryArea = document.getElementById('vitals-summary-area');
+                 toggleVitalsSummaryBtn = document.getElementById('toggle-vitals-summary-btn');
+                 dataModal = document.getElementById('data-modal');
+                 modalTitle = document.getElementById('modal-title');
+                 dataForm = document.getElementById('data-form');
+                 entryIdInput = document.getElementById('entry-id');
+                 chiefComplaintInput = document.getElementById('chiefComplaint');
+                 descriptionInput = document.getElementById('description');
+                 chiefComplaintMemoInput = document.getElementById('chiefComplaintMemo');
+                 diseasesContainer = document.getElementById('diseases-container');
+                 deleteBtn = document.getElementById('delete-btn');
+                 addNewBtn = document.getElementById('add-new-btn');
+                 modalCloseBtn = document.getElementById('modal-close-btn');
+                 addDiseaseBtn = document.getElementById('add-disease-btn');
+                 confirmModal = document.getElementById('confirm-modal');
+                 confirmTitle = document.getElementById('confirm-title');
+                 confirmMessage = document.getElementById('confirm-message');
+                 confirmButtons = document.getElementById('confirm-buttons');
+                 alertIcon = document.getElementById('alert-icon');
+                 menuBtn = document.getElementById('menu-btn');
+                 mobileMenu = document.getElementById('mobile-menu');
+                 sidebarToggleBtn = document.getElementById('sidebar-toggle-btn');
+                 sidebarBackdrop = document.getElementById('sidebar-backdrop');
+            }
+            
+            // --- START APP ---
+            cacheDomElements();
+            initializeAppUI();
+            startApp();
+            attachEventListeners();
+        });
     </script>
 </body>
 </html>
