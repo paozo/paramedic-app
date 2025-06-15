@@ -52,7 +52,7 @@
         #switch-bg { position: absolute; top: 2px; bottom: 2px; left: 2px; width: calc(50% - 2px); background-color: #fBBF24; border-radius: 9999px; transition: transform 0.2s ease-in-out; }
         #logic-switch-container[data-mode="AND"] #switch-bg { transform: translateX(100%); }
         
-        #filter-favorites-btn.active, #mobile-filter-favorites-btn.active { color: #fBBF24; background-color: #374151; }
+        #filter-favorites-btn.active, #mobile-filter-favorites-btn.active, #keywords-panel-toggle-btn.active { color: #fBBF24; }
         .gender-btn.active, .vitals-btn.active, .pupil-btn.active, .pupil-reflex-btn.active { background-color: #3b82f6; color: white; }
         .font-size-btn.active { background-color: #2563eb; }
 
@@ -66,74 +66,62 @@
 </head>
 <body class="bg-gray-900 text-gray-100 antialiased text-sm">
 
-    <!-- メインレイアウト -->
     <div id="app" class="flex h-screen overflow-hidden">
-        <!-- 左サイドバー -->
         <nav id="jump-nav" class="w-48 bg-gray-800 p-2 overflow-y-auto fixed top-0 left-0 h-full z-40 transform -translate-x-full transition-transform md:relative md:w-28 md:translate-x-0 shadow-lg"></nav>
         <div id="sidebar-backdrop" class="hidden fixed inset-0 bg-black bg-opacity-50 z-30 md:hidden"></div>
 
-        <!-- メインコンテンツ -->
         <main class="flex-1 flex flex-col">
-            <!-- ヘッダー -->
             <header class="bg-gray-800/50 backdrop-blur-sm p-2 md:p-3 sticky top-0 z-20 shadow-lg">
-                <div class="flex flex-col gap-2">
-                    <!-- ヘッダー上段 -->
-                    <div class="flex flex-wrap items-center gap-2">
-                        <button id="sidebar-toggle-btn" class="p-2 text-white hover:text-blue-400" aria-label="ナビゲーションを開く"><i class="fas fa-bars fa-lg"></i></button>
-                        <button id="main-controls-toggle-btn" class="p-2 text-white hover:text-blue-400" aria-label="メインコントロールの表示切替"><i class="fa-solid fa-note-sticky"></i></button>
-                        
-                        <div id="main-controls-container" class="flex-grow flex flex-wrap items-center gap-2">
-                             <div class="flex items-center space-x-2 bg-gray-700 p-1 rounded-lg flex-shrink-0">
-                                <input type="number" id="age-input" placeholder="年齢" min="0" max="130" class="w-14 bg-gray-600 text-white placeholder-gray-400 text-center rounded-md p-1 focus:outline-none focus:ring-2 focus:ring-blue-500" aria-label="年齢">
-                                <button id="dob-btn" class="p-1 text-white hover:text-blue-400" aria-label="生年月日から年齢を計算"><i class="fas fa-calendar-alt"></i></button>
-                                <div class="flex">
-                                   <button class="gender-btn bg-gray-600 hover:bg-gray-500 text-white font-bold py-1 px-2 md:px-3 rounded-l-md" data-gender="male">男</button>
-                                   <button class="gender-btn bg-gray-600 hover:bg-gray-500 text-white font-bold py-1 px-2 md:px-3 rounded-r-md" data-gender="female">女</button>
-                                </div>
-                            </div>
-                            <input type="text" id="temp-memo" placeholder="一時メモ..." class="flex-grow min-w-[100px] bg-gray-700 text-white placeholder-gray-400 rounded-lg p-2 focus:outline-none focus:ring-2 focus:ring-blue-500" aria-label="一時メモ">
+                <div class="flex flex-wrap items-center gap-2">
+                    <button id="sidebar-toggle-btn" class="p-2 text-white hover:text-blue-400 flex-shrink-0" aria-label="ナビゲーションを開く"><i class="fas fa-bars fa-lg"></i></button>
+                    
+                    <div class="flex items-center space-x-2 bg-gray-700 p-1 rounded-lg flex-shrink-0">
+                        <input type="number" id="age-input" placeholder="年齢" min="0" max="130" class="w-14 bg-gray-600 text-white placeholder-gray-400 text-center rounded-md p-1 focus:outline-none focus:ring-2 focus:ring-blue-500" aria-label="年齢">
+                        <button id="dob-btn" class="p-1 text-white hover:text-blue-400" aria-label="生年月日から年齢を計算"><i class="fas fa-calendar-alt"></i></button>
+                        <div class="flex">
+                           <button class="gender-btn bg-gray-600 hover:bg-gray-500 text-white font-bold py-1 px-2 md:px-3 rounded-l-md" data-gender="male">男</button>
+                           <button class="gender-btn bg-gray-600 hover:bg-gray-500 text-white font-bold py-1 px-2 md:px-3 rounded-r-md" data-gender="female">女</button>
                         </div>
+                    </div>
+                    
+                    <input type="text" id="temp-memo" placeholder="一時メモ..." class="flex-grow min-w-[120px] bg-gray-700 text-white placeholder-gray-400 rounded-lg p-2 focus:outline-none focus:ring-2 focus:ring-blue-500" aria-label="一時メモ">
 
-                        <div id="stopwatch" class="bg-gray-700 text-white font-mono text-lg p-2 rounded-lg cursor-pointer flex-shrink-0" title="クリック: スタート/ストップ | 長押し: リセット">00:00</div>
-                        <button id="vitals-btn" class="bg-cyan-600 hover:bg-cyan-700 text-white font-bold py-2 px-3 rounded-lg flex-shrink-0" title="バイタル入力" aria-label="バイタル入力モーダルを開く"><i class="fas fa-wave-square"></i></button>
-                        
-                        <!-- NEW: 右パネルトグルボタン -->
-                        <button id="keywords-panel-toggle-btn" class="p-2 text-white hover:text-blue-400 hidden md:block" aria-label="キーワードパネルを開く"><i class="fas fa-tags fa-lg"></i></button>
+                    <div class="w-24 md:w-48 flex items-center bg-gray-700 rounded-lg relative">
+                        <input type="text" id="search-input" placeholder="検索..." class="w-full bg-transparent text-white placeholder-gray-400 rounded-lg py-2 px-4 focus:outline-none" aria-label="鑑別検索">
+                        <button id="search-history-btn" class="text-gray-400 hover:text-white px-2" title="検索履歴の表示" aria-label="検索履歴の表示"><i class="fas fa-history"></i></button>
+                        <button id="search-clear-btn" class="text-gray-400 hover:text-white pr-2" title="検索文字のクリア" aria-label="検索文字のクリア"><i class="fas fa-times"></i></button>
+                        <div id="search-history-dropdown" class="hidden absolute top-full left-0 mt-2 w-full bg-gray-800 border border-gray-700 rounded-lg shadow-xl z-30"></div>
                     </div>
 
-                    <!-- ヘッダー下段 -->
-                    <div class="flex items-center gap-2">
-                        <div class="flex-grow flex items-center bg-gray-700 rounded-lg relative">
-                            <input type="text" id="search-input" placeholder="鑑別検索..." class="w-full bg-transparent text-white placeholder-gray-400 rounded-lg py-2 px-4 focus:outline-none" aria-label="鑑別検索">
-                            <button id="search-history-btn" class="text-gray-400 hover:text-white px-2" title="検索履歴の表示" aria-label="検索履歴の表示"><i class="fas fa-history"></i></button>
-                            <button id="search-clear-btn" class="text-gray-400 hover:text-white pr-2" title="検索文字のクリア" aria-label="検索文字のクリア"><i class="fas fa-times"></i></button>
-                            <div id="search-history-dropdown" class="hidden absolute top-full left-0 mt-2 w-full bg-gray-800 border border-gray-700 rounded-lg shadow-xl z-30"></div>
-                        </div>
-                        <button id="search-exec-btn" class="bg-blue-600 hover:bg-blue-700 text-white p-2 rounded-lg flex-shrink-0 w-10 h-10 flex items-center justify-center" title="検索実行" aria-label="検索実行"><i class="fas fa-search"></i></button>
-                        
-                        <div class="hidden sm:flex items-center space-x-2 bg-gray-700 p-1 rounded-lg">
-                             <span id="search-count" class="text-sm font-mono text-gray-300 w-14 text-center" aria-live="polite">0/0</span>
-                             <button id="search-prev-btn" class="search-nav-btn text-white hover:bg-gray-600 p-1 rounded-md" disabled title="前のハイライトへ" aria-label="前のハイライトへ"><i class="fas fa-arrow-up"></i></button>
-                             <button id="search-next-btn" class="search-nav-btn text-white hover:bg-gray-600 p-1 rounded-md" disabled title="次のハイライトへ" aria-label="次のハイライトへ"><i class="fas fa-arrow-down"></i></button>
-                        </div>
-                        
-                        <div class="relative md:hidden">
-                             <button id="menu-btn" class="bg-gray-600 hover:bg-gray-500 text-white font-bold p-2 rounded-lg w-10 h-10 flex items-center justify-center" aria-label="メニューを開く"><i class="fas fa-ellipsis-v"></i></button>
-                             <div id="mobile-menu" class="hidden absolute right-0 mt-2 w-48 bg-gray-800 rounded-lg shadow-xl z-30">
-                                 <a href="#" id="mobile-keywords-panel-toggle-btn" class="block px-4 py-2 text-white hover:bg-gray-700"><i class="fas fa-tags w-6"></i> キーワード</a>
-                                 <a href="#" id="mobile-add-new-btn" class="block px-4 py-2 text-white hover:bg-gray-700"><i class="fas fa-plus w-6"></i> 新規追加</a>
-                                 <a href="#" id="mobile-filter-favorites-btn" class="block px-4 py-2 text-white hover:bg-gray-700"><i class="fas fa-star w-6"></i> お気に入り</a>
-                                 <a href="#" id="mobile-random-btn" class="block px-4 py-2 text-white hover:bg-gray-700"><i class="fas fa-dice w-6"></i> ランダム表示</a>
-                                 <a href="#" id="mobile-settings-btn" class="block px-4 py-2 text-white hover:bg-gray-700"><i class="fas fa-cog w-6"></i> 設定</a>
-                             </div>
-                        </div>
+                    <button id="search-exec-btn" class="bg-blue-600 hover:bg-blue-700 text-white p-2 rounded-lg flex-shrink-0 w-10 h-10 flex items-center justify-center" title="検索実行" aria-label="検索実行"><i class="fas fa-search"></i></button>
 
-                        <div class="hidden md:flex items-center space-x-2">
-                            <button id="filter-favorites-btn" class="bg-gray-600 hover:bg-gray-500 text-white font-bold py-2 px-3 rounded-lg flex-shrink-0" title="お気に入りフィルター" aria-label="お気に入りフィルター"><i class="fas fa-star"></i></button>
-                            <button id="random-btn" class="bg-purple-600 hover:bg-purple-700 text-white font-bold py-2 px-3 rounded-lg flex-shrink-0" title="ランダム表示" aria-label="ランダム表示"><i class="fas fa-dice"></i></button>
-                            <button id="add-new-btn" class="bg-green-600 hover:bg-green-700 text-white font-bold py-2 px-3 rounded-lg flex-shrink-0"><i class="fas fa-plus"></i> <span class="hidden lg:inline">新規</span></button>
-                            <button id="settings-btn" class="bg-gray-600 hover:bg-gray-500 text-white font-bold py-2 px-3 rounded-lg flex-shrink-0" title="データ管理" aria-label="データ管理"><i class="fas fa-cog"></i></button>
-                        </div>
+                    <div id="stopwatch" class="bg-gray-700 text-white font-mono text-lg p-2 rounded-lg cursor-pointer flex-shrink-0" title="クリック: スタート/ストップ | 長押し: リセット">00:00</div>
+                    <button id="vitals-btn" class="bg-cyan-600 hover:bg-cyan-700 text-white font-bold py-2 px-3 rounded-lg flex-shrink-0" title="バイタル入力" aria-label="バイタル入力モーダルを開く"><i class="fas fa-wave-square"></i></button>
+                    
+                    <button id="keywords-panel-toggle-btn" class="p-2 text-white hover:text-blue-400 hidden md:block" aria-label="キーワードパネルを開く"><i class="fas fa-tags fa-lg"></i></button>
+
+                    <div class="hidden sm:flex items-center space-x-2 bg-gray-700 p-1 rounded-lg">
+                         <span id="search-count" class="text-sm font-mono text-gray-300 w-14 text-center" aria-live="polite">0/0</span>
+                         <button id="search-prev-btn" class="search-nav-btn text-white hover:bg-gray-600 p-1 rounded-md" disabled title="前のハイライトへ" aria-label="前のハイライトへ"><i class="fas fa-arrow-up"></i></button>
+                         <button id="search-next-btn" class="search-nav-btn text-white hover:bg-gray-600 p-1 rounded-md" disabled title="次のハイライトへ" aria-label="次のハイライトへ"><i class="fas fa-arrow-down"></i></button>
+                    </div>
+                    
+                    <div class="relative md:hidden">
+                         <button id="menu-btn" class="bg-gray-600 hover:bg-gray-500 text-white font-bold p-2 rounded-lg w-10 h-10 flex items-center justify-center" aria-label="メニューを開く"><i class="fas fa-ellipsis-v"></i></button>
+                         <div id="mobile-menu" class="hidden absolute right-0 mt-2 w-48 bg-gray-800 rounded-lg shadow-xl z-30">
+                             <a href="#" id="mobile-keywords-panel-toggle-btn" class="block px-4 py-2 text-white hover:bg-gray-700"><i class="fas fa-tags w-6"></i> キーワード</a>
+                             <a href="#" id="mobile-add-new-btn" class="block px-4 py-2 text-white hover:bg-gray-700"><i class="fas fa-plus w-6"></i> 新規追加</a>
+                             <a href="#" id="mobile-filter-favorites-btn" class="block px-4 py-2 text-white hover:bg-gray-700"><i class="fas fa-star w-6"></i> お気に入り</a>
+                             <a href="#" id="mobile-random-btn" class="block px-4 py-2 text-white hover:bg-gray-700"><i class="fas fa-dice w-6"></i> ランダム表示</a>
+                             <a href="#" id="mobile-settings-btn" class="block px-4 py-2 text-white hover:bg-gray-700"><i class="fas fa-cog w-6"></i> 設定</a>
+                         </div>
+                    </div>
+
+                    <div class="hidden md:flex items-center space-x-2">
+                        <button id="filter-favorites-btn" class="bg-gray-600 hover:bg-gray-500 text-white font-bold py-2 px-3 rounded-lg flex-shrink-0" title="お気に入りフィルター" aria-label="お気に入りフィルター"><i class="fas fa-star"></i></button>
+                        <button id="random-btn" class="bg-purple-600 hover:bg-purple-700 text-white font-bold py-2 px-3 rounded-lg flex-shrink-0" title="ランダム表示" aria-label="ランダム表示"><i class="fas fa-dice"></i></button>
+                        <button id="add-new-btn" class="bg-green-600 hover:bg-green-700 text-white font-bold py-2 px-3 rounded-lg flex-shrink-0"><i class="fas fa-plus"></i> <span class="hidden lg:inline">新規</span></button>
+                        <button id="settings-btn" class="bg-gray-600 hover:bg-gray-500 text-white font-bold py-2 px-3 rounded-lg flex-shrink-0" title="データ管理" aria-label="データ管理"><i class="fas fa-cog"></i></button>
                     </div>
                 </div>
                 
@@ -145,7 +133,6 @@
                  </div>
             </header>
 
-            <!-- メインコンテンツエリア -->
             <div id="content-area" class="flex-1 overflow-y-auto p-2 sm:p-4">
                  <div id="loading" class="text-center p-8">
                     <i class="fas fa-spinner fa-spin text-4xl text-blue-500"></i>
@@ -158,21 +145,17 @@
             </footer>
         </main>
 
-        <!-- NEW: 右キーワードパネル -->
         <aside id="keywords-panel" class="w-64 bg-gray-800 flex flex-col fixed top-0 right-0 h-full z-40 transform translate-x-full transition-transform shadow-lg">
-            <div class="p-4 border-b border-gray-700">
+            <div class="p-4 border-b border-gray-700 flex justify-between items-center">
                 <h3 class="text-lg font-bold text-white">キーワードフィルター</h3>
+                <button id="keywords-panel-close-btn" class="text-gray-400 hover:text-white"><i class="fas fa-times fa-lg"></i></button>
             </div>
-            <div id="selected-keywords-area" class="flex-1 p-2 space-y-4 overflow-y-auto">
-                 <!-- Keywords will be rendered here -->
-            </div>
+            <div id="selected-keywords-area" class="flex-1 p-2 space-y-4 overflow-y-auto"></div>
         </aside>
         <div id="keywords-panel-backdrop" class="hidden fixed inset-0 bg-black bg-opacity-50 z-30"></div>
-
     </div>
 
-    <!-- ===== 各種モーダルウィンドウ ===== -->
-    
+    <!-- Modals -->
     <div id="vitals-modal" class="modal hidden fixed inset-0 bg-black bg-opacity-80 flex items-center justify-center z-50 p-4">
         <div class="bg-gray-800 rounded-2xl shadow-xl w-full max-w-4xl max-h-[90vh] flex flex-col">
              <div class="p-4 border-b border-gray-700 flex justify-between items-center">
@@ -233,7 +216,7 @@
                              <input type="text" id="pupil-l" placeholder="左" readonly class="w-full bg-gray-700 text-white rounded-lg p-2 text-center">
                          </div>
                          <div class="flex items-center justify-between mt-2">
-                             <span id="pupil-side-selector" class="font-bold text-blue-400">右(R):</span>
+                             <span id="pupil-side-selector" data-side="r" class="font-bold text-blue-400 cursor-pointer">右(R):</span>
                              <div id="pupil-size-group" class="flex flex-wrap gap-1"></div>
                          </div>
                          <div id="pupil-reflex-group" class="flex flex-wrap gap-1 mt-2"></div>
@@ -246,54 +229,11 @@
             </div>
         </div>
     </div>
-    
-    <div id="settings-modal" class="modal hidden fixed inset-0 bg-black bg-opacity-70 flex items-center justify-center z-50 p-4">
-        <div class="bg-gray-800 rounded-2xl shadow-xl w-full max-w-lg">
-            <div class="p-6">
-                <div class="flex justify-between items-center mb-6">
-                    <h2 class="text-2xl font-bold text-white">設定</h2>
-                    <button id="settings-modal-close-btn" class="text-gray-400 hover:text-white text-2xl">&times;</button>
-                </div>
-                <div class="space-y-4">
-                    <div class="border-b border-gray-700 pb-4">
-                        <h3 class="text-lg font-semibold text-gray-300 mb-2">表示設定</h3>
-                        <div class="space-y-3">
-                            <label class="flex items-center">
-                                <input type="checkbox" id="show-random-btn-toggle" class="h-4 w-4 text-blue-600 bg-gray-700 border-gray-600 rounded focus:ring-blue-500">
-                                <span class="ml-2 text-gray-300">ランダムボタンをヘッダーに表示する</span>
-                            </label>
-                            <div>
-                                <label class="block text-gray-300 mb-2">文字サイズ</label>
-                                <div id="font-size-controls" class="flex items-center gap-2">
-                                    <button data-size="sm" class="font-size-btn w-10 h-10 rounded-md bg-gray-700 hover:bg-gray-600">小</button>
-                                    <button data-size="base" class="font-size-btn w-10 h-10 rounded-md bg-gray-700 hover:bg-gray-600">中</button>
-                                    <button data-size="lg" class="font-size-btn w-10 h-10 rounded-md bg-gray-700 hover:bg-gray-600">大</button>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-                    <div>
-                        <h3 class="text-lg font-semibold text-teal-400 mb-2">エクスポート</h3>
-                        <p class="text-gray-400 mb-3">現在の全データをバックアップとしてJSONファイルに保存します。</p>
-                        <button id="export-data-btn" class="w-full bg-blue-600 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded-lg"><i class="fas fa-download mr-2"></i>データをエクスポート</button>
-                    </div>
-                    <div class="border-t border-gray-700 my-4"></div>
-                    <div>
-                        <h3 class="text-lg font-semibold text-red-400 mb-2">インポート</h3>
-                        <p class="text-gray-400 mb-3"><strong class="text-red-500">注意：現在のデータはすべて上書きされます。</strong></p>
-                        <button id="import-data-btn" class="w-full bg-red-600 hover:bg-red-700 text-white font-bold py-2 px-4 rounded-lg"><i class="fas fa-upload mr-2"></i>データをインポート</button>
-                        <input type="file" id="import-file-input" class="hidden" accept="application/json">
-                    </div>
-                </div>
-            </div>
-        </div>
-    </div>
-
-    <!-- 他のモーダルは省略 -->
-    <div id="dob-era-modal" class="modal hidden fixed inset-0 bg-black bg-opacity-70 flex items-center justify-center z-50 p-4">...</div>
+    <div id="settings-modal" class="modal hidden fixed inset-0 bg-black bg-opacity-70 flex items-center justify-center z-50 p-4">...</div>
     <div id="data-modal" class="modal hidden fixed inset-0 bg-black bg-opacity-70 flex items-center justify-center z-50 p-4">...</div>
     <div id="confirm-modal" class="modal hidden fixed inset-0 bg-black bg-opacity-80 flex items-center justify-center z-50 p-4">...</div>
     <div id="compare-modal" class="modal hidden fixed inset-0 bg-black bg-opacity-80 flex items-center justify-center z-50 p-4">...</div>
+    <div id="dob-era-modal" class="modal hidden fixed inset-0 bg-black bg-opacity-70 flex items-center justify-center z-50 p-4">...</div>
 
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
@@ -301,7 +241,6 @@
         import { getAuth, signInAnonymously, onAuthStateChanged, signInWithCustomToken } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
 
         document.addEventListener('DOMContentLoaded', () => {
-
             const App = {
                 config: {
                     collectionName: 'clinical_cases',
@@ -323,14 +262,14 @@
                     },
                     jcsOptions: ["1", "2", "3", "10", "20", "30", "100", "200", "300"],
                     appearanceOptions: ["起坐呼吸", "喘鳴", "顔面蒼白", "頸静脈怒張", "冷や汗"],
-                    pupilSizeOptions: [2, 3, 4, 5, 6, 7, 8],
-                    pupilReflexOptions: ["迅速(+)", "鈍(+) / C", "なし(-)"],
+                    pupilSizeOptions: [1, 1.5, 2, 2.5, 3, 3.5, 4, 4.5, 5, 5.5, 6],
+                    pupilReflexOptions: ["迅速(+)", "鈍", "なし(-)"],
                 },
                 state: {
-                    db: null, auth: null, userId: null, dataStore: [], isLoading: true,
+                    db: null, auth: null, userId: null, dataStore: [], originalDataOrder: [], isLoading: true,
                     intersectionObserver: null,
                     filters: { searchTerm: '', activeKeywords: new Set(), keywordMode: 'OR', isFavoritesOnly: false },
-                    ui: { selectedItems: new Set(), highlightedElements: [], currentHighlightIndex: -1, mainControlsVisible: true },
+                    ui: { selectedItems: new Set(), highlightedElements: [], currentHighlightIndex: -1 },
                     stopwatch: { interval: null, isRunning: false, elapsedSeconds: 0, pressTimer: null },
                     vitals: {},
                     sidebar: { touchStartX: 0, touchCurrentX: 0, isDragging: false },
@@ -352,10 +291,9 @@
                         userIdDisplay: D.getElementById('user-id-display'),
                         sidebarToggleBtn: D.getElementById('sidebar-toggle-btn'),
                         sidebarBackdrop: D.getElementById('sidebar-backdrop'),
-                        mainControlsToggleBtn: D.getElementById('main-controls-toggle-btn'),
-                        mainControlsContainer: D.getElementById('main-controls-container'),
                         keywordsPanel: D.getElementById('keywords-panel'),
                         keywordsPanelToggleBtn: D.getElementById('keywords-panel-toggle-btn'),
+                        keywordsPanelCloseBtn: D.getElementById('keywords-panel-close-btn'),
                         keywordsPanelBackdrop: D.getElementById('keywords-panel-backdrop'),
                         
                         stopwatch: D.getElementById('stopwatch'),
@@ -426,12 +364,11 @@
                     };
                 },
                 bindEventListeners() {
-                    const { elements: el, handlers: h, components: c } = this;
+                    const { elements: el, handlers: h } = this;
                     
                     el.searchExecBtn.addEventListener('click', () => h.handleSearch());
                     el.searchInput.addEventListener('keypress', e => { if (e.key === 'Enter') h.handleSearch(); });
                     el.searchClearBtn.addEventListener('click', () => h.handleSearchClear());
-                    el.searchHistoryBtn.addEventListener('click', e => { e.stopPropagation(); c.searchHistory.toggleDropdown(); });
                     el.searchNextBtn.addEventListener('click', () => this.renderer.search.navigateToHighlight(1));
                     el.searchPrevBtn.addEventListener('click', () => this.renderer.search.navigateToHighlight(-1));
                     
@@ -440,33 +377,10 @@
                     el.jumpNav.addEventListener('change', e => h.handleCheckboxChange(e));
 
                     el.filterFavoritesBtn.addEventListener('click', () => h.handleToggleFavoritesFilter());
-                    el.addNewBtn.addEventListener('click', () => c.dataModal.openForNew());
-                    el.settingsBtn.addEventListener('click', () => this.utils.showModal(el.settingsModal));
                     el.randomBtn.addEventListener('click', () => h.handleRandomSelect());
                     
-                    el.sidebarToggleBtn.addEventListener('click', () => c.sidebar.toggle());
-                    el.sidebarBackdrop.addEventListener('click', () => c.sidebar.toggle(false));
-                    el.mainControlsToggleBtn.addEventListener('click', () => h.handleMainControlsToggle());
-                    
-                    el.keywordsPanelToggleBtn.addEventListener('click', () => c.keywordsPanel.toggle());
-                    el.keywordsPanelBackdrop.addEventListener('click', () => c.keywordsPanel.toggle(false));
-
                     el.menuBtn.addEventListener('click', e => { e.stopPropagation(); el.mobileMenu.classList.toggle('hidden'); });
-                    el.mobileKeywordsPanelToggleBtn.addEventListener('click', e => { e.preventDefault(); c.keywordsPanel.toggle(); this.utils.hide(el.mobileMenu); });
-                    el.mobileAddNewBtn.addEventListener('click', e => { e.preventDefault(); c.dataModal.openForNew(); this.utils.hide(el.mobileMenu); });
-                    el.mobileFilterFavoritesBtn.addEventListener('click', e => { e.preventDefault(); h.handleToggleFavoritesFilter(); this.utils.hide(el.mobileMenu); });
-                    el.mobileRandomBtn.addEventListener('click', e => { e.preventDefault(); h.handleRandomSelect(); this.utils.hide(el.mobileMenu); });
-                    el.mobileSettingsBtn.addEventListener('click', e => { e.preventDefault(); this.utils.showModal(el.settingsModal); this.utils.hide(el.mobileMenu); });
                     
-                    el.settingsModalCloseBtn.addEventListener('click', () => this.utils.hideModal(el.settingsModal));
-                    el.exportDataBtn.addEventListener('click', () => c.settings.exportData());
-                    el.importDataBtn.addEventListener('click', () => el.importFileInput.click());
-                    el.importFileInput.addEventListener('change', e => c.settings.handleFileSelect(e));
-                    el.showRandomBtnToggle.addEventListener('change', e => c.settings.toggleRandomButtonVisibility(e.target.checked));
-                    el.fontSizeControls.addEventListener('click', e => c.settings.handleFontSizeChange(e));
-                    
-                    el.toggleVitalsSummaryBtn.addEventListener('click', () => h.handleToggleVisibility(el.vitalsSummaryArea, el.toggleVitalsSummaryBtn, true));
-
                     document.addEventListener('click', e => {
                         if (el.searchHistoryBtn && !el.searchHistoryBtn.parentElement.contains(e.target)) this.utils.hide(el.searchHistoryDropdown);
                         if (el.menuBtn && !el.menuBtn.contains(e.target) && !el.mobileMenu.contains(e.target)) this.utils.hide(el.mobileMenu);
@@ -491,11 +405,6 @@
                         App.elements.filterFavoritesBtn.classList.toggle('active', App.state.filters.isFavoritesOnly);
                         App.elements.mobileFilterFavoritesBtn.classList.toggle('active', App.state.filters.isFavoritesOnly);
                         App.renderer.renderAll();
-                    },
-                    handleMainControlsToggle() {
-                         App.state.ui.mainControlsVisible = !App.state.ui.mainControlsVisible;
-                         App.elements.mainControlsContainer.classList.toggle('hidden', !App.state.ui.mainControlsVisible);
-                         App.elements.mainControlsToggleBtn.classList.toggle('text-blue-400', App.state.ui.mainControlsVisible);
                     },
                     handleToggleVisibility(area, button, isCollapsed = false) {
                         const isHidden = area.classList.toggle('hidden');
@@ -609,8 +518,8 @@
                                 App.utils.hide(App.elements.loading);
                                 App.state.isLoading = false;
                                 
-                                const serverData = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
-                                App.state.dataStore = serverData;
+                                App.state.originalDataOrder = snapshot.docs.map(doc => doc.id);
+                                App.state.dataStore = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
                 
                                 if (snapshot.empty && App.state.dataStore.length === 0) { 
                                     this.seedInitialData(); 
@@ -719,7 +628,9 @@
                         processedData.sort((a, b) => {
                             if (a.isFavorite && !b.isFavorite) return -1;
                             if (!a.isFavorite && b.isFavorite) return 1;
-                            return a.chiefComplaint.localeCompare(b.chiefComplaint, 'ja');
+                            const indexA = App.state.originalDataOrder.indexOf(a.id);
+                            const indexB = App.state.originalDataOrder.indexOf(b.id);
+                            return indexA - indexB;
                         });
                         
                         return processedData;
@@ -727,13 +638,14 @@
                     renderNav(data) {
                         const { jumpNav } = App.elements;
                         jumpNav.innerHTML = '';
-                        data.forEach((entry, index) => {
+                        data.forEach(entry => {
                             const complaintId = `complaint-${entry.id}`;
+                            const originalIndex = App.state.originalDataOrder.indexOf(entry.id);
                             const navItem = document.createElement('a');
                             navItem.href = `#${complaintId}`;
                             navItem.className = 'nav-item block text-gray-300 hover:bg-blue-600 hover:text-white font-bold py-3 px-2 rounded-lg transition-colors flex items-center';
                             const starIcon = entry.isFavorite ? `<i class="fas fa-star text-yellow-400 mr-2"></i>` : '';
-                            navItem.innerHTML = `<input type="checkbox" class="nav-item-checkbox" data-type="complaint" data-id="${entry.id}"> ${starIcon}${(index + 1).toString().padStart(2, '0')}. ${entry.chiefComplaint}`;
+                            navItem.innerHTML = `<input type="checkbox" class="nav-item-checkbox" data-type="complaint" data-id="${entry.id}"> ${starIcon}${(originalIndex + 1).toString().padStart(2, '0')}. ${entry.chiefComplaint}`;
                             navItem.title = entry.chiefComplaint;
                             navItem.querySelector('.nav-item-checkbox').addEventListener('click', e => e.stopPropagation());
                             navItem.onclick = (e) => { 
@@ -753,7 +665,8 @@
                         }
                         
                         const fragment = document.createDocumentFragment();
-                        data.forEach((entry, index) => {
+                        data.forEach(entry => {
+                            const originalIndex = App.state.originalDataOrder.indexOf(entry.id);
                             const complaintId = `complaint-${entry.id}`;
                             const isComplaintChecked = App.state.ui.selectedItems.has(`c_${entry.id}`);
                             const entryDiv = document.createElement('div');
@@ -789,7 +702,7 @@
                                 <div class="flex justify-between items-center">
                                     <div class="flex items-center">
                                         <input type="checkbox" class="item-checkbox" data-type="complaint" data-id="${entry.id}" ${isComplaintChecked ? 'checked' : ''}>
-                                        <h2 class="text-xl md:text-2xl font-bold text-blue-400">${(index + 1).toString().padStart(2, '0')}. ${entry.chiefComplaint}</h2>
+                                        <h2 class="text-xl md:text-2xl font-bold text-blue-400">${(originalIndex + 1).toString().padStart(2, '0')}. ${entry.chiefComplaint}</h2>
                                     </div>
                                     <div class="flex items-center">
                                         <button class="favorite-btn text-xl mr-4" data-id="${entry.id}" title="お気に入り登録"><i class="${favoriteClass} fa-star"></i></button>
@@ -966,6 +879,10 @@
                             App.elements.body.addEventListener('touchmove', e => this.handleTouchMove(e), { passive: true });
                             App.elements.body.addEventListener('touchend', e => this.handleTouchEnd(e));
                         },
+                        bindEventListeners() {
+                           App.elements.sidebarToggleBtn.addEventListener('click', () => this.toggle());
+                           App.elements.sidebarBackdrop.addEventListener('click', () => this.toggle(false));
+                        },
                         handleTouchStart(e) {
                             const s = App.state.sidebar;
                             if (e.touches[0].clientX < 40) {
@@ -1006,6 +923,7 @@
                     keywordsPanel: {
                         bindEventListeners() {
                             App.elements.keywordsPanelToggleBtn.addEventListener('click', () => this.toggle());
+                            App.elements.keywordsPanelCloseBtn.addEventListener('click', () => this.toggle(false));
                             App.elements.mobileKeywordsPanelToggleBtn.addEventListener('click', (e) => {
                                 e.preventDefault();
                                 this.toggle();
@@ -1014,10 +932,11 @@
                             App.elements.keywordsPanelBackdrop.addEventListener('click', () => this.toggle(false));
                         },
                         toggle(forceShow) {
-                            const { keywordsPanel, keywordsPanelBackdrop } = App.elements;
+                            const { keywordsPanel, keywordsPanelBackdrop, keywordsPanelToggleBtn } = App.elements;
                             const shouldShow = typeof forceShow === 'boolean' ? forceShow : keywordsPanel.classList.contains('translate-x-full');
                             keywordsPanel.classList.toggle('translate-x-full', !shouldShow);
                             keywordsPanelBackdrop.classList.toggle('hidden', !shouldShow);
+                            keywordsPanelToggleBtn.classList.toggle('active', shouldShow);
                         }
                     },
                     stopwatch: {
@@ -1158,7 +1077,7 @@
                         },
                         updatePupilSelectors() {
                             const side = App.elements.pupilSideSelector.dataset.side;
-                             const [size, reflex] = (App.state.vitals[`pupil_${side}`] || '').split('/');
+                             const [size, reflex] = (App.state.vitals[`pupil_${side}`] || '/').split('/');
                              App.elements.pupilSizeGroup.querySelectorAll('button').forEach(b => b.classList.toggle('active', b.textContent === size));
                              App.elements.pupilReflexGroup.querySelectorAll('button').forEach(b => b.classList.toggle('active', b.textContent === reflex));
                         },
@@ -1189,6 +1108,16 @@
                              const fontSize = App.utils.loadFromStorage(App.config.storageKeys.fontSize, 'base');
                              this.applyFontSize(fontSize);
                         },
+                        bindEventListeners() {
+                           App.elements.addNewBtn.addEventListener('click', () => App.components.dataModal.openForNew());
+                           App.elements.settingsBtn.addEventListener('click', () => App.utils.showModal(App.elements.settingsModal));
+                           App.elements.settingsModalCloseBtn.addEventListener('click', () => App.utils.hideModal(App.elements.settingsModal));
+                           App.elements.exportDataBtn.addEventListener('click', () => this.exportData());
+                           App.elements.importDataBtn.addEventListener('click', () => App.elements.importFileInput.click());
+                           App.elements.importFileInput.addEventListener('change', e => this.handleFileSelect(e));
+                           App.elements.showRandomBtnToggle.addEventListener('change', e => this.toggleRandomButtonVisibility(e.target.checked));
+                           App.elements.fontSizeControls.addEventListener('click', e => this.handleFontSizeChange(e));
+                        },
                         toggleRandomButtonVisibility(isVisible) {
                              App.elements.randomBtn.classList.toggle('hidden', !isVisible);
                              App.utils.saveToStorage(App.config.storageKeys.showRandomBtn, isVisible);
@@ -1205,6 +1134,59 @@
                             App.utils.saveToStorage(App.config.storageKeys.fontSize, size);
                         }
                     },
+                    searchHistory: {
+                        bindEventListeners() {
+                            App.elements.searchHistoryBtn.addEventListener('click', e => { e.stopPropagation(); this.toggleDropdown(); });
+                        },
+                        getKey() { return `paramedic_app_search_history_${App.config.appId}`; },
+                        get() { return JSON.parse(localStorage.getItem(this.getKey())) || []; },
+                        save(term) {
+                            if (!term) return;
+                            let history = this.get();
+                            history = history.filter(item => item !== term);
+                            history.unshift(term);
+                            if (history.length > App.config.maxHistoryItems) history.pop();
+                            localStorage.setItem(this.getKey(), JSON.stringify(history));
+                        },
+                        clear() {
+                            localStorage.removeItem(this.getKey());
+                            this.render();
+                        },
+                        render() {
+                            const { searchHistoryDropdown } = App.elements;
+                            const history = this.get();
+                            searchHistoryDropdown.innerHTML = '';
+                            if (history.length === 0) {
+                                searchHistoryDropdown.innerHTML = '<div class="p-3 text-sm text-gray-500 text-center">検索履歴はありません。</div>';
+                                return;
+                            }
+                            const list = document.createElement('ul');
+                            history.forEach(term => {
+                                const item = document.createElement('li');
+                                item.className = 'px-4 py-2 hover:bg-gray-700 cursor-pointer text-gray-200';
+                                item.textContent = term;
+                                item.addEventListener('click', () => { App.elements.searchInput.value = term; App.handlers.handleSearch(); App.utils.hide(searchHistoryDropdown); });
+                                list.appendChild(item);
+                            });
+                            searchHistoryDropdown.appendChild(list);
+                            const footer = document.createElement('div');
+                            footer.className = 'p-2 border-t border-gray-700 text-center';
+                            const clearButton = App.utils.createButton('履歴を消去', 'text-sm text-red-500 hover:text-red-400', e => { e.stopPropagation(); this.clear(); });
+                            footer.appendChild(clearButton);
+                            searchHistoryDropdown.appendChild(footer);
+                        },
+                        toggleDropdown() {
+                             if(App.elements.searchHistoryDropdown.classList.contains('hidden')) {
+                                this.render();
+                                App.utils.show(App.elements.searchHistoryDropdown);
+                             } else {
+                                App.utils.hide(App.elements.searchHistoryDropdown);
+                             }
+                        }
+                    },
+                    dataModal: {},
+                    compareModal: {},
+                    dobModal: {}
                 },
                 utils: {
                     initFirebaseConfig() {
