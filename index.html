@@ -8,96 +8,103 @@
     <!-- スタイルシートとフォント -->
     <script src="https://cdn.tailwindcss.com"></script>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Noto+Sans+JP:wght@400;500;700&display=swap" rel="stylesheet">
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" crossorigin="anonymous" referrerpolicy="no-referrer" />
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css" crossorigin="anonymous" referrerpolicy="no-referrer" />
     <style>
-        body {
-            font-family: 'Inter', 'Noto Sans JP', sans-serif;
-            -webkit-tap-highlight-color: transparent; /* iOSでのタップ時のハイライトを無効化 */
+        :root {
+            --font-size-base: 14px;
+            --font-size-sm: 12px;
+            --font-size-xs: 11px;
+            --font-size-lg: 16px;
+            --font-size-xl: 18px;
+            --font-size-2xl: 20px;
         }
-        /* カスタムスクロールバー */
-        ::-webkit-scrollbar { width: 8px; }
-        ::-webkit-scrollbar-track { background: #1f2937; }
-        ::-webkit-scrollbar-thumb { background: #4b5563; border-radius: 4px; }
-        ::-webkit-scrollbar-thumb:hover { background: #6b7280; }
+        html.text-sm {
+            --font-size-base: 13px; --font-size-sm: 11px; --font-size-xs: 10px; --font-size-lg: 15px; --font-size-xl: 17px; --font-size-2xl: 19px;
+        }
+        html.text-lg {
+             --font-size-base: 16px; --font-size-sm: 14px; --font-size-xs: 13px; --font-size-lg: 18px; --font-size-xl: 20px; --font-size-2xl: 22px;
+        }
+        body { font-family: 'Inter', 'Noto Sans JP', sans-serif; -webkit-tap-highlight-color: transparent; font-size: var(--font-size-base); }
+        h2 { font-size: var(--font-size-xl); } h3 { font-size: var(--font-size-lg); }
+        .text-xs { font-size: var(--font-size-xs); } .text-sm { font-size: var(--font-size-sm); }
         
-        /* 汎用スタイル */
+        ::-webkit-scrollbar { width: 8px; } ::-webkit-scrollbar-track { background: #1f2937; } ::-webkit-scrollbar-thumb { background: #4b5563; border-radius: 4px; } ::-webkit-scrollbar-thumb:hover { background: #6b7280; }
+        
         .modal, .content-card { transition: all 0.3s ease-in-out; }
         .modal.hidden { opacity: 0; transform: scale(0.95); pointer-events: none; }
         
-        /* 検索ハイライト */
         .highlight { background-color: yellow; color: #1f2937; padding: 0 2px; border-radius: 2px; }
         .current-highlight { outline: 2px solid #f97316; scroll-margin-top: 150px; }
         
-        /* ボタン無効化スタイル */
-        .search-nav-btn:disabled, button:disabled { opacity: 0.5; cursor: not-allowed; }
+        button:disabled { opacity: 0.5; cursor: not-allowed; }
         
         .item-checkbox, .nav-item-checkbox { transform: scale(1.2); margin-right: 12px; accent-color: #3b82f6; }
         
         .keyword-tag, .content-keyword-tag { cursor: pointer; transition: background-color 0.2s ease, color 0.2s ease; }
-        .keyword-tag.active { background-color: yellow; color: #1f2937; font-weight: bold; }
+        .keyword-tag.active, .content-keyword-tag.active { background-color: yellow; color: #1f2937; font-weight: bold; }
         
-        .nav-item { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; transition: background-color 0.2s ease, color 0.2s ease; }
+        .nav-item { padding-left: 0.75rem; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; transition: background-color 0.2s ease, color 0.2s ease; }
         .nav-item.active-nav { background-color: #2563eb; color: white; }
         
-        /* キーワードフィルターロジック切り替えスイッチ */
         #logic-switch-container { position: relative; display: inline-flex; background-color: #374151; border-radius: 9999px; padding: 2px; cursor: pointer; }
-        .switch-label { padding: 2px 10px; font-size: 0.75rem; font-weight: 500; color: #d1d5db; transition: color 0.2s ease-in-out; z-index: 10; }
+        .switch-label { padding: 2px 10px; font-weight: 500; color: #d1d5db; transition: color 0.2s ease-in-out; z-index: 10; }
         .switch-label.active-logic { color: #111827; }
         #switch-bg { position: absolute; top: 2px; bottom: 2px; left: 2px; width: calc(50% - 2px); background-color: #fBBF24; border-radius: 9999px; transition: transform 0.2s ease-in-out; }
         #logic-switch-container[data-mode="AND"] #switch-bg { transform: translateX(100%); }
         
-        /* アクティブ状態のボタンスタイル */
         #filter-favorites-btn.active, #mobile-filter-favorites-btn.active { color: #fBBF24; background-color: #374151; }
-        .gender-btn.active, .vitals-btn.active { background-color: #3b82f6; color: white; }
+        .gender-btn.active, .vitals-btn.active, .pupil-btn.active, .pupil-reflex-btn.active { background-color: #3b82f6; color: white; }
+        .font-size-btn.active { background-color: #2563eb; }
 
-        /* ストップウォッチ実行中スタイル */
         #stopwatch.running { background-color: #166534; }
         
-        /* 開閉シェブロン */
         .toggle-chevron { transition: transform 0.2s ease-in-out; }
         .toggle-chevron.collapsed { transform: rotate(180deg); }
 
-        /* バイタルアラートアニメーション */
-        @keyframes flash-red-bg { 0%, 100% { background-color: transparent; } 50% { background-color: rgba(220, 38, 38, 0.4); } }
-        @keyframes flash-red-text { 0%, 100% { color: inherit; } 50% { color: #f87171; } }
-        .vitals-alert-bg { animation: flash-red-bg 1.5s infinite; }
-        .vitals-alert-text { animation: flash-red-text 1.5s infinite; }
+        select.gcs-select { -webkit-appearance: none; appearance: none; background-image: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 20 20'%3e%3cpath stroke='%239ca3af' stroke-linecap='round' stroke-linejoin='round' stroke-width='1.5' d='M6 8l4 4 4-4'/%3e%3c/svg%3e"); background-position: right 0.5rem center; background-repeat: no-repeat; background-size: 1.5em 1.5em; padding-right: 2.5rem; }
     </style>
 </head>
-<body class="bg-gray-900 text-gray-100 antialiased">
+<body class="bg-gray-900 text-gray-100 antialiased text-sm">
 
     <!-- メインレイアウト -->
     <div id="app" class="flex h-screen overflow-hidden">
-        <!-- サイドナビゲーション -->
-        <nav id="jump-nav" class="w-48 bg-gray-800 p-2 overflow-y-auto fixed top-0 left-0 h-full z-40 transform -translate-x-full transition-transform md:relative md:w-28 md:translate-x-0"></nav>
+        <!-- 左サイドバー -->
+        <nav id="jump-nav" class="w-48 bg-gray-800 p-2 overflow-y-auto fixed top-0 left-0 h-full z-40 transform -translate-x-full transition-transform md:relative md:w-28 md:translate-x-0 shadow-lg"></nav>
         <div id="sidebar-backdrop" class="hidden fixed inset-0 bg-black bg-opacity-50 z-30 md:hidden"></div>
 
+        <!-- メインコンテンツ -->
         <main class="flex-1 flex flex-col">
             <!-- ヘッダー -->
-            <header class="bg-gray-800/50 backdrop-blur-sm p-2 md:p-4 sticky top-0 z-20 shadow-lg">
+            <header class="bg-gray-800/50 backdrop-blur-sm p-2 md:p-3 sticky top-0 z-20 shadow-lg">
                 <div class="flex flex-col gap-2">
                     <!-- ヘッダー上段 -->
                     <div class="flex flex-wrap items-center gap-2">
-                        <button id="sidebar-toggle-btn" class="p-2 text-white hover:text-blue-400 md:hidden" aria-label="ナビゲーションを開く"><i class="fas fa-bars fa-lg"></i></button>
-                        <div id="stopwatch" class="bg-gray-700 text-white font-mono text-lg md:text-xl p-2 rounded-lg cursor-pointer flex-shrink-0" title="クリック: スタート/ストップ | トリプルクリック: リセット">00:00</div>
+                        <button id="sidebar-toggle-btn" class="p-2 text-white hover:text-blue-400" aria-label="ナビゲーションを開く"><i class="fas fa-bars fa-lg"></i></button>
+                        <button id="main-controls-toggle-btn" class="p-2 text-white hover:text-blue-400" aria-label="メインコントロールの表示切替"><i class="fa-solid fa-note-sticky"></i></button>
                         
-                        <div class="flex items-center space-x-2 bg-gray-700 p-1 rounded-lg flex-shrink-0">
-                            <input type="number" id="age-input" placeholder="年齢" min="0" max="130" class="w-14 bg-gray-600 text-white placeholder-gray-400 text-center rounded-md p-1 focus:outline-none focus:ring-2 focus:ring-blue-500" aria-label="年齢">
-                            <button id="dob-btn" class="p-1 text-white hover:text-blue-400" aria-label="生年月日から年齢を計算"><i class="fas fa-calendar-alt"></i></button>
-                            <div class="flex">
-                               <button class="gender-btn bg-gray-600 hover:bg-gray-500 text-white font-bold py-1 px-2 md:px-3 rounded-l-md text-sm" data-gender="male">男</button>
-                               <button class="gender-btn bg-gray-600 hover:bg-gray-500 text-white font-bold py-1 px-2 md:px-3 rounded-r-md text-sm" data-gender="female">女</button>
+                        <div id="main-controls-container" class="flex-grow flex flex-wrap items-center gap-2">
+                             <div class="flex items-center space-x-2 bg-gray-700 p-1 rounded-lg flex-shrink-0">
+                                <input type="number" id="age-input" placeholder="年齢" min="0" max="130" class="w-14 bg-gray-600 text-white placeholder-gray-400 text-center rounded-md p-1 focus:outline-none focus:ring-2 focus:ring-blue-500" aria-label="年齢">
+                                <button id="dob-btn" class="p-1 text-white hover:text-blue-400" aria-label="生年月日から年齢を計算"><i class="fas fa-calendar-alt"></i></button>
+                                <div class="flex">
+                                   <button class="gender-btn bg-gray-600 hover:bg-gray-500 text-white font-bold py-1 px-2 md:px-3 rounded-l-md" data-gender="male">男</button>
+                                   <button class="gender-btn bg-gray-600 hover:bg-gray-500 text-white font-bold py-1 px-2 md:px-3 rounded-r-md" data-gender="female">女</button>
+                                </div>
                             </div>
+                            <input type="text" id="temp-memo" placeholder="一時メモ..." class="flex-grow min-w-[100px] bg-gray-700 text-white placeholder-gray-400 rounded-lg p-2 focus:outline-none focus:ring-2 focus:ring-blue-500" aria-label="一時メモ">
                         </div>
-                         <button id="vitals-btn" class="bg-cyan-600 hover:bg-cyan-700 text-white font-bold py-2 px-3 rounded-lg flex-shrink-0" title="バイタル入力" aria-label="バイタル入力モーダルを開く"><i class="fas fa-wave-square"></i></button>
+
+                        <div id="stopwatch" class="bg-gray-700 text-white font-mono text-lg p-2 rounded-lg cursor-pointer flex-shrink-0" title="クリック: スタート/ストップ | 長押し: リセット">00:00</div>
+                        <button id="vitals-btn" class="bg-cyan-600 hover:bg-cyan-700 text-white font-bold py-2 px-3 rounded-lg flex-shrink-0" title="バイタル入力" aria-label="バイタル入力モーダルを開く"><i class="fas fa-wave-square"></i></button>
                         
-                        <input type="text" id="temp-memo" placeholder="一時メモ..." class="flex-grow min-w-[100px] bg-gray-700 text-white placeholder-gray-400 rounded-lg p-2 focus:outline-none focus:ring-2 focus:ring-blue-500" aria-label="一時メモ">
+                        <!-- NEW: 右パネルトグルボタン -->
+                        <button id="keywords-panel-toggle-btn" class="p-2 text-white hover:text-blue-400 hidden md:block" aria-label="キーワードパネルを開く"><i class="fas fa-tags fa-lg"></i></button>
                     </div>
 
                     <!-- ヘッダー下段 -->
                     <div class="flex items-center gap-2">
                         <div class="flex-grow flex items-center bg-gray-700 rounded-lg relative">
-                            <input type="text" id="search-input" placeholder="鑑別検索..." class="flex-grow bg-transparent text-white placeholder-gray-400 rounded-lg py-2 px-4 focus:outline-none" aria-label="鑑別検索">
+                            <input type="text" id="search-input" placeholder="鑑別検索..." class="w-full bg-transparent text-white placeholder-gray-400 rounded-lg py-2 px-4 focus:outline-none" aria-label="鑑別検索">
                             <button id="search-history-btn" class="text-gray-400 hover:text-white px-2" title="検索履歴の表示" aria-label="検索履歴の表示"><i class="fas fa-history"></i></button>
                             <button id="search-clear-btn" class="text-gray-400 hover:text-white pr-2" title="検索文字のクリア" aria-label="検索文字のクリア"><i class="fas fa-times"></i></button>
                             <div id="search-history-dropdown" class="hidden absolute top-full left-0 mt-2 w-full bg-gray-800 border border-gray-700 rounded-lg shadow-xl z-30"></div>
@@ -110,10 +117,10 @@
                              <button id="search-next-btn" class="search-nav-btn text-white hover:bg-gray-600 p-1 rounded-md" disabled title="次のハイライトへ" aria-label="次のハイライトへ"><i class="fas fa-arrow-down"></i></button>
                         </div>
                         
-                        <!-- モバイル用ハンバーガーメニュー -->
                         <div class="relative md:hidden">
                              <button id="menu-btn" class="bg-gray-600 hover:bg-gray-500 text-white font-bold p-2 rounded-lg w-10 h-10 flex items-center justify-center" aria-label="メニューを開く"><i class="fas fa-ellipsis-v"></i></button>
                              <div id="mobile-menu" class="hidden absolute right-0 mt-2 w-48 bg-gray-800 rounded-lg shadow-xl z-30">
+                                 <a href="#" id="mobile-keywords-panel-toggle-btn" class="block px-4 py-2 text-white hover:bg-gray-700"><i class="fas fa-tags w-6"></i> キーワード</a>
                                  <a href="#" id="mobile-add-new-btn" class="block px-4 py-2 text-white hover:bg-gray-700"><i class="fas fa-plus w-6"></i> 新規追加</a>
                                  <a href="#" id="mobile-filter-favorites-btn" class="block px-4 py-2 text-white hover:bg-gray-700"><i class="fas fa-star w-6"></i> お気に入り</a>
                                  <a href="#" id="mobile-random-btn" class="block px-4 py-2 text-white hover:bg-gray-700"><i class="fas fa-dice w-6"></i> ランダム表示</a>
@@ -121,7 +128,6 @@
                              </div>
                         </div>
 
-                         <!-- デスクトップ用ボタン -->
                         <div class="hidden md:flex items-center space-x-2">
                             <button id="filter-favorites-btn" class="bg-gray-600 hover:bg-gray-500 text-white font-bold py-2 px-3 rounded-lg flex-shrink-0" title="お気に入りフィルター" aria-label="お気に入りフィルター"><i class="fas fa-star"></i></button>
                             <button id="random-btn" class="bg-purple-600 hover:bg-purple-700 text-white font-bold py-2 px-3 rounded-lg flex-shrink-0" title="ランダム表示" aria-label="ランダム表示"><i class="fas fa-dice"></i></button>
@@ -131,353 +137,227 @@
                     </div>
                 </div>
                 
-                 <!-- バイタルサマリー表示エリア -->
                 <div id="vitals-summary-container" class="w-full mt-2 hidden">
                      <div class="flex items-start">
-                        <div id="vitals-summary-area" class="flex flex-wrap gap-x-4 gap-y-1 items-center flex-grow text-sm text-gray-300 bg-gray-900/50 p-2 rounded-lg border border-gray-700"></div>
+                        <div id="vitals-summary-area" class="flex flex-wrap gap-x-4 gap-y-1 items-center flex-grow text-gray-300 bg-gray-900/50 p-2 rounded-lg border border-gray-700"></div>
                          <button id="toggle-vitals-summary-btn" class="ml-2 text-gray-400 hover:text-white p-2 flex-shrink-0" title="バイタル概要の表示切替" aria-label="バイタル概要の表示切替"><i class="fas fa-chevron-up toggle-chevron"></i></button>
                     </div>
                  </div>
-
-                <!-- 選択キーワード表示エリア -->
-                <div class="flex items-start mt-2">
-                    <div id="selected-keywords-area" class="flex-wrap gap-2 items-center flex-grow hidden"></div>
-                     <button id="toggle-keywords-btn" class="ml-auto text-gray-400 hover:text-white p-2 flex-shrink-0" title="キーワード表示の切替" aria-label="キーワード表示の切替"><i class="fas fa-chevron-down toggle-chevron"></i></button>
-                </div>
             </header>
 
             <!-- メインコンテンツエリア -->
-            <div id="content-area" class="flex-1 overflow-y-auto p-4">
+            <div id="content-area" class="flex-1 overflow-y-auto p-2 sm:p-4">
                  <div id="loading" class="text-center p-8">
                     <i class="fas fa-spinner fa-spin text-4xl text-blue-500"></i>
                     <p class="mt-4 text-gray-400">データを読み込んでいます...</p>
                 </div>
             </div>
             
-            <!-- フッター -->
             <footer class="bg-gray-800 p-2 text-center text-xs text-gray-500">
                 UserID: <span id="user-id-display">未ログイン</span>
             </footer>
         </main>
+
+        <!-- NEW: 右キーワードパネル -->
+        <aside id="keywords-panel" class="w-64 bg-gray-800 flex flex-col fixed top-0 right-0 h-full z-40 transform translate-x-full transition-transform shadow-lg">
+            <div class="p-4 border-b border-gray-700">
+                <h3 class="text-lg font-bold text-white">キーワードフィルター</h3>
+            </div>
+            <div id="selected-keywords-area" class="flex-1 p-2 space-y-4 overflow-y-auto">
+                 <!-- Keywords will be rendered here -->
+            </div>
+        </aside>
+        <div id="keywords-panel-backdrop" class="hidden fixed inset-0 bg-black bg-opacity-50 z-30"></div>
+
     </div>
 
     <!-- ===== 各種モーダルウィンドウ ===== -->
-    <!-- ... (モーダルのHTMLは変更がないため省略) ... -->
-    <div id="dob-era-modal" class="modal hidden fixed inset-0 bg-black bg-opacity-70 flex items-center justify-center z-50 p-4">...</div>
-    <div id="vitals-modal" class="modal hidden fixed inset-0 bg-black bg-opacity-80 flex items-center justify-center z-50 p-4">...</div>
-    <div id="data-modal" class="modal hidden fixed inset-0 bg-black bg-opacity-70 flex items-center justify-center z-50 p-4">...</div>
-    <div id="confirm-modal" class="modal hidden fixed inset-0 bg-black bg-opacity-80 flex items-center justify-center z-50 p-4">...</div>
-    <div id="settings-modal" class="modal hidden fixed inset-0 bg-black bg-opacity-70 flex items-center justify-center z-50 p-4">...</div>
-    <div id="compare-modal" class="modal hidden fixed inset-0 bg-black bg-opacity-80 flex items-center justify-center z-50 p-4">...</div>
     
-    <!-- モーダルウィンドウのHTML（展開すると表示） -->
-    <div id="dob-era-modal" class="modal hidden fixed inset-0 bg-black bg-opacity-70 flex items-center justify-center z-50 p-4">
-        <div class="bg-gray-800 rounded-lg shadow-xl w-full max-w-sm">
-            <div class="p-6">
-                <h3 class="text-lg font-medium text-white mb-4">生年月日（和暦）</h3>
-                <div class="grid grid-cols-4 gap-2 items-center">
-                    <select id="era-select" class="col-span-2 bg-gray-700 text-white p-2 rounded-md">
-                        <option value="reiwa">令和</option>
-                        <option value="heisei">平成</option>
-                        <option value="showa">昭和</option>
-                        <option value="meiji">明治</option>
-                    </select>
-                    <input type="number" id="era-year-input" placeholder="年" min="1" class="bg-gray-700 text-white p-2 rounded-md text-center">
-                    <label class="text-gray-300">年</label>
-                    <input type="number" id="era-month-input" placeholder="月" min="1" max="12" class="col-start-2 bg-gray-700 text-white p-2 rounded-md text-center">
-                    <label class="text-gray-300">月</label>
-                    <div></div>
-                    <input type="number" id="era-day-input" placeholder="日" min="1" max="31" class="col-start-2 bg-gray-700 text-white p-2 rounded-md text-center">
-                    <label class="text-gray-300">日</label>
-                </div>
-                <div class="mt-6 flex justify-end space-x-2">
-                     <button id="dob-era-cancel-btn" class="bg-gray-600 hover:bg-gray-500 text-white font-bold py-2 px-4 rounded-md">キャンセル</button>
-                     <button id="dob-era-ok-btn" class="bg-blue-600 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded-md">OK</button>
-                </div>
-            </div>
-        </div>
-    </div>
     <div id="vitals-modal" class="modal hidden fixed inset-0 bg-black bg-opacity-80 flex items-center justify-center z-50 p-4">
         <div class="bg-gray-800 rounded-2xl shadow-xl w-full max-w-4xl max-h-[90vh] flex flex-col">
              <div class="p-4 border-b border-gray-700 flex justify-between items-center">
                 <h2 class="text-2xl font-bold text-white">バイタルサイン記録</h2>
                 <button id="vitals-modal-close-btn" class="text-gray-400 hover:text-white text-2xl" aria-label="閉じる">&times;</button>
             </div>
-            <div id="vitals-form" class="flex-grow p-6 overflow-auto space-y-4">
+            <div id="vitals-form" class="flex-grow p-4 md:p-6 overflow-auto space-y-4">
                  <div>
-                    <label id="vitals-appearance-label" for="vitals-appearance" class="block text-gray-300 text-sm font-bold mb-2">外観・様子</label>
-                    <div id="vitals-appearance-tags" class="flex flex-wrap gap-2 mb-2">
-                        <button type="button" class="vitals-btn bg-gray-600 hover:bg-gray-500 text-sm py-1 px-3 rounded-full">起坐呼吸</button>
-                        <button type="button" class="vitals-btn bg-gray-600 hover:bg-gray-500 text-sm py-1 px-3 rounded-full">喘鳴</button>
-                        <button type="button" class="vitals-btn bg-gray-600 hover:bg-gray-500 text-sm py-1 px-3 rounded-full">顔面蒼白</button>
-                        <button type="button" class="vitals-btn bg-gray-600 hover:bg-gray-500 text-sm py-1 px-3 rounded-full">頸静脈怒張</button>
-                        <button type="button" class="vitals-btn bg-gray-600 hover:bg-gray-500 text-sm py-1 px-3 rounded-full">冷や汗</button>
-                    </div>
+                    <label class="block text-gray-300 font-bold mb-2">外観・様子</label>
+                    <div id="vitals-appearance-tags" class="flex flex-wrap gap-2 mb-2"></div>
                     <textarea id="vitals-appearance" rows="2" placeholder="その他特記事項..." class="w-full bg-gray-700 text-white rounded-lg p-2 focus:outline-none focus:ring-2 focus:ring-blue-500"></textarea>
                 </div>
                 <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
                     <div>
-                         <label id="vitals-jcs-label" class="block text-gray-300 text-sm font-bold mb-2">JCS</label>
-                         <div id="vitals-jcs-group" class="grid grid-cols-3 gap-2">
-                            <button type="button" class="vitals-btn bg-gray-600 p-2 rounded-md">1</button>
-                            <button type="button" class="vitals-btn bg-gray-600 p-2 rounded-md">2</button>
-                            <button type="button" class="vitals-btn bg-gray-600 p-2 rounded-md">3</button>
-                            <button type="button" class="vitals-btn bg-gray-600 p-2 rounded-md">10</button>
-                            <button type="button" class="vitals-btn bg-gray-600 p-2 rounded-md">20</button>
-                            <button type="button" class="vitals-btn bg-gray-600 p-2 rounded-md">30</button>
-                            <button type="button" class="vitals-btn bg-gray-600 p-2 rounded-md">100</button>
-                            <button type="button" class="vitals-btn bg-gray-600 p-2 rounded-md">200</button>
-                            <button type="button" class="vitals-btn bg-gray-600 p-2 rounded-md">300</button>
-                         </div>
+                         <label class="block text-gray-300 font-bold mb-2">JCS</label>
+                         <div id="vitals-jcs-group" class="grid grid-cols-3 gap-2"></div>
                     </div>
                      <div>
-                        <label id="vitals-gcs-label" class="block text-gray-300 text-sm font-bold mb-2">GCS: <span id="gcs-total" class="text-white font-mono"></span></label>
+                        <label class="block text-gray-300 font-bold mb-2">GCS: <span id="gcs-total" class="text-white font-mono">3</span></label>
                         <div class="space-y-2">
-                             <div id="gcs-e-group"><span id="gcs-e-label" class="font-bold inline-block w-6">E:</span> <button type="button" class="vitals-btn bg-gray-600 p-1 px-2 rounded-md" data-gcs-type="E" data-gcs-val="4">4</button> <button type="button" class="vitals-btn bg-gray-600 p-1 px-2 rounded-md" data-gcs-type="E" data-gcs-val="3">3</button> <button type="button" class="vitals-btn bg-gray-600 p-1 px-2 rounded-md" data-gcs-type="E" data-gcs-val="2">2</button> <button type="button" class="vitals-btn bg-gray-600 p-1 px-2 rounded-md" data-gcs-type="E" data-gcs-val="1">1</button></div>
-                             <div id="gcs-v-group"><span id="gcs-v-label" class="font-bold inline-block w-6">V:</span> <button type="button" class="vitals-btn bg-gray-600 p-1 px-2 rounded-md" data-gcs-type="V" data-gcs-val="5">5</button> <button type="button" class="vitals-btn bg-gray-600 p-1 px-2 rounded-md" data-gcs-type="V" data-gcs-val="4">4</button> <button type="button" class="vitals-btn bg-gray-600 p-1 px-2 rounded-md" data-gcs-type="V" data-gcs-val="3">3</button> <button type="button" class="vitals-btn bg-gray-600 p-1 px-2 rounded-md" data-gcs-type="V" data-gcs-val="2">2</button> <button type="button" class="vitals-btn bg-gray-600 p-1 px-2 rounded-md" data-gcs-type="V" data-gcs-val="1">1</button></div>
-                             <div id="gcs-m-group"><span id="gcs-m-label" class="font-bold inline-block w-6">M:</span> <button type="button" class="vitals-btn bg-gray-600 p-1 px-2 rounded-md" data-gcs-type="M" data-gcs-val="6">6</button> <button type="button" class="vitals-btn bg-gray-600 p-1 px-2 rounded-md" data-gcs-type="M" data-gcs-val="5">5</button> <button type="button" class="vitals-btn bg-gray-600 p-1 px-2 rounded-md" data-gcs-type="M" data-gcs-val="4">4</button> <button type="button" class="vitals-btn bg-gray-600 p-1 px-2 rounded-md" data-gcs-type="M" data-gcs-val="3">3</button> <button type="button" class="vitals-btn bg-gray-600 p-1 px-2 rounded-md" data-gcs-type="M" data-gcs-val="2">2</button> <button type="button" class="vitals-btn bg-gray-600 p-1 px-2 rounded-md" data-gcs-type="M" data-gcs-val="1">1</button></div>
+                             <div class="flex items-center gap-2"><span class="font-bold inline-block w-6">E:</span><select id="gcs-e-select" class="gcs-select w-full bg-gray-700 text-white rounded-md p-2 focus:outline-none focus:ring-2 focus:ring-blue-500"></select></div>
+                             <div class="flex items-center gap-2"><span class="font-bold inline-block w-6">V:</span><select id="gcs-v-select" class="gcs-select w-full bg-gray-700 text-white rounded-md p-2 focus:outline-none focus:ring-2 focus:ring-blue-500"></select></div>
+                             <div class="flex items-center gap-2"><span class="font-bold inline-block w-6">M:</span><select id="gcs-m-select" class="gcs-select w-full bg-gray-700 text-white rounded-md p-2 focus:outline-none focus:ring-2 focus:ring-blue-500"></select></div>
                         </div>
                     </div>
                 </div>
                 <div class="grid grid-cols-2 md:grid-cols-4 gap-4">
                     <div>
-                        <label id="vitals-resp-label" for="vitals-resp" class="block text-gray-300 text-sm font-bold mb-2">呼吸 (回/分)</label>
-                        <input type="number" id="vitals-resp" inputmode="numeric" pattern="[0-9]*" class="w-full bg-gray-700 text-white rounded-lg p-2 focus:outline-none focus:ring-2 focus:ring-blue-500">
+                        <label for="vitals-resp" class="block text-gray-300 font-bold mb-2">呼吸</label>
+                        <input type="number" id="vitals-resp" placeholder="回/分" inputmode="numeric" class="w-full bg-gray-700 text-white rounded-lg p-2 focus:outline-none focus:ring-2 focus:ring-blue-500">
                     </div>
                     <div>
-                        <label id="vitals-spo2-label" for="vitals-spo2" class="block text-gray-300 text-sm font-bold mb-2">SpO2 (%)</label>
-                        <input type="number" id="vitals-spo2" inputmode="numeric" pattern="[0-9]*" class="w-full bg-gray-700 text-white rounded-lg p-2 focus:outline-none focus:ring-2 focus:ring-blue-500">
+                        <label for="vitals-spo2" class="block text-gray-300 font-bold mb-2">SpO2</label>
+                        <input type="number" id="vitals-spo2" placeholder="%" inputmode="numeric" class="w-full bg-gray-700 text-white rounded-lg p-2 focus:outline-none focus:ring-2 focus:ring-blue-500">
                     </div>
                      <div>
-                        <label id="vitals-pulse-label" for="vitals-pulse" class="block text-gray-300 text-sm font-bold mb-2">脈拍 (回/分)</label>
-                        <input type="number" id="vitals-pulse" inputmode="numeric" pattern="[0-9]*" class="w-full bg-gray-700 text-white rounded-lg p-2 focus:outline-none focus:ring-2 focus:ring-blue-500">
+                        <label for="vitals-pulse" class="block text-gray-300 font-bold mb-2">脈拍</label>
+                        <input type="number" id="vitals-pulse" placeholder="回/分" inputmode="numeric" class="w-full bg-gray-700 text-white rounded-lg p-2 focus:outline-none focus:ring-2 focus:ring-blue-500">
                     </div>
                     <div>
-                        <label id="vitals-temp-label" for="vitals-temp" class="block text-gray-300 text-sm font-bold mb-2">体温 (°C)</label>
-                        <input type="number" id="vitals-temp" step="0.1" inputmode="decimal" class="w-full bg-gray-700 text-white rounded-lg p-2 focus:outline-none focus:ring-2 focus:ring-blue-500">
+                        <label for="vitals-temp" class="block text-gray-300 font-bold mb-2">体温</label>
+                        <input type="number" id="vitals-temp" placeholder="°C" step="0.1" inputmode="decimal" class="w-full bg-gray-700 text-white rounded-lg p-2 focus:outline-none focus:ring-2 focus:ring-blue-500">
                     </div>
                 </div>
                  <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
                      <div>
-                        <label id="vitals-bp-label" class="block text-gray-300 text-sm font-bold mb-2">血圧 (mmHg)</label>
+                        <label class="block text-gray-300 font-bold mb-2">血圧</label>
                         <div class="flex items-center">
-                             <input type="number" id="vitals-bp-sys" aria-label="収縮期血圧" inputmode="numeric" pattern="[0-9]*" class="w-full bg-gray-700 text-white rounded-l-lg p-2 focus:outline-none focus:ring-2 focus:ring-blue-500">
+                             <input type="number" id="vitals-bp-sys" placeholder="収縮期" aria-label="収縮期血圧" inputmode="numeric" class="w-full bg-gray-700 text-white rounded-l-lg p-2 focus:outline-none focus:ring-2 focus:ring-blue-500">
                              <span class="bg-gray-600 p-2">/</span>
-                             <input type="number" id="vitals-bp-dia" aria-label="拡張期血圧" inputmode="numeric" pattern="[0-9]*" class="w-full bg-gray-700 text-white rounded-r-lg p-2 focus:outline-none focus:ring-2 focus:ring-blue-500">
+                             <input type="number" id="vitals-bp-dia" placeholder="拡張期" aria-label="拡張期血圧" inputmode="numeric" class="w-full bg-gray-700 text-white rounded-r-lg p-2 focus:outline-none focus:ring-2 focus:ring-blue-500">
                         </div>
                     </div>
                     <div>
-                        <label id="pupil-label" class="block text-gray-300 text-sm font-bold mb-2">瞳孔</label>
-                        <div class="grid grid-cols-2 gap-2">
+                        <label class="block text-gray-300 font-bold mb-2">瞳孔</label>
+                         <div class="grid grid-cols-2 gap-2">
                              <input type="text" id="pupil-r" placeholder="右" readonly class="w-full bg-gray-700 text-white rounded-lg p-2 text-center">
                              <input type="text" id="pupil-l" placeholder="左" readonly class="w-full bg-gray-700 text-white rounded-lg p-2 text-center">
-                             <div id="pupil-size-group" class="col-span-2 grid grid-cols-5 gap-1"></div>
-                             <div id="pupil-reflex-group" class="col-span-2 grid grid-cols-3 gap-1"></div>
-                        </div>
+                         </div>
+                         <div class="flex items-center justify-between mt-2">
+                             <span id="pupil-side-selector" class="font-bold text-blue-400">右(R):</span>
+                             <div id="pupil-size-group" class="flex flex-wrap gap-1"></div>
+                         </div>
+                         <div id="pupil-reflex-group" class="flex flex-wrap gap-1 mt-2"></div>
                     </div>
                  </div>
             </div>
-             <div class="p-4 border-t border-gray-700 flex justify-end space-x-3">
-                <button type="button" id="vitals-clear-btn" title="トリプルクリックで全クリア" class="bg-gray-600 hover:bg-gray-500 text-white font-bold py-2 px-4 rounded-lg">クリア</button>
+             <div class="p-4 border-t border-gray-700 flex justify-between items-center">
+                <button type="button" id="vitals-clear-btn" title="長押しで全クリア" class="bg-gray-600 hover:bg-gray-500 text-white font-bold py-2 px-4 rounded-lg">クリア</button>
+                <button type="button" id="vitals-save-btn" class="bg-blue-600 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded-lg">保存して閉じる</button>
             </div>
         </div>
     </div>
-    <div id="data-modal" class="modal hidden fixed inset-0 bg-black bg-opacity-70 flex items-center justify-center z-50 p-4">
-        <div class="bg-gray-800 rounded-2xl shadow-xl w-full max-w-2xl max-h-full overflow-y-auto">
-            <form id="data-form" class="p-6">
-                <input type="hidden" id="entry-id">
-                <h2 id="modal-title" class="text-2xl font-bold mb-6 text-white"></h2>
-                <div class="mb-4">
-                    <label for="chiefComplaint" class="block text-gray-300 text-sm font-bold mb-2">主訴</label>
-                    <input type="text" id="chiefComplaint" class="w-full bg-gray-700 text-white rounded-lg py-2 px-3 focus:outline-none focus:ring-2 focus:ring-blue-500" required>
-                </div>
-                <div class="mb-6">
-                    <label for="description" class="block text-gray-300 text-sm font-bold mb-2">説明</label>
-                    <textarea id="description" rows="2" class="w-full bg-gray-700 text-white rounded-lg py-2 px-3 focus:outline-none focus:ring-2 focus:ring-blue-500"></textarea>
-                </div>
-                 <div class="mb-6">
-                    <label for="chiefComplaintMemo" class="block text-gray-300 text-sm font-bold mb-2">個人メモ (主訴全体)</label>
-                    <textarea id="chiefComplaintMemo" rows="2" class="w-full bg-gray-700 text-white rounded-lg py-2 px-3 focus:outline-none focus:ring-2 focus:ring-blue-500"></textarea>
-                </div>
-                <div id="diseases-container"></div>
-                <button type="button" id="add-disease-btn" class="mt-2 bg-blue-600 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded-lg"><i class="fas fa-plus"></i> 疾患を追加</button>
-                <div class="mt-8 flex justify-end space-x-4">
-                    <button type="button" id="modal-close-btn" class="bg-gray-600 hover:bg-gray-700 text-white font-bold py-2 px-4 rounded-lg">キャンセル</button>
-                    <button type="button" id="delete-btn" class="bg-red-600 hover:bg-red-700 text-white font-bold py-2 px-4 rounded-lg hidden">削除</button>
-                    <button type="submit" class="bg-green-600 hover:bg-green-700 text-white font-bold py-2 px-4 rounded-lg">保存</button>
-                </div>
-            </form>
-        </div>
-    </div>
-    <div id="confirm-modal" class="modal hidden fixed inset-0 bg-black bg-opacity-80 flex items-center justify-center z-50 p-4">
-        <div class="bg-gray-800 rounded-lg shadow-xl w-full max-w-md">
-            <div class="p-6 text-center">
-                <div id="alert-icon" class="mx-auto flex items-center justify-center h-12 w-12 rounded-full bg-gray-700 mb-4"></div>
-                <h3 id="confirm-title" class="text-lg font-medium leading-6 text-white"></h3>
-                <div class="mt-2"><p id="confirm-message" class="text-sm text-gray-400"></p></div>
-            </div>
-            <div id="confirm-buttons" class="bg-gray-700/50 px-4 py-3 sm:px-6 flex justify-end space-x-3"></div>
-        </div>
-    </div>
+    
     <div id="settings-modal" class="modal hidden fixed inset-0 bg-black bg-opacity-70 flex items-center justify-center z-50 p-4">
         <div class="bg-gray-800 rounded-2xl shadow-xl w-full max-w-lg">
             <div class="p-6">
                 <div class="flex justify-between items-center mb-6">
-                    <h2 class="text-2xl font-bold text-white">データ管理</h2>
+                    <h2 class="text-2xl font-bold text-white">設定</h2>
                     <button id="settings-modal-close-btn" class="text-gray-400 hover:text-white text-2xl">&times;</button>
                 </div>
                 <div class="space-y-4">
+                    <div class="border-b border-gray-700 pb-4">
+                        <h3 class="text-lg font-semibold text-gray-300 mb-2">表示設定</h3>
+                        <div class="space-y-3">
+                            <label class="flex items-center">
+                                <input type="checkbox" id="show-random-btn-toggle" class="h-4 w-4 text-blue-600 bg-gray-700 border-gray-600 rounded focus:ring-blue-500">
+                                <span class="ml-2 text-gray-300">ランダムボタンをヘッダーに表示する</span>
+                            </label>
+                            <div>
+                                <label class="block text-gray-300 mb-2">文字サイズ</label>
+                                <div id="font-size-controls" class="flex items-center gap-2">
+                                    <button data-size="sm" class="font-size-btn w-10 h-10 rounded-md bg-gray-700 hover:bg-gray-600">小</button>
+                                    <button data-size="base" class="font-size-btn w-10 h-10 rounded-md bg-gray-700 hover:bg-gray-600">中</button>
+                                    <button data-size="lg" class="font-size-btn w-10 h-10 rounded-md bg-gray-700 hover:bg-gray-600">大</button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
                     <div>
                         <h3 class="text-lg font-semibold text-teal-400 mb-2">エクスポート</h3>
-                        <p class="text-sm text-gray-400 mb-3">現在の全データをバックアップとしてJSONファイルに保存します。</p>
+                        <p class="text-gray-400 mb-3">現在の全データをバックアップとしてJSONファイルに保存します。</p>
                         <button id="export-data-btn" class="w-full bg-blue-600 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded-lg"><i class="fas fa-download mr-2"></i>データをエクスポート</button>
                     </div>
                     <div class="border-t border-gray-700 my-4"></div>
                     <div>
                         <h3 class="text-lg font-semibold text-red-400 mb-2">インポート</h3>
-                        <p class="text-sm text-gray-400 mb-3"><strong class="text-red-500">注意：現在のデータはすべて上書きされます。</strong></p>
+                        <p class="text-gray-400 mb-3"><strong class="text-red-500">注意：現在のデータはすべて上書きされます。</strong></p>
                         <button id="import-data-btn" class="w-full bg-red-600 hover:bg-red-700 text-white font-bold py-2 px-4 rounded-lg"><i class="fas fa-upload mr-2"></i>データをインポート</button>
                         <input type="file" id="import-file-input" class="hidden" accept="application/json">
-                    </div>
-                     <div class="border-t border-gray-700 my-4"></div>
-                    <div>
-                        <h3 class="text-lg font-semibold text-gray-300 mb-2">表示設定</h3>
-                         <label class="flex items-center">
-                            <input type="checkbox" id="show-random-btn-toggle" class="h-4 w-4 text-blue-600 bg-gray-700 border-gray-600 rounded focus:ring-blue-500">
-                            <span class="ml-2 text-sm text-gray-300">ランダムボタンをヘッダーに表示する</span>
-                        </label>
                     </div>
                 </div>
             </div>
         </div>
     </div>
-    <div id="compare-modal" class="modal hidden fixed inset-0 bg-black bg-opacity-80 flex items-center justify-center z-50 p-4">
-        <div class="bg-gray-900 rounded-2xl shadow-xl w-full max-w-6xl max-h-[90vh] flex flex-col">
-            <div class="p-4 border-b border-gray-700 flex justify-between items-center">
-                <h2 class="text-2xl font-bold text-white">鑑別診断の比較</h2>
-                <button id="compare-modal-close-btn" class="text-gray-400 hover:text-white text-2xl" aria-label="閉じる">&times;</button>
-            </div>
-            <div id="compare-content-area" class="flex-grow p-4 overflow-auto flex space-x-4">
-            </div>
-        </div>
-    </div>
 
+    <!-- 他のモーダルは省略 -->
+    <div id="dob-era-modal" class="modal hidden fixed inset-0 bg-black bg-opacity-70 flex items-center justify-center z-50 p-4">...</div>
+    <div id="data-modal" class="modal hidden fixed inset-0 bg-black bg-opacity-70 flex items-center justify-center z-50 p-4">...</div>
+    <div id="confirm-modal" class="modal hidden fixed inset-0 bg-black bg-opacity-80 flex items-center justify-center z-50 p-4">...</div>
+    <div id="compare-modal" class="modal hidden fixed inset-0 bg-black bg-opacity-80 flex items-center justify-center z-50 p-4">...</div>
 
     <script type="module">
-        // Firebase SDKのインポート
         import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
         import { getFirestore, collection, onSnapshot, doc, addDoc, setDoc, deleteDoc, getDocs, writeBatch, updateDoc } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
         import { getAuth, signInAnonymously, onAuthStateChanged, signInWithCustomToken } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
 
-        /**
-         * =========================================================================
-         * アプリケーションのメインオブジェクト (App)
-         * =========================================================================
-         * このオブジェクトは、アプリケーション全体のロジック、状態、設定を管理します。
-         * 役割ごとにプロパティを分割することで、コードの見通しを良くし、保守性を高めています。
-         *
-         * - config: アプリケーションの基本設定
-         * - state: アプリケーションの現在の状態（データ、フィルター条件など）
-         * - elements: DOM要素のキャッシュ
-         * - services: 外部サービス（Firebaseなど）との通信を担当
-         * - handlers: ユーザーの操作（クリック、入力など）への応答を担当
-         * - components: 特定のUI部品（モーダル、ストップウォッチなど）のロジックを担当
-         * - renderer: stateに基づいてHTMLを生成し、画面を描画する担当
-         * - utils: 汎用的な補助関数
-         * - init: アプリケーションの初期化処理
-         */
         document.addEventListener('DOMContentLoaded', () => {
 
             const App = {
-                // -------------------------------------------------------------------------
-                // 1. 設定 (Config)
-                // -------------------------------------------------------------------------
                 config: {
-                    collectionName: 'clinical_cases', // Firestoreのコレクション名
-                    maxHistoryItems: 15, // 検索履歴の最大保存数
-                    showRandomBtnKey: `paramedic_app_show_random_button`, // ローカルストレージキー
-                    stopwatchClickDelay: 300, // ストップウォッチのクリック判定遅延
-                    vitalsClearClickDelay: 400, // バイタルクリアのクリック判定遅延
-                    firebaseConfig: null, // Firebase設定
-                    appId: 'default-app-id', // アプリID
+                    collectionName: 'clinical_cases',
+                    maxHistoryItems: 15,
+                    storageKeys: {
+                        showRandomBtn: `paramedic_app_show_random_button`,
+                        fontSize: `paramedic_app_font_size`,
+                        vitals: `paramedic_app_vitals`,
+                    },
+                    stopwatchResetDelay: 700,
+                    vitalsClearResetDelay: 700,
+                    swipeThreshold: 50,
+                    firebaseConfig: null,
+                    appId: 'default-app-id',
+                    gcsOptions: {
+                        E: [ {v:4,t:"4:自発的に"}, {v:3,t:"3:呼びかけで"}, {v:2,t:"2:痛み刺激で"}, {v:1,t:"1:開眼せず"} ],
+                        V: [ {v:5,t:"5:見当識良好"}, {v:4,t:"4:混乱した会話"}, {v:3,t:"3:不適切な発語"}, {v:2,t:"2:理解不能な音声"}, {v:1,t:"1:発語せず"} ],
+                        M: [ {v:6,t:"6:命令に従う"}, {v:5,t:"5:痛み刺激に手で払う"}, {v:4,t:"4:痛み刺激で逃避"}, {v:3,t:"3:異常屈曲"}, {v:2,t:"2:異常伸展"}, {v:1,t:"1:全く動かず"} ],
+                    },
+                    jcsOptions: ["1", "2", "3", "10", "20", "30", "100", "200", "300"],
+                    appearanceOptions: ["起坐呼吸", "喘鳴", "顔面蒼白", "頸静脈怒張", "冷や汗"],
+                    pupilSizeOptions: [2, 3, 4, 5, 6, 7, 8],
+                    pupilReflexOptions: ["迅速(+)", "鈍(+) / C", "なし(-)"],
                 },
-
-                // -------------------------------------------------------------------------
-                // 2. 状態管理 (State)
-                // -------------------------------------------------------------------------
                 state: {
-                    db: null, // Firestoreインスタンス
-                    auth: null, // Authインスタンス
-                    userId: null, // ユーザーID
-                    dataStore: [], // Firestoreから取得した全データ
-                    isLoading: true, // ローディング中か否か
-                    intersectionObserver: null, // IntersectionObserverインスタンス
-                    
-                    // フィルター関連の状態
-                    filters: {
-                        searchTerm: '',
-                        activeKeywords: new Set(),
-                        keywordMode: 'OR', // 'OR' or 'AND'
-                        isFavoritesOnly: false,
-                    },
-                    
-                    // UI関連の状態
-                    ui: {
-                        selectedItems: new Set(), // 比較などで選択されたアイテム
-                        highlightedElements: [],
-                        currentHighlightIndex: -1,
-                    },
-
-                    // 各コンポーネントの状態
-                    stopwatch: {
-                        interval: null,
-                        isRunning: false,
-                        elapsedSeconds: 0,
-                        clickCount: 0,
-                        clickTimer: null,
-                    },
-                    vitals: {
-                        clearClickCount: 0,
-                        clearClickTimer: null,
-                        gcs: { E: 0, V: 0, M: 0 },
-                        pupil: { r: '', l: '' },
-                        pupilReflex: { r: '', l: '' },
-                    },
+                    db: null, auth: null, userId: null, dataStore: [], isLoading: true,
+                    intersectionObserver: null,
+                    filters: { searchTerm: '', activeKeywords: new Set(), keywordMode: 'OR', isFavoritesOnly: false },
+                    ui: { selectedItems: new Set(), highlightedElements: [], currentHighlightIndex: -1, mainControlsVisible: true },
+                    stopwatch: { interval: null, isRunning: false, elapsedSeconds: 0, pressTimer: null },
+                    vitals: {},
+                    sidebar: { touchStartX: 0, touchCurrentX: 0, isDragging: false },
                 },
-
-                // -------------------------------------------------------------------------
-                // 3. DOM要素のキャッシュ (Elements)
-                // -------------------------------------------------------------------------
-                elements: {},
-
-                // -------------------------------------------------------------------------
-                // 4. 初期化 (Initialization)
-                // -------------------------------------------------------------------------
                 init() {
                     this.cacheDomElements();
                     this.utils.initFirebaseConfig();
                     this.services.auth.init();
                     this.bindEventListeners();
-                    this.components.searchHistory.init();
-                    this.components.settings.init();
-                    this.components.pupilSelector.init();
+                    Object.values(this.components).forEach(component => component.init?.());
                 },
-
                 cacheDomElements() {
-                    // この関数は、頻繁にアクセスするDOM要素を一度だけ取得し、
-                    // `App.elements` オブジェクトに保存します。これにより、
-                    // DOMへのアクセス回数が減り、パフォーマンスが向上します。
                     const D = document;
                     this.elements = {
-                        // Main layout
+                        html: D.documentElement, body: D.body, app: D.getElementById('app'),
                         contentArea: D.getElementById('content-area'),
                         jumpNav: D.getElementById('jump-nav'),
                         loading: D.getElementById('loading'),
                         userIdDisplay: D.getElementById('user-id-display'),
                         sidebarToggleBtn: D.getElementById('sidebar-toggle-btn'),
                         sidebarBackdrop: D.getElementById('sidebar-backdrop'),
-
-                        // Header
+                        mainControlsToggleBtn: D.getElementById('main-controls-toggle-btn'),
+                        mainControlsContainer: D.getElementById('main-controls-container'),
+                        keywordsPanel: D.getElementById('keywords-panel'),
+                        keywordsPanelToggleBtn: D.getElementById('keywords-panel-toggle-btn'),
+                        keywordsPanelBackdrop: D.getElementById('keywords-panel-backdrop'),
+                        
                         stopwatch: D.getElementById('stopwatch'),
                         ageInput: D.getElementById('age-input'),
                         dobBtn: D.getElementById('dob-btn'),
@@ -485,7 +365,6 @@
                         vitalsBtn: D.getElementById('vitals-btn'),
                         tempMemo: D.getElementById('temp-memo'),
 
-                        // Search
                         searchInput: D.getElementById('search-input'),
                         searchExecBtn: D.getElementById('search-exec-btn'),
                         searchClearBtn: D.getElementById('search-clear-btn'),
@@ -495,39 +374,41 @@
                         searchPrevBtn: D.getElementById('search-prev-btn'),
                         searchNextBtn: D.getElementById('search-next-btn'),
 
-                        // Action buttons
                         filterFavoritesBtn: D.getElementById('filter-favorites-btn'),
                         randomBtn: D.getElementById('random-btn'),
                         addNewBtn: D.getElementById('add-new-btn'),
                         settingsBtn: D.getElementById('settings-btn'),
                         
-                        // Mobile menu
                         menuBtn: D.getElementById('menu-btn'),
                         mobileMenu: D.getElementById('mobile-menu'),
+                        mobileKeywordsPanelToggleBtn: D.getElementById('mobile-keywords-panel-toggle-btn'),
                         mobileAddNewBtn: D.getElementById('mobile-add-new-btn'),
                         mobileFilterFavoritesBtn: D.getElementById('mobile-filter-favorites-btn'),
                         mobileRandomBtn: D.getElementById('mobile-random-btn'),
                         mobileSettingsBtn: D.getElementById('mobile-settings-btn'),
 
-                        // Keywords & Vitals summary
                         selectedKeywordsArea: D.getElementById('selected-keywords-area'),
-                        toggleKeywordsBtn: D.getElementById('toggle-keywords-btn'),
                         vitalsSummaryContainer: D.getElementById('vitals-summary-container'),
                         vitalsSummaryArea: D.getElementById('vitals-summary-area'),
                         toggleVitalsSummaryBtn: D.getElementById('toggle-vitals-summary-btn'),
                         
-                        // Modals
-                        dataModal: D.getElementById('data-modal'),
-                        modalTitle: D.getElementById('modal-title'),
-                        dataForm: D.getElementById('data-form'),
-                        entryIdInput: D.getElementById('entry-id'),
-                        chiefComplaintInput: D.getElementById('chiefComplaint'),
-                        descriptionInput: D.getElementById('description'),
-                        chiefComplaintMemoInput: D.getElementById('chiefComplaintMemo'),
-                        diseasesContainer: D.getElementById('diseases-container'),
-                        addDiseaseBtn: D.getElementById('add-disease-btn'),
-                        deleteBtn: D.getElementById('delete-btn'),
-                        modalCloseBtn: D.getElementById('modal-close-btn'),
+                        vitalsModal: D.getElementById('vitals-modal'),
+                        vitalsModalCloseBtn: D.getElementById('vitals-modal-close-btn'),
+                        vitalsSaveBtn: D.getElementById('vitals-save-btn'),
+                        vitalsClearBtn: D.getElementById('vitals-clear-btn'),
+                        vitalsForm: D.getElementById('vitals-form'),
+                        vitalsAppearance: D.getElementById('vitals-appearance'),
+                        gcsTotalEl: D.getElementById('gcs-total'),
+                        gcsESelect: D.getElementById('gcs-e-select'),
+                        gcsVSelect: D.getElementById('gcs-v-select'),
+                        gcsMSelect: D.getElementById('gcs-m-select'),
+                        pupilR: D.getElementById('pupil-r'),
+                        pupilL: D.getElementById('pupil-l'),
+                        pupilSideSelector: D.getElementById('pupil-side-selector'),
+                        pupilSizeGroup: D.getElementById('pupil-size-group'),
+                        pupilReflexGroup: D.getElementById('pupil-reflex-group'),
+                        vitalsAppearanceTags: D.getElementById('vitals-appearance-tags'),
+                        vitalsJcsGroup: D.getElementById('vitals-jcs-group'),
                         
                         settingsModal: D.getElementById('settings-modal'),
                         settingsModalCloseBtn: D.getElementById('settings-modal-close-btn'),
@@ -535,101 +416,64 @@
                         importDataBtn: D.getElementById('import-data-btn'),
                         importFileInput: D.getElementById('import-file-input'),
                         showRandomBtnToggle: D.getElementById('show-random-btn-toggle'),
-                        
+                        fontSizeControls: D.getElementById('font-size-controls'),
+
                         confirmModal: D.getElementById('confirm-modal'),
                         confirmTitle: D.getElementById('confirm-title'),
                         confirmMessage: D.getElementById('confirm-message'),
                         confirmButtons: D.getElementById('confirm-buttons'),
                         alertIcon: D.getElementById('alert-icon'),
-
-                        compareModal: D.getElementById('compare-modal'),
-                        compareModalCloseBtn: D.getElementById('compare-modal-close-btn'),
-                        compareContentArea: D.getElementById('compare-content-area'),
-                        
-                        dobEraModal: D.getElementById('dob-era-modal'),
-                        dobEraOkBtn: D.getElementById('dob-era-ok-btn'),
-                        dobEraCancelBtn: D.getElementById('dob-era-cancel-btn'),
-                        eraSelect: D.getElementById('era-select'),
-                        eraYearInput: D.getElementById('era-year-input'),
-                        eraMonthInput: D.getElementById('era-month-input'),
-                        eraDayInput: D.getElementById('era-day-input'),
-                        
-                        vitalsModal: D.getElementById('vitals-modal'),
-                        vitalsModalCloseBtn: D.getElementById('vitals-modal-close-btn'),
-                        vitalsClearBtn: D.getElementById('vitals-clear-btn'),
-                        vitalsForm: D.getElementById('vitals-form'),
-                        gcsTotalEl: D.getElementById('gcs-total'),
-                        pupilR: D.getElementById('pupil-r'),
-                        pupilL: D.getElementById('pupil-l'),
                     };
                 },
-
                 bindEventListeners() {
-                    // この関数は、全てのイベントリスナーをセットアップします。
-                    // 実際の処理は `App.handlers` 内の各メソッドに委譲します。
-                    const { elements, handlers } = this;
+                    const { elements: el, handlers: h, components: c } = this;
                     
-                    // Search
-                    elements.searchExecBtn.addEventListener('click', () => handlers.handleSearch());
-                    elements.searchInput.addEventListener('keypress', e => { if (e.key === 'Enter') handlers.handleSearch(); });
-                    elements.searchClearBtn.addEventListener('click', () => handlers.handleSearchClear());
-                    elements.searchHistoryBtn.addEventListener('click', e => { e.stopPropagation(); this.components.searchHistory.toggleDropdown(); });
-                    elements.searchNextBtn.addEventListener('click', () => this.renderer.search.navigateToHighlight(1));
-                    elements.searchPrevBtn.addEventListener('click', () => this.renderer.search.navigateToHighlight(-1));
+                    el.searchExecBtn.addEventListener('click', () => h.handleSearch());
+                    el.searchInput.addEventListener('keypress', e => { if (e.key === 'Enter') h.handleSearch(); });
+                    el.searchClearBtn.addEventListener('click', () => h.handleSearchClear());
+                    el.searchHistoryBtn.addEventListener('click', e => { e.stopPropagation(); c.searchHistory.toggleDropdown(); });
+                    el.searchNextBtn.addEventListener('click', () => this.renderer.search.navigateToHighlight(1));
+                    el.searchPrevBtn.addEventListener('click', () => this.renderer.search.navigateToHighlight(-1));
                     
-                    // Main content and nav clicks (event delegation)
-                    elements.contentArea.addEventListener('click', e => handlers.handleContentAreaClick(e));
-                    elements.contentArea.addEventListener('change', e => handlers.handleCheckboxChange(e));
-                    elements.jumpNav.addEventListener('change', e => handlers.handleCheckboxChange(e));
+                    el.contentArea.addEventListener('click', e => h.handleContentAreaClick(e));
+                    el.contentArea.addEventListener('change', e => h.handleCheckboxChange(e));
+                    el.jumpNav.addEventListener('change', e => h.handleCheckboxChange(e));
 
-                    // Header buttons
-                    elements.filterFavoritesBtn.addEventListener('click', () => handlers.handleToggleFavoritesFilter());
-                    elements.addNewBtn.addEventListener('click', () => this.components.dataModal.openForNew());
-                    elements.settingsBtn.addEventListener('click', () => this.utils.showModal(elements.settingsModal));
-                    elements.randomBtn.addEventListener('click', () => handlers.handleRandomSelect());
+                    el.filterFavoritesBtn.addEventListener('click', () => h.handleToggleFavoritesFilter());
+                    el.addNewBtn.addEventListener('click', () => c.dataModal.openForNew());
+                    el.settingsBtn.addEventListener('click', () => this.utils.showModal(el.settingsModal));
+                    el.randomBtn.addEventListener('click', () => h.handleRandomSelect());
                     
-                    // Mobile navigation
-                    elements.sidebarToggleBtn.addEventListener('click', () => handlers.handleSidebarToggle());
-                    elements.sidebarBackdrop.addEventListener('click', () => handlers.handleSidebarToggle(false));
-                    elements.menuBtn.addEventListener('click', e => { e.stopPropagation(); elements.mobileMenu.classList.toggle('hidden'); });
-                    elements.mobileAddNewBtn.addEventListener('click', e => { e.preventDefault(); this.components.dataModal.openForNew(); this.utils.hide(elements.mobileMenu); });
-                    elements.mobileFilterFavoritesBtn.addEventListener('click', e => { e.preventDefault(); handlers.handleToggleFavoritesFilter(); this.utils.hide(elements.mobileMenu); });
-                    elements.mobileRandomBtn.addEventListener('click', e => { e.preventDefault(); handlers.handleRandomSelect(); this.utils.hide(elements.mobileMenu); });
-                    elements.mobileSettingsBtn.addEventListener('click', e => { e.preventDefault(); this.utils.showModal(elements.settingsModal); this.utils.hide(elements.mobileMenu); });
+                    el.sidebarToggleBtn.addEventListener('click', () => c.sidebar.toggle());
+                    el.sidebarBackdrop.addEventListener('click', () => c.sidebar.toggle(false));
+                    el.mainControlsToggleBtn.addEventListener('click', () => h.handleMainControlsToggle());
                     
-                    // Modals
-                    elements.modalCloseBtn.addEventListener('click', () => this.utils.hideModal(elements.dataModal));
-                    elements.dataForm.addEventListener('submit', e => { e.preventDefault(); this.components.dataModal.submit(); });
-                    elements.deleteBtn.addEventListener('click', () => this.components.dataModal.delete());
-                    elements.addDiseaseBtn.addEventListener('click', () => this.components.dataModal.addDiseaseForm());
-                    
-                    elements.settingsModalCloseBtn.addEventListener('click', () => this.utils.hideModal(elements.settingsModal));
-                    elements.exportDataBtn.addEventListener('click', () => this.components.settings.exportData());
-                    elements.importDataBtn.addEventListener('click', () => elements.importFileInput.click());
-                    elements.importFileInput.addEventListener('change', e => this.components.settings.handleFileSelect(e));
-                    elements.showRandomBtnToggle.addEventListener('change', e => this.components.settings.toggleRandomButtonVisibility(e.target.checked));
-                    
-                    elements.compareModalCloseBtn.addEventListener('click', () => this.utils.hideModal(elements.compareModal));
+                    el.keywordsPanelToggleBtn.addEventListener('click', () => c.keywordsPanel.toggle());
+                    el.keywordsPanelBackdrop.addEventListener('click', () => c.keywordsPanel.toggle(false));
 
-                    // Toggles
-                    elements.toggleKeywordsBtn.addEventListener('click', () => handlers.handleToggleVisibility(elements.selectedKeywordsArea, elements.toggleKeywordsBtn));
-                    elements.toggleVitalsSummaryBtn.addEventListener('click', () => handlers.handleToggleVisibility(elements.vitalsSummaryArea, elements.toggleVitalsSummaryBtn, true));
+                    el.menuBtn.addEventListener('click', e => { e.stopPropagation(); el.mobileMenu.classList.toggle('hidden'); });
+                    el.mobileKeywordsPanelToggleBtn.addEventListener('click', e => { e.preventDefault(); c.keywordsPanel.toggle(); this.utils.hide(el.mobileMenu); });
+                    el.mobileAddNewBtn.addEventListener('click', e => { e.preventDefault(); c.dataModal.openForNew(); this.utils.hide(el.mobileMenu); });
+                    el.mobileFilterFavoritesBtn.addEventListener('click', e => { e.preventDefault(); h.handleToggleFavoritesFilter(); this.utils.hide(el.mobileMenu); });
+                    el.mobileRandomBtn.addEventListener('click', e => { e.preventDefault(); h.handleRandomSelect(); this.utils.hide(el.mobileMenu); });
+                    el.mobileSettingsBtn.addEventListener('click', e => { e.preventDefault(); this.utils.showModal(el.settingsModal); this.utils.hide(el.mobileMenu); });
+                    
+                    el.settingsModalCloseBtn.addEventListener('click', () => this.utils.hideModal(el.settingsModal));
+                    el.exportDataBtn.addEventListener('click', () => c.settings.exportData());
+                    el.importDataBtn.addEventListener('click', () => el.importFileInput.click());
+                    el.importFileInput.addEventListener('change', e => c.settings.handleFileSelect(e));
+                    el.showRandomBtnToggle.addEventListener('change', e => c.settings.toggleRandomButtonVisibility(e.target.checked));
+                    el.fontSizeControls.addEventListener('click', e => c.settings.handleFontSizeChange(e));
+                    
+                    el.toggleVitalsSummaryBtn.addEventListener('click', () => h.handleToggleVisibility(el.vitalsSummaryArea, el.toggleVitalsSummaryBtn, true));
 
-                    // Global click listener to close dropdowns
                     document.addEventListener('click', e => {
-                        if (elements.searchHistoryBtn && !elements.searchHistoryBtn.parentElement.contains(e.target)) this.utils.hide(elements.searchHistoryDropdown);
-                        if (elements.menuBtn && !elements.menuBtn.contains(e.target) && !elements.mobileMenu.contains(e.target)) this.utils.hide(elements.mobileMenu);
+                        if (el.searchHistoryBtn && !el.searchHistoryBtn.parentElement.contains(e.target)) this.utils.hide(el.searchHistoryDropdown);
+                        if (el.menuBtn && !el.menuBtn.contains(e.target) && !el.mobileMenu.contains(e.target)) this.utils.hide(el.mobileMenu);
                     });
                     
-                    // Components with own listeners
-                    this.components.stopwatch.bindEventListeners();
-                    this.components.vitalsModal.bindEventListeners();
-                    this.components.dobModal.bindEventListeners();
+                    Object.values(this.components).forEach(component => component.bindEventListeners?.());
                 },
-                
-                // -------------------------------------------------------------------------
-                // 5. イベントハンドラ (Event Handlers)
-                // -------------------------------------------------------------------------
                 handlers: {
                     handleSearch() {
                         App.state.filters.activeKeywords.clear();
@@ -638,31 +482,31 @@
                         App.components.searchHistory.save(searchTerm);
                         App.renderer.renderAll();
                     },
-                    
                     handleSearchClear() {
                         App.elements.searchInput.value = '';
                         this.handleSearch();
                     },
-
                     handleToggleFavoritesFilter() {
-                        const { filters } = App.state;
-                        filters.isFavoritesOnly = !filters.isFavoritesOnly;
-                        App.elements.filterFavoritesBtn.classList.toggle('active', filters.isFavoritesOnly);
-                        App.elements.mobileFilterFavoritesBtn.classList.toggle('active', filters.isFavoritesOnly);
+                        App.state.filters.isFavoritesOnly = !App.state.filters.isFavoritesOnly;
+                        App.elements.filterFavoritesBtn.classList.toggle('active', App.state.filters.isFavoritesOnly);
+                        App.elements.mobileFilterFavoritesBtn.classList.toggle('active', App.state.filters.isFavoritesOnly);
                         App.renderer.renderAll();
                     },
-                    
+                    handleMainControlsToggle() {
+                         App.state.ui.mainControlsVisible = !App.state.ui.mainControlsVisible;
+                         App.elements.mainControlsContainer.classList.toggle('hidden', !App.state.ui.mainControlsVisible);
+                         App.elements.mainControlsToggleBtn.classList.toggle('text-blue-400', App.state.ui.mainControlsVisible);
+                    },
                     handleToggleVisibility(area, button, isCollapsed = false) {
                         const isHidden = area.classList.toggle('hidden');
                         const chevron = button.querySelector('.toggle-chevron');
-                        if(isCollapsed) {
-                           chevron.classList.toggle('collapsed');
+                        if (isCollapsed) {
+                            chevron.classList.toggle('collapsed');
                         } else {
                            chevron.classList.toggle('fa-chevron-down', isHidden);
                            chevron.classList.toggle('fa-chevron-up', !isHidden);
                         }
                     },
-
                     handleRandomSelect() {
                         const allComplaintCards = App.elements.contentArea.querySelectorAll('.content-card');
                         if (allComplaintCards.length > 0) {
@@ -670,53 +514,30 @@
                             allComplaintCards[randomIndex].scrollIntoView({ behavior: 'smooth', block: 'center' });
                         }
                     },
-                    
-                    handleSidebarToggle(forceShow) {
-                        if(typeof forceShow === 'boolean') {
-                           App.elements.jumpNav.classList.toggle('-translate-x-full', !forceShow);
-                           App.elements.sidebarBackdrop.classList.toggle('hidden', !forceShow);
-                        } else {
-                           App.elements.jumpNav.classList.toggle('-translate-x-full');
-                           App.elements.sidebarBackdrop.classList.toggle('hidden');
-                        }
-                    },
-                    
                     handleContentAreaClick(event) {
                         const { target } = event;
-                        const editBtn = target.closest('.edit-btn');
-                        const favoriteBtn = target.closest('.favorite-btn');
-                        const favoriteDiseaseBtn = target.closest('.favorite-disease-btn');
-                        
-                        if (editBtn) { App.components.dataModal.openForEdit(editBtn.dataset.id); return; }
-                        if (favoriteBtn) { App.services.db.toggleFavorite('complaint', favoriteBtn.dataset.id); return; }
-                        if (favoriteDiseaseBtn) { App.services.db.toggleFavorite('disease', favoriteDiseaseBtn.dataset.complaintId, favoriteDiseaseBtn.dataset.diseaseName); return; }
-                        if (target.classList.contains('content-keyword-tag')) { this.handleKeywordTagClick(target.textContent); }
+                        const actions = {
+                            'edit-btn': el => App.components.dataModal.openForEdit(el.dataset.id),
+                            'favorite-btn': el => App.services.db.toggleFavorite('complaint', el.dataset.id),
+                            'favorite-disease-btn': el => App.services.db.toggleFavorite('disease', el.dataset.complaintId, el.dataset.diseaseName),
+                            'content-keyword-tag': el => this.handleKeywordTagClick(el.textContent),
+                        };
+                        for (const className in actions) {
+                            const el = target.closest(`.${className}`);
+                            if (el) {
+                                actions[className](el);
+                                return;
+                            }
+                        }
                     },
-                    
                     handleKeywordTagClick(keyword) {
                         const { activeKeywords } = App.state.filters;
-                        if (activeKeywords.has(keyword)) {
-                            activeKeywords.delete(keyword);
-                        } else {
-                            activeKeywords.add(keyword);
-                        }
+                        if (activeKeywords.has(keyword)) activeKeywords.delete(keyword);
+                        else activeKeywords.add(keyword);
                         App.state.filters.searchTerm = '';
                         App.elements.searchInput.value = '';
                         App.renderer.renderAll();
                     },
-                    
-                    handleKeywordLogicToggle() {
-                        const { filters } = App.state;
-                        filters.keywordMode = filters.keywordMode === 'OR' ? 'AND' : 'OR';
-                        App.renderer.renderAll();
-                    },
-
-                    handleClearKeywordFilter() {
-                        App.state.filters.activeKeywords.clear();
-                        App.state.filters.keywordMode = 'OR';
-                        App.renderer.renderAll();
-                    },
-                    
                     handleCheckboxChange(event) {
                         const checkbox = event.target;
                         if (!checkbox.classList.contains('item-checkbox') && !checkbox.classList.contains('nav-item-checkbox')) return;
@@ -730,26 +551,15 @@
                             App.state.ui.selectedItems.delete(uniqueId);
                         }
                         
-                        // Sync checkboxes in main content and nav
-                        const mainCheckbox = App.elements.contentArea.querySelector(`.item-checkbox[data-id='${id}'][data-type='${type}']${name ? `[data-name='${name}']` : ''}`);
-                        const navCheckbox = App.elements.jumpNav.querySelector(`.nav-item-checkbox[data-id='${id}'][data-type='${type}']${name ? `[data-name='${name}']` : ''}`);
+                        const mainCheckbox = App.elements.contentArea.querySelector(`.item-checkbox[data-id='${id}']${name ? `[data-name='${name}']` : ''}`);
+                        const navCheckbox = App.elements.jumpNav.querySelector(`.nav-item-checkbox[data-id='${id}']`);
 
                         if (mainCheckbox && mainCheckbox.checked !== checkbox.checked) mainCheckbox.checked = checkbox.checked;
                         if (navCheckbox && navCheckbox.checked !== checkbox.checked) navCheckbox.checked = checkbox.checked;
                         
                         App.renderer.renderSelectedKeywords();
                     },
-                    
-                    handleClearAllSelections() {
-                        App.state.ui.selectedItems.clear();
-                        document.querySelectorAll('.item-checkbox, .nav-item-checkbox').forEach(cb => cb.checked = false);
-                        App.renderer.renderSelectedKeywords();
-                    },
                 },
-                
-                // -------------------------------------------------------------------------
-                // 6. 外部サービス (Services)
-                // -------------------------------------------------------------------------
                 services: {
                     auth: {
                         init() {
@@ -760,7 +570,7 @@
                                 this.listen();
                             } catch (error) {
                                 console.error("Firebase Initialization Failed:", error);
-                                App.elements.loading.innerHTML = `<p class="text-red-500 p-8">アプリケーションの初期化に失敗しました。設定を確認してください。</p>`;
+                                App.elements.loading.innerHTML = `<p class="text-red-500 p-8">アプリケーションの初期化に失敗しました。</p>`;
                             }
                         },
                         listen() {
@@ -791,8 +601,8 @@
                     db: {
                         getCollectionRef() {
                             const { db, userId } = App.state;
-                            const { appId } = App.config;
-                            return collection(db, 'artifacts', appId, 'users', userId, App.config.collectionName);
+                            const { appId, collectionName } = App.config;
+                            return collection(db, 'artifacts', appId, 'users', userId, collectionName);
                         },
                         listenForChanges() {
                             onSnapshot(this.getCollectionRef(), (snapshot) => {
@@ -804,18 +614,17 @@
                 
                                 if (snapshot.empty && App.state.dataStore.length === 0) { 
                                     this.seedInitialData(); 
-                                    return;
+                                    return; 
                                 }
                                 
                                 App.renderer.renderAll();
                             }, (error) => {
                                 console.error("Error fetching data:", error);
-                                if (App.elements.loading) App.elements.loading.innerHTML = '<p class="text-red-500">データの取得に失敗しました。オフラインの可能性があります。</p>';
+                                if (App.elements.loading) App.elements.loading.innerHTML = '<p class="text-red-500">データの取得に失敗しました。</p>';
                             });
                         },
                         async seedInitialData() {
-                            // 初期データ (変更なし)
-                            const initialData = [ { chiefComplaint: "気分不良", description: "身体的な不調や精神的な落ち込みなど、主観的な不快感全般。", memo: "", isFavorite: false, diseases: [ { name: "脳血管障害", description: "脳の血管が詰まったり破れたりすることで脳細胞が障害される病気。", memo: "", isFavorite: false, keywords: ["突然の片麻痺", "顔面神経麻痺", "言語障害", "意識障害", "激しい頭痛", "嘔吐", "めまい"], pitfalls: ["非典型症状（高齢者、後方循環系）", "頭痛軽微なくも膜下出血の見逃し", "TIAの見過ごし"] }, { name: "急性冠症候群", description: "心臓の血管が急に詰まり、心筋に血液が供給されなくなる危険な状態。", memo: "", isFavorite: false, keywords: ["胸痛", "放散痛", "冷や汗", "呼吸困難", "吐き気"], pitfalls: ["非典型的な胸痛（糖尿病患者、高齢者）", "心電図変化がない場合の見逃し", "消化器症状との誤認"] }, { name: "低血糖", description: "血糖値が異常に低くなることで様々な症状を引き起こす状態。", memo: "", isFavorite: false, keywords: ["冷や汗", "動悸", "意識障害", "痙攣", "空腹感"], pitfalls: ["高齢者の非典型的症状", "インスリン・経口血糖降下薬の使用歴確認漏れ", "アルコール摂取後の低血糖"] } ] }, { chiefComplaint: "呼吸困難", description: "息が苦しい、息切れがする、十分に息が吸えないといった主観的な感覚。", memo: "", isFavorite: false, diseases: [ { name: "心不全", description: "心臓のポンプ機能が低下し、全身に必要な血液を送れなくなった状態。", memo: "", isFavorite: false, keywords: ["起坐呼吸", "発作性夜間呼吸困難", "下腿浮腫", "頸静脈怒張", "ピンク色泡沫状痰"], pitfalls: ["喘息との鑑別困難", "右心不全のみの場合の呼吸困難感の欠如", "腎不全との合併"] }, { name: "気管支喘息", description: "気道が慢性的に炎症を起こし、様々な刺激で狭くなる病気。", memo: "", isFavorite: false, keywords: ["喘鳴", "呼気性呼吸困難", "夜間・早朝の増悪", "アトピー素因"], pitfalls: ["心臓喘息との鑑別", "重積発作時の喘鳴減弱（silent chest）", "アナフィラキシーの初期症状"] } ] } ];
+                            const initialData = [ { chiefComplaint: "気分不良", diseases: [ { name: "脳血管障害", keywords: ["突然の片麻痺", "顔面神経麻痺", "言語障害", "意識障害"], pitfalls: ["TIAの見過ごし"] }, { name: "急性冠症候群", keywords: ["胸痛", "放散痛", "冷や汗"], pitfalls: ["非典型的な胸痛"] } ] }, { chiefComplaint: "呼吸困難", diseases: [ { name: "心不全", keywords: ["起坐呼吸", "下腿浮腫"], pitfalls: ["喘息との鑑別困難"] } ] }];
                             try {
                                 const batch = writeBatch(App.state.db);
                                 initialData.forEach(item => {
@@ -823,9 +632,7 @@
                                     batch.set(docRef, item);
                                 });
                                 await batch.commit();
-                            } catch (error) {
-                                console.error("Error seeding data:", error);
-                            }
+                            } catch (error) { console.error("Error seeding data:", error); }
                         },
                         async toggleFavorite(type, id, diseaseName = null) {
                             const entryIndex = App.state.dataStore.findIndex(e => e.id === id);
@@ -838,73 +645,30 @@
 
                             if(type === 'complaint') {
                                 newFavoriteStatus = !entry.isFavorite;
-                                entry.isFavorite = newFavoriteStatus; // Optimistic UI update
+                                entry.isFavorite = newFavoriteStatus;
                                 updatePayload = { isFavorite: newFavoriteStatus };
-                            } else { // disease
+                            } else {
                                 const diseaseIndex = entry.diseases.findIndex(d => d.name === diseaseName);
                                 if(diseaseIndex === -1) return;
                                 newFavoriteStatus = !entry.diseases[diseaseIndex].isFavorite;
-                                entry.diseases[diseaseIndex].isFavorite = newFavoriteStatus; // Optimistic UI update
+                                entry.diseases[diseaseIndex].isFavorite = newFavoriteStatus;
                                 updatePayload = { diseases: entry.diseases };
                             }
 
-                            App.renderer.renderAll(); // Re-render with new state
+                            App.renderer.renderAll();
                 
                             try {
                                 await updateDoc(docRef, updatePayload);
                             } catch (error) {
                                 console.error("Error updating favorite status:", error);
-                                // Rollback on error
                                 if(type === 'complaint') entry.isFavorite = !newFavoriteStatus;
                                 else entry.diseases.find(d => d.name === diseaseName).isFavorite = !newFavoriteStatus;
                                 App.renderer.renderAll();
                                 App.utils.customAlert("お気に入り状態の更新に失敗しました。");
                             }
                         },
-                        async saveData(entryData, id) {
-                           try {
-                               if (id) {
-                                   await setDoc(doc(this.getCollectionRef(), id), entryData);
-                               } else {
-                                   await addDoc(this.getCollectionRef(), entryData);
-                               }
-                           } catch (error) {
-                               console.error("Error saving data: ", error);
-                               await App.utils.customAlert("データの保存に失敗しました。");
-                               throw error; // Re-throw to handle in UI
-                           }
-                        },
-                        async deleteData(id) {
-                            try {
-                                await deleteDoc(doc(this.getCollectionRef(), id));
-                            } catch (error) {
-                                console.error("Error deleting data: ", error);
-                                await App.utils.customAlert("データの削除に失敗しました。");
-                                throw error; // Re-throw to handle in UI
-                            }
-                        },
-                        async importData(newData) {
-                            try {
-                                const querySnapshot = await getDocs(this.getCollectionRef());
-                                const batch = writeBatch(App.state.db);
-                                querySnapshot.forEach((doc) => batch.delete(doc.ref));
-                                newData.forEach(item => {
-                                    const newDocRef = doc(this.getCollectionRef());
-                                    batch.set(newDocRef, item);
-                                });
-                                await batch.commit();
-                                await App.utils.customAlert("データのインポートが完了しました。", "成功");
-                            } catch (error) {
-                                console.error("Error importing data: ", error);
-                                await App.utils.customAlert("データのインポート中にエラーが発生しました。", "エラー");
-                            }
-                        }
                     }
                 },
-                
-                // -------------------------------------------------------------------------
-                // 7. レンダリング (Renderer)
-                // -------------------------------------------------------------------------
                 renderer: {
                     renderAll() {
                         this.search.unhighlight();
@@ -912,16 +676,15 @@
                         this.renderContent(dataToRender);
                         this.renderNav(dataToRender);
                         this.renderSelectedKeywords();
+                        this.renderVitalsSummary();
                         this.search.updateNav();
                         this.search.applyHighlights();
                         this.setupIntersectionObserver();
                     },
-
                     filterAndSortData() {
                         const { dataStore, filters } = App.state;
                         let processedData = [...dataStore];
 
-                        // 1. Filter by favorites if active
                         if (filters.isFavoritesOnly) {
                              processedData = processedData.map(entry => {
                                 const favoriteDiseases = (entry.diseases || []).filter(d => d.isFavorite);
@@ -931,7 +694,6 @@
                             }).filter(Boolean);
                         }
                         
-                        // 2. Filter by keywords or search term
                         if (filters.activeKeywords.size > 0) {
                             const activeKeywords = Array.from(filters.activeKeywords);
                              processedData = processedData.map(entry => {
@@ -939,7 +701,7 @@
                                     const keywords = d.keywords || [];
                                     if (filters.keywordMode === 'OR') {
                                         return activeKeywords.some(filter => keywords.includes(filter));
-                                    } else { // AND
+                                    } else {
                                         return activeKeywords.every(filter => keywords.includes(filter));
                                     }
                                 });
@@ -954,7 +716,6 @@
                             );
                         }
 
-                        // 3. Sort the results
                         processedData.sort((a, b) => {
                             if (a.isFavorite && !b.isFavorite) return -1;
                             if (!a.isFavorite && b.isFavorite) return 1;
@@ -963,7 +724,6 @@
                         
                         return processedData;
                     },
-
                     renderNav(data) {
                         const { jumpNav } = App.elements;
                         jumpNav.innerHTML = '';
@@ -971,7 +731,7 @@
                             const complaintId = `complaint-${entry.id}`;
                             const navItem = document.createElement('a');
                             navItem.href = `#${complaintId}`;
-                            navItem.className = 'nav-item block text-gray-300 hover:bg-blue-600 hover:text-white font-bold py-3 px-2 rounded-lg transition-colors text-sm flex items-center';
+                            navItem.className = 'nav-item block text-gray-300 hover:bg-blue-600 hover:text-white font-bold py-3 px-2 rounded-lg transition-colors flex items-center';
                             const starIcon = entry.isFavorite ? `<i class="fas fa-star text-yellow-400 mr-2"></i>` : '';
                             navItem.innerHTML = `<input type="checkbox" class="nav-item-checkbox" data-type="complaint" data-id="${entry.id}"> ${starIcon}${(index + 1).toString().padStart(2, '0')}. ${entry.chiefComplaint}`;
                             navItem.title = entry.chiefComplaint;
@@ -979,12 +739,11 @@
                             navItem.onclick = (e) => { 
                                 e.preventDefault(); 
                                 document.getElementById(complaintId)?.scrollIntoView({ behavior: 'smooth' }); 
-                                App.handlers.handleSidebarToggle(false);
+                                App.components.sidebar.toggle(false);
                             };
                             jumpNav.appendChild(navItem);
                         });
                     },
-
                     renderContent(data) {
                         const { contentArea } = App.elements;
                         contentArea.innerHTML = '';
@@ -995,7 +754,6 @@
                         
                         const fragment = document.createDocumentFragment();
                         data.forEach((entry, index) => {
-                            // (This part is complex but largely unchanged from the original, focusing on HTML string generation)
                             const complaintId = `complaint-${entry.id}`;
                             const isComplaintChecked = App.state.ui.selectedItems.has(`c_${entry.id}`);
                             const entryDiv = document.createElement('div');
@@ -1021,7 +779,7 @@
                                         <div class="mt-2 pl-8">
                                             <p class="text-sm text-gray-400 mt-1">${disease.description || ''}</p>
                                             ${diseaseMemoHTML}
-                                            <h4 class="font-bold text-sm text-gray-300 mt-3"><i class="fas fa-lightbulb text-yellow-400 mr-2"></i>キーワード</h4><div class="flex flex-wrap gap-2 mt-1">${(disease.keywords || []).map(k => `<span class="content-keyword-tag bg-gray-700 text-sm text-gray-200 rounded-full px-3 py-1 hover:bg-gray-500">${k}</span>`).join('')}</div>
+                                            <h4 class="font-bold text-sm text-gray-300 mt-3"><i class="fas fa-lightbulb text-yellow-400 mr-2"></i>キーワード</h4><div class="flex flex-wrap gap-2 mt-1">${(disease.keywords || []).map(k => `<span class="content-keyword-tag bg-gray-700 text-sm text-gray-200 rounded-full px-3 py-1 hover:bg-gray-500 ${App.state.filters.activeKeywords.has(k) ? 'active' : ''}">${k}</span>`).join('')}</div>
                                             <h4 class="font-bold text-sm text-gray-300 mt-3"><i class="fas fa-exclamation-triangle text-red-400 mr-2"></i>落とし穴</h4><ul class="list-disc list-inside mt-1 text-sm text-gray-300 space-y-1">${(disease.pitfalls || []).map(p => `<li>${p}</li>`).join('')}</ul>
                                         </div>
                                     </div>`;
@@ -1045,44 +803,40 @@
                         });
                         contentArea.appendChild(fragment);
                     },
-                    
                     renderSelectedKeywords() {
-                        const { selectedKeywordsArea } = App.elements;
-                        const { dataStore } = App.state;
-                        const { selectedItems, activeKeywords } = App.state.filters;
-
+                        const { selectedKeywordsArea, keywordsPanelToggleBtn } = App.elements;
                         selectedKeywordsArea.innerHTML = '';
-                        App.utils.show(selectedKeywordsArea.parentElement.parentElement);
-
+                        
                         const allAvailableKeywords = new Set();
                         if (App.state.ui.selectedItems.size === 0) {
-                            dataStore.forEach(entry => (entry.diseases || []).forEach(d => (d.keywords || []).forEach(k => allAvailableKeywords.add(k))));
+                            App.state.dataStore.forEach(entry => (entry.diseases || []).forEach(d => (d.keywords || []).forEach(k => allAvailableKeywords.add(k))));
                         } else {
                             App.state.ui.selectedItems.forEach(itemId => {
                                 const parts = itemId.split('_'); const type = parts[0]; const entryId = parts[1];
-                                const entry = dataStore.find(e => e.id === entryId); if (!entry) return;
+                                const entry = App.state.dataStore.find(e => e.id === entryId); if (!entry) return;
                                 if (type === 'c') { (entry.diseases || []).forEach(d => (d.keywords || []).forEach(k => allAvailableKeywords.add(k))); } 
                                 else if (type === 'd') { const diseaseName = parts.slice(2).join(' ').replace(/_/g, ' '); const disease = (entry.diseases || []).find(d => d.name === diseaseName); if (disease) { (disease.keywords || []).forEach(k => allAvailableKeywords.add(k)); } }
                             });
                         }
                         
-                        if(allAvailableKeywords.size === 0) {
-                             App.utils.hide(selectedKeywordsArea);
-                             return;
-                        }
-                        App.utils.show(selectedKeywordsArea);
+                        App.utils.hide(keywordsPanelToggleBtn);
+                        if(allAvailableKeywords.size === 0) return;
+                        
+                        App.utils.show(keywordsPanelToggleBtn);
 
+                        const keywordTags = document.createElement('div');
+                        keywordTags.className = 'flex flex-wrap gap-2';
                         [...allAvailableKeywords].sort((a,b) => a.localeCompare(b, 'ja')).forEach(keyword => { 
                             const tag = document.createElement('span'); 
-                            tag.className = 'keyword-tag bg-gray-700 hover:bg-gray-600 text-sm py-1 px-3 rounded-full transition-colors'; 
-                            if (App.state.filters.activeKeywords.has(keyword)) tag.classList.add('active');
+                            tag.className = `keyword-tag bg-gray-700 hover:bg-gray-600 text-sm py-1 px-3 rounded-full transition-colors ${App.state.filters.activeKeywords.has(keyword) ? 'active' : ''}`;
                             tag.textContent = keyword; 
                             tag.onclick = () => App.handlers.handleKeywordTagClick(keyword);
-                            selectedKeywordsArea.appendChild(tag); 
+                            keywordTags.appendChild(tag); 
                         });
-                        
+                        selectedKeywordsArea.appendChild(keywordTags);
+
                         const controlsContainer = document.createElement('div');
-                        controlsContainer.className = "ml-4 flex items-center space-x-3";
+                        controlsContainer.className = "mt-4 pt-4 border-t border-gray-700 flex flex-col gap-3";
                         
                         if (App.state.filters.activeKeywords.size > 0) {
                             if (App.state.filters.activeKeywords.size > 1) {
@@ -1102,12 +856,12 @@
                         App.state.ui.selectedItems.forEach(itemId => { if(itemId.startsWith('d_')) diseaseCount++; });
                 
                         if (diseaseCount >= 2) {
-                            const compareBtn = App.utils.createButton('<i class="fas fa-exchange-alt mr-2"></i>選択した疾患を比較', 'ml-auto text-sm bg-indigo-600 hover:bg-indigo-700 text-white font-bold py-1 px-3 rounded-lg flex items-center', () => App.components.compareModal.render());
+                            const compareBtn = App.utils.createButton('<i class="fas fa-exchange-alt mr-2"></i>選択した疾患を比較', 'text-sm bg-indigo-600 hover:bg-indigo-700 text-white font-bold py-2 px-4 rounded-lg flex items-center justify-center', () => App.components.compareModal.render());
                             controlsContainer.appendChild(compareBtn);
                         }
                 
                         if(App.state.ui.selectedItems.size > 0){
-                            const clearSelectionBtn = App.utils.createButton('<i class="fas fa-times mr-2"></i>選択をすべて解除', 'ml-auto text-sm bg-gray-500 hover:bg-gray-600 text-white font-bold py-1 px-3 rounded-lg flex items-center', () => App.handlers.handleClearAllSelections());
+                            const clearSelectionBtn = App.utils.createButton('<i class="fas fa-times mr-2"></i>選択をすべて解除', 'text-sm bg-gray-500 hover:bg-gray-600 text-white font-bold py-2 px-4 rounded-lg flex items-center justify-center', () => App.handlers.handleClearAllSelections());
                             controlsContainer.appendChild(clearSelectionBtn);
                         }
 
@@ -1115,7 +869,31 @@
                            selectedKeywordsArea.appendChild(controlsContainer);
                         }
                     },
-                    
+                    renderVitalsSummary() {
+                        const { vitalsSummaryContainer, vitalsSummaryArea } = App.elements;
+                        const vitals = App.state.vitals;
+                        
+                        if (!vitals || Object.keys(vitals).length === 0) {
+                            App.utils.hide(vitalsSummaryContainer);
+                            return;
+                        }
+                        
+                        let html = '';
+                        const format = (icon, label, value, unit = '') => (value !== null && value !== undefined && value !== '') ? `<span class="flex items-center gap-1"><i class="fa-solid ${icon} fa-fw text-gray-400"></i> ${label}: <b>${value}${unit}</b></span>` : '';
+                        
+                        html += format('fa-user', '患者', `${vitals.age || ''}歳 ${vitals.gender || ''}`.trim());
+                        html += format('fa-brain', 'JCS', vitals.jcs);
+                        if(vitals.gcs) html += format('fa-arrows-to-dot', 'GCS', vitals.gcs, ` (E${vitals.gcs_e}V${vitals.gcs_v}M${vitals.gcs_m})`);
+                        html += format('fa-lungs', '呼吸', vitals.resp, '回');
+                        html += format('fa-heart-pulse', '脈拍', vitals.pulse, '回');
+                        html += format('fa-o', 'SpO2', vitals.spo2, '%');
+                        html += format('fa-temperature-half', '体温', vitals.temp, '℃');
+                        if (vitals.bp_sys || vitals.bp_dia) html += format('fa-droplet', '血圧', `${vitals.bp_sys || '?'}/${vitals.bp_dia || '?'}`);
+                        if (vitals.pupil_r || vitals.pupil_l) html += format('fa-eye', '瞳孔', `R:${vitals.pupil_r || '?'} L:${vitals.pupil_l || '?'}`);
+                        
+                        vitalsSummaryArea.innerHTML = html;
+                        App.utils.show(vitalsSummaryContainer);
+                    },
                     setupIntersectionObserver() {
                         if (App.state.intersectionObserver) App.state.intersectionObserver.disconnect();
                         
@@ -1132,16 +910,12 @@
                         }, options);
                         document.querySelectorAll('.content-card').forEach(card => App.state.intersectionObserver.observe(card));
                     },
-
-                    search: { // Nested object for search-specific rendering
+                    search: {
                         applyHighlights() {
                             const { filters, ui } = App.state;
                             let termToHighlight = [];
-                            if (filters.activeKeywords.size > 0) {
-                                termToHighlight = [...filters.activeKeywords];
-                            } else if (filters.searchTerm) {
-                                termToHighlight = [filters.searchTerm];
-                            }
+                            if (filters.activeKeywords.size > 0) termToHighlight = [...filters.activeKeywords];
+                            else if (filters.searchTerm) termToHighlight = [filters.searchTerm];
 
                             if(termToHighlight.length > 0) {
                                 const regex = new RegExp(`(${termToHighlight.map(t => t.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')).join('|')})`, 'gi');
@@ -1151,8 +925,11 @@
                             ui.highlightedElements = App.elements.contentArea.querySelectorAll('.highlight');
                             if(ui.highlightedElements.length > 0) {
                                 ui.currentHighlightIndex = 0;
-                                this.navigateToHighlight(0, false); // Don't scroll on initial highlight
+                                this.navigateToHighlight(0, false);
+                            } else {
+                                ui.currentHighlightIndex = -1;
                             }
+                            this.updateNav();
                         },
                         updateNav() {
                             const { ui } = App.state;
@@ -1172,39 +949,95 @@
                             ui.highlightedElements.forEach(el => el.classList.remove('current-highlight'));
                             const currentEl = ui.highlightedElements[ui.currentHighlightIndex];
                             currentEl.classList.add('current-highlight');
-                            if(shouldScroll) {
-                                currentEl.scrollIntoView({ behavior: 'smooth', block: 'center' });
-                            }
+                            if(shouldScroll) currentEl.scrollIntoView({ behavior: 'smooth', block: 'center' });
                             this.updateNav();
                         },
                         unhighlight() {
                             App.state.ui.highlightedElements = [];
                             App.state.ui.currentHighlightIndex = -1;
                             App.elements.contentArea.querySelectorAll('mark.highlight').forEach(el => { el.outerHTML = el.innerHTML; });
-                            this.updateNav();
                         },
                     },
                 },
-                
-                // -------------------------------------------------------------------------
-                // 8. コンポーネント (Components)
-                // -------------------------------------------------------------------------
                 components: {
+                    sidebar: {
+                        init() {
+                            App.elements.body.addEventListener('touchstart', e => this.handleTouchStart(e), { passive: true });
+                            App.elements.body.addEventListener('touchmove', e => this.handleTouchMove(e), { passive: true });
+                            App.elements.body.addEventListener('touchend', e => this.handleTouchEnd(e));
+                        },
+                        handleTouchStart(e) {
+                            const s = App.state.sidebar;
+                            if (e.touches[0].clientX < 40) {
+                                s.isDragging = true;
+                                s.touchStartX = e.touches[0].clientX;
+                            }
+                        },
+                        handleTouchMove(e) {
+                            const s = App.state.sidebar;
+                            if (!s.isDragging) return;
+                            s.touchCurrentX = e.touches[0].clientX;
+                            const diff = s.touchCurrentX - s.touchStartX;
+                            if (diff > 0) {
+                                App.elements.jumpNav.style.transition = 'none';
+                                App.elements.jumpNav.style.transform = `translateX(${Math.min(diff - 192, 0)}px)`;
+                            }
+                        },
+                        handleTouchEnd() {
+                            const s = App.state.sidebar;
+                            if (!s.isDragging) return;
+                            s.isDragging = false;
+                            App.elements.jumpNav.style.transition = '';
+                            App.elements.jumpNav.style.transform = '';
+                            const diff = s.touchCurrentX - s.touchStartX;
+                            if (diff > App.config.swipeThreshold) {
+                                this.toggle(true);
+                            } else {
+                                this.toggle(false);
+                            }
+                        },
+                        toggle(forceShow) {
+                            const { jumpNav, sidebarBackdrop } = App.elements;
+                            const shouldShow = typeof forceShow === 'boolean' ? forceShow : jumpNav.classList.contains('-translate-x-full');
+                            jumpNav.classList.toggle('-translate-x-full', !shouldShow);
+                            sidebarBackdrop.classList.toggle('hidden', !shouldShow);
+                        }
+                    },
+                    keywordsPanel: {
+                        bindEventListeners() {
+                            App.elements.keywordsPanelToggleBtn.addEventListener('click', () => this.toggle());
+                            App.elements.mobileKeywordsPanelToggleBtn.addEventListener('click', (e) => {
+                                e.preventDefault();
+                                this.toggle();
+                                App.utils.hide(App.elements.mobileMenu);
+                            });
+                            App.elements.keywordsPanelBackdrop.addEventListener('click', () => this.toggle(false));
+                        },
+                        toggle(forceShow) {
+                            const { keywordsPanel, keywordsPanelBackdrop } = App.elements;
+                            const shouldShow = typeof forceShow === 'boolean' ? forceShow : keywordsPanel.classList.contains('translate-x-full');
+                            keywordsPanel.classList.toggle('translate-x-full', !shouldShow);
+                            keywordsPanelBackdrop.classList.toggle('hidden', !shouldShow);
+                        }
+                    },
                     stopwatch: {
-                        bindEventListeners() { App.elements.stopwatch.addEventListener('click', e => this.handleClick(e)); },
-                        handleClick(e) {
+                        bindEventListeners() {
+                           const el = App.elements.stopwatch;
+                           el.addEventListener('mousedown', e => this.handlePress(e));
+                           el.addEventListener('mouseup', e => this.handleRelease(e));
+                           el.addEventListener('mouseleave', e => this.handleRelease(e));
+                           el.addEventListener('touchstart', e => this.handlePress(e));
+                           el.addEventListener('touchend', e => this.handleRelease(e));
+                        },
+                        handlePress(e) {
                             e.preventDefault();
-                            const s = App.state.stopwatch;
-                            s.clickCount++;
-                            if (s.clickTimer) clearTimeout(s.clickTimer);
-                            s.clickTimer = setTimeout(() => {
-                                if (s.clickCount === 1) this.toggle();
-                                s.clickCount = 0;
-                            }, App.config.stopwatchClickDelay);
-                            if (s.clickCount === 3) {
-                                clearTimeout(s.clickTimer);
-                                this.reset();
-                                s.clickCount = 0;
+                            App.state.stopwatch.pressTimer = setTimeout(() => this.reset(), App.config.stopwatchResetDelay);
+                        },
+                        handleRelease() {
+                            if (App.state.stopwatch.pressTimer) {
+                                clearTimeout(App.state.stopwatch.pressTimer);
+                                App.state.stopwatch.pressTimer = null;
+                                this.toggle();
                             }
                         },
                         toggle() {
@@ -1232,70 +1065,147 @@
                             s.elapsedSeconds = 0;
                             App.elements.stopwatch.textContent = "00:00";
                             App.elements.stopwatch.classList.remove('running');
+                            App.utils.customAlert("ストップウォッチをリセットしました。");
                         },
                     },
-
-                    // 各モーダルやUI部品のロジックをここに集約
-                    searchHistory: {
-                        init() { /* ... */ },
-                        getKey() { return `paramedic_app_search_history_${App.config.appId}`; },
-                        get() { return JSON.parse(localStorage.getItem(this.getKey())) || []; },
-                        save(term) {
-                            if (!term) return;
-                            let history = this.get();
-                            history = history.filter(item => item !== term);
-                            history.unshift(term);
-                            if (history.length > App.config.maxHistoryItems) history.pop();
-                            localStorage.setItem(this.getKey(), JSON.stringify(history));
+                    vitalsModal: {
+                        init() {
+                            this.populateSelectors();
+                            App.state.vitals = App.utils.loadFromStorage(App.config.storageKeys.vitals, {});
+                            this.updateFormFromState();
                         },
-                        clear() {
-                            localStorage.removeItem(this.getKey());
-                            this.render();
+                        bindEventListeners() {
+                            const el = App.elements;
+                            el.vitalsBtn.addEventListener('click', () => { this.updateFormFromState(); App.utils.showModal(el.vitalsModal); });
+                            el.vitalsModalCloseBtn.addEventListener('click', () => App.utils.hideModal(el.vitalsModal));
+                            el.vitalsSaveBtn.addEventListener('click', () => this.saveAndClose());
+                            el.vitalsForm.addEventListener('change', () => this.updateStateFromForm());
+                            el.pupilSideSelector.addEventListener('click', () => this.togglePupilSide());
+                             el.vitalsClearBtn.addEventListener('mousedown', () => { App.state.vitals.pressTimer = setTimeout(() => this.clear(), App.config.vitalsClearResetDelay); });
+                             el.vitalsClearBtn.addEventListener('mouseup', () => clearTimeout(App.state.vitals.pressTimer));
+                             el.vitalsClearBtn.addEventListener('mouseleave', () => clearTimeout(App.state.vitals.pressTimer));
+                             el.vitalsClearBtn.addEventListener('touchstart', () => { App.state.vitals.pressTimer = setTimeout(() => this.clear(), App.config.vitalsClearResetDelay); });
+                             el.vitalsClearBtn.addEventListener('touchend', () => clearTimeout(App.state.vitals.pressTimer));
                         },
-                        render() {
-                            const { searchHistoryDropdown } = App.elements;
-                            const history = this.get();
-                            searchHistoryDropdown.innerHTML = '';
-                            if (history.length === 0) {
-                                searchHistoryDropdown.innerHTML = '<div class="p-3 text-sm text-gray-500 text-center">検索履歴はありません。</div>';
-                                return;
-                            }
-                            const list = document.createElement('ul');
-                            history.forEach(term => {
-                                const item = document.createElement('li');
-                                item.className = 'px-4 py-2 hover:bg-gray-700 cursor-pointer text-gray-200';
-                                item.textContent = term;
-                                item.addEventListener('click', () => { App.elements.searchInput.value = term; App.handlers.handleSearch(); App.utils.hide(searchHistoryDropdown); });
-                                list.appendChild(item);
+                        populateSelectors() {
+                            const { gcsOptions, jcsOptions, appearanceOptions, pupilSizeOptions, pupilReflexOptions } = App.config;
+                            ['E', 'V', 'M'].forEach(type => {
+                                const select = App.elements[`gcs${type.toUpperCase()}Select`];
+                                gcsOptions[type].forEach(opt => select.add(new Option(opt.t, opt.v)));
                             });
-                            searchHistoryDropdown.appendChild(list);
-                            const footer = document.createElement('div');
-                            footer.className = 'p-2 border-t border-gray-700 text-center';
-                            const clearButton = App.utils.createButton('履歴を消去', 'text-sm text-red-500 hover:text-red-400', e => { e.stopPropagation(); this.clear(); });
-                            footer.appendChild(clearButton);
-                            searchHistoryDropdown.appendChild(footer);
+                            jcsOptions.forEach(val => App.elements.vitalsJcsGroup.appendChild(App.utils.createButton(val, 'vitals-btn bg-gray-600 p-2 rounded-md', e => this.handleJcsClick(e))));
+                            appearanceOptions.forEach(val => App.elements.vitalsAppearanceTags.appendChild(App.utils.createButton(val, 'vitals-btn bg-gray-600 hover:bg-gray-500 text-sm py-1 px-3 rounded-full', e => e.target.classList.toggle('active'))));
+                            pupilSizeOptions.forEach(val => App.elements.pupilSizeGroup.appendChild(App.utils.createButton(val, 'pupil-btn bg-gray-700 w-8 h-8 rounded-full', e => this.handlePupilClick(e, 'size'))));
+                            pupilReflexOptions.forEach(val => App.elements.pupilReflexGroup.appendChild(App.utils.createButton(val, 'pupil-reflex-btn bg-gray-700 h-8 px-2 rounded-md', e => this.handlePupilClick(e, 'reflex'))));
                         },
-                        toggleDropdown() {
-                             if(App.elements.searchHistoryDropdown.classList.contains('hidden')) {
-                                this.render();
-                                App.utils.show(App.elements.searchHistoryDropdown);
-                             } else {
-                                App.utils.hide(App.elements.searchHistoryDropdown);
+                        handleJcsClick(e) {
+                            App.elements.vitalsJcsGroup.querySelectorAll('.active').forEach(b => b.classList.remove('active'));
+                            e.target.classList.add('active');
+                            this.updateStateFromForm();
+                        },
+                        handlePupilClick(e, type) {
+                            const groupEl = type === 'size' ? App.elements.pupilSizeGroup : App.elements.pupilReflexGroup;
+                            const alreadyActive = e.target.classList.contains('active');
+                            groupEl.querySelectorAll('.active').forEach(b => b.classList.remove('active'));
+                            if (!alreadyActive) e.target.classList.add('active');
+                             this.updateStateFromForm();
+                        },
+                        togglePupilSide() {
+                            const selector = App.elements.pupilSideSelector;
+                            const newSide = selector.dataset.side === 'r' ? 'l' : 'r';
+                            selector.dataset.side = newSide;
+                            selector.textContent = newSide === 'r' ? '右(R):' : '左(L):';
+                            this.updatePupilSelectors();
+                        },
+                        updateGcsTotal() {
+                            const { gcsESelect, gcsVSelect, gcsMSelect, gcsTotalEl } = App.elements;
+                            const total = parseInt(gcsESelect.value || 1) + parseInt(gcsVSelect.value || 1) + parseInt(gcsMSelect.value || 1);
+                            gcsTotalEl.textContent = total;
+                            return total;
+                        },
+                        updateStateFromForm() {
+                             const form = App.elements.vitalsForm;
+                             const vitals = App.state.vitals;
+                             
+                             vitals.jcs = form.querySelector('#vitals-jcs-group .active')?.textContent.trim() || null;
+                             vitals.gcs = this.updateGcsTotal();
+                             vitals.gcs_e = App.elements.gcsESelect.value;
+                             vitals.gcs_v = App.elements.gcsVSelect.value;
+                             vitals.gcs_m = App.elements.gcsMSelect.value;
+                             
+                             const sideR = (vitals.pupil_r || '/').split('/');
+                             const sideL = (vitals.pupil_l || '/').split('/');
+                             let currentPupilState = { r_size: sideR[0], r_reflex: sideR[1], l_size: sideL[0], l_reflex: sideL[1]};
+                             
+                             const activeSide = App.elements.pupilSideSelector.dataset.side;
+                             currentPupilState[`${activeSide}_size`] = form.querySelector('#pupil-size-group .active')?.textContent.trim() || null;
+                             currentPupilState[`${activeSide}_reflex`] = form.querySelector('#pupil-reflex-group .active')?.textContent.trim() || null;
+                             
+                             vitals.pupil_r = [currentPupilState.r_size, currentPupilState.r_reflex].filter(Boolean).join('/') || null;
+                             vitals.pupil_l = [currentPupilState.l_size, currentPupilState.l_reflex].filter(Boolean).join('/') || null;
+
+                             this.updatePupilDisplay();
+                        },
+                        updateFormFromState() {
+                            const vitals = App.state.vitals;
+                            this.updateGcsTotal();
+                            this.updatePupilDisplay();
+                            this.updatePupilSelectors();
+                        },
+                        updatePupilDisplay() {
+                            App.elements.pupilR.value = App.state.vitals.pupil_r || '';
+                            App.elements.pupilL.value = App.state.vitals.pupil_l || '';
+                        },
+                        updatePupilSelectors() {
+                            const side = App.elements.pupilSideSelector.dataset.side;
+                             const [size, reflex] = (App.state.vitals[`pupil_${side}`] || '').split('/');
+                             App.elements.pupilSizeGroup.querySelectorAll('button').forEach(b => b.classList.toggle('active', b.textContent === size));
+                             App.elements.pupilReflexGroup.querySelectorAll('button').forEach(b => b.classList.toggle('active', b.textContent === reflex));
+                        },
+                        saveAndClose() {
+                            this.updateStateFromForm();
+                            App.utils.saveToStorage(App.config.storageKeys.vitals, App.state.vitals);
+                            App.renderer.renderVitalsSummary();
+                            App.utils.hideModal(App.elements.vitalsModal);
+                        },
+                        async clear() {
+                            const confirmed = await App.utils.customConfirm("バイタル入力をすべてクリアしますか？", "確認");
+                             if(confirmed) {
+                                App.state.vitals = {};
+                                App.utils.saveToStorage(App.config.storageKeys.vitals, {});
+                                App.elements.vitalsForm.reset();
+                                App.elements.vitalsForm.querySelectorAll('.active').forEach(b => b.classList.remove('active'));
+                                this.updateFormFromState();
+                                App.renderer.renderVitalsSummary();
                              }
+                        },
+                    },
+                    settings: {
+                        init() {
+                             const showRandom = App.utils.loadFromStorage(App.config.storageKeys.showRandomBtn) === 'true';
+                             App.elements.showRandomBtnToggle.checked = showRandom;
+                             App.elements.randomBtn.classList.toggle('hidden', !showRandom);
+                             
+                             const fontSize = App.utils.loadFromStorage(App.config.storageKeys.fontSize, 'base');
+                             this.applyFontSize(fontSize);
+                        },
+                        toggleRandomButtonVisibility(isVisible) {
+                             App.elements.randomBtn.classList.toggle('hidden', !isVisible);
+                             App.utils.saveToStorage(App.config.storageKeys.showRandomBtn, isVisible);
+                        },
+                        handleFontSizeChange(e) {
+                            const btn = e.target.closest('.font-size-btn');
+                            if(btn) this.applyFontSize(btn.dataset.size);
+                        },
+                        applyFontSize(size) {
+                            App.elements.html.className = `text-${size}`;
+                            App.elements.fontSizeControls.querySelectorAll('.font-size-btn').forEach(b => {
+                                b.classList.toggle('active', b.dataset.size === size);
+                            });
+                            App.utils.saveToStorage(App.config.storageKeys.fontSize, size);
                         }
                     },
-                    
-                    settings: { /* ... */ },
-                    dataModal: { /* ... */ },
-                    vitalsModal: { /* ... */ },
-                    dobModal: { /* ... */ },
-                    compareModal: { /* ... */ },
-                    pupilSelector: { /* ... */ },
                 },
-                
-                // -------------------------------------------------------------------------
-                // 9. ユーティリティ (Utilities)
-                // -------------------------------------------------------------------------
                 utils: {
                     initFirebaseConfig() {
                         if (typeof __firebase_config !== 'undefined' && __firebase_config) {
@@ -1314,20 +1224,22 @@
                         }
                         App.config.appId = typeof __app_id !== 'undefined' ? __app_id : 'default-app-id';
                     },
-                    show(el) { el.classList.remove('hidden'); },
-                    hide(el) { el.classList.add('hidden'); },
-                    showModal(el) { el.classList.remove('hidden'); },
-                    hideModal(el) { el.classList.add('hidden'); },
+                    show(el) { if(el) el.classList.remove('hidden'); },
+                    hide(el) { if(el) el.classList.add('hidden'); },
+                    showModal(el) { if(el) el.classList.remove('hidden'); },
+                    hideModal(el) { if(el) el.classList.add('hidden'); },
                     createButton(html, classes, onClick) {
                         const btn = document.createElement('button');
+                        btn.type = 'button';
                         btn.innerHTML = html;
                         btn.className = classes;
-                        btn.onclick = onClick;
+                        if(onClick) btn.onclick = onClick;
                         return btn;
                     },
                     customAlert(message, title = '情報') {
                         return new Promise((resolve) => {
                             const { confirmModal, confirmTitle, confirmMessage, alertIcon, confirmButtons } = App.elements;
+                            if(!confirmModal) return resolve(true);
                             confirmTitle.textContent = title;
                             confirmMessage.textContent = message;
                             alertIcon.innerHTML = `<i class="fas fa-info-circle text-blue-400 text-2xl"></i>`;
@@ -1339,6 +1251,7 @@
                     customConfirm(message, title = '確認') {
                         return new Promise((resolve) => {
                             const { confirmModal, confirmTitle, confirmMessage, alertIcon, confirmButtons } = App.elements;
+                            if(!confirmModal) return resolve(false);
                             confirmTitle.textContent = title;
                             confirmMessage.textContent = message;
                             alertIcon.innerHTML = `<i class="fas fa-exclamation-triangle text-yellow-400 text-2xl"></i>`;
@@ -1349,11 +1262,26 @@
                             document.getElementById('confirm-ok-btn').onclick = () => { this.hideModal(confirmModal); resolve(true); };
                             document.getElementById('confirm-cancel-btn').onclick = () => { this.hideModal(confirmModal); resolve(false); };
                         });
-                    }
+                    },
+                    loadFromStorage(key, defaultValue = null) {
+                        const item = localStorage.getItem(key);
+                        if (item === null) return defaultValue;
+                        try {
+                            return JSON.parse(item);
+                        } catch (e) {
+                            return item;
+                        }
+                    },
+                    saveToStorage(key, value) {
+                        if (typeof value === 'object') {
+                            localStorage.setItem(key, JSON.stringify(value));
+                        } else {
+                            localStorage.setItem(key, value);
+                        }
+                    },
                 }
             };
 
-            // アプリケーションの実行開始
             App.init();
         });
     </script>
