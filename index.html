@@ -60,6 +60,15 @@
         .toggle-chevron.collapsed { transform: rotate(180deg); }
 
         select.gcs-select { -webkit-appearance: none; appearance: none; background-image: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 20 20'%3e%3cpath stroke='%239ca3af' stroke-linecap='round' stroke-linejoin='round' stroke-width='1.5' d='M6 8l4 4 4-4'/%3e%3c/svg%3e"); background-position: right 0.5rem center; background-repeat: no-repeat; background-size: 1.5em 1.5em; padding-right: 2.5rem; }
+
+        @keyframes flash {
+          50% { opacity: 0.2; }
+        }
+        .flashing-indicator {
+          animation: flash 1.5s linear infinite;
+          color: #f87171; /* red-400 */
+          font-weight: bold;
+        }
     </style>
 </head>
 <body class="bg-gray-900 text-gray-100 antialiased text-sm">
@@ -198,13 +207,15 @@
                              <div>
                                 <h4 class="block text-sm font-medium mt-4">血圧 (mmHg)</h4>
                                 <div class="grid grid-cols-2 gap-x-4 mt-2">
-                                    <div class="space-y-2">
+                                    <div class="space-y-2 relative">
+                                        <div id="pulse-pressure-r" class="absolute right-0 top-0 text-xs"></div>
                                         <label for="bp-sys-r" class="text-xs">収縮期 (右)</label>
                                         <input name="bp_sys_r" type="number" id="bp-sys-r" class="w-full bg-gray-700 p-2 rounded-md" placeholder="Sys">
                                         <label for="bp-dia-r" class="text-xs">拡張期 (右)</label>
                                         <input name="bp_dia_r" type="number" id="bp-dia-r" class="w-full bg-gray-700 p-2 rounded-md" placeholder="Dia">
                                     </div>
-                                    <div class="space-y-2">
+                                    <div class="space-y-2 relative">
+                                        <div id="pulse-pressure-l" class="absolute right-0 top-0 text-xs"></div>
                                         <label for="bp-sys-l" class="text-xs">収縮期 (左)</label>
                                         <input name="bp_sys_l" type="number" id="bp-sys-l" class="w-full bg-gray-700 p-2 rounded-md" placeholder="Sys">
                                         <label for="bp-dia-l" class="text-xs">拡張期 (左)</label>
@@ -1039,8 +1050,15 @@
                             html += format('fa-heart-pulse', '脈拍', vitals.pulse, '回');
                             html += format('fa-o', 'SpO2', vitals.spo2, '%');
                             html += format('fa-temperature-half', '体温', vitals.temp, '℃');
-                            if (vitals.bp_sys_r || vitals.bp_dia_r) html += format('fa-droplet', '血圧(R)', `${vitals.bp_sys_r || '?'}/${vitals.bp_dia_r || '?'}`);
-                            if (vitals.bp_sys_l || vitals.bp_dia_l) html += format('fa-droplet', '血圧(L)', `${vitals.bp_sys_l || '?'}/${vitals.bp_dia_l || '?'}`);
+                            
+                            let bpTextR = `${vitals.bp_sys_r || '?'}/${vitals.bp_dia_r || '?'}`;
+                            if (vitals.pulse_pressure_r) bpTextR += ` <b class="text-red-400">${vitals.pulse_pressure_r}</b>`;
+                            if (vitals.bp_sys_r || vitals.bp_dia_r) html += format('fa-droplet', '血圧(R)', bpTextR, '', true);
+
+                            let bpTextL = `${vitals.bp_sys_l || '?'}/${vitals.bp_dia_l || '?'}`;
+                            if (vitals.pulse_pressure_l) bpTextL += ` <b class="text-red-400">${vitals.pulse_pressure_l}</b>`;
+                            if (vitals.bp_sys_l || vitals.bp_dia_l) html += format('fa-droplet', '血圧(L)', bpTextL, '', true);
+
                             if (vitals.pupil_r || vitals.pupil_l) html += format('fa-eye', '瞳孔', `R:${vitals.pupil_r || '?'} L:${vitals.pupil_l || '?'}`);
                         }
                         
