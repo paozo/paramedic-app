@@ -1070,11 +1070,11 @@
                             html += format('fa-o', 'SpO2', vitals.spo2, '%');
                             html += format('fa-temperature-half', '体温', vitals.temp, '℃');
                             
-                            let bpTextR = `${vitals.bp_sys_r || '?'}/${vitals.bp_dia_r || '?'}`;
+                            let bpTextR = `<b>${vitals.bp_sys_r || '?'}/${vitals.bp_dia_r || '?'}</b>`;
                             if (vitals.pulse_pressure_r) bpTextR += ` <b class="text-red-400">${vitals.pulse_pressure_r}</b>`;
                             if (vitals.bp_sys_r || vitals.bp_dia_r) html += format('fa-droplet', '血圧(R)', bpTextR, '', true);
 
-                            let bpTextL = `${vitals.bp_sys_l || '?'}/${vitals.bp_dia_l || '?'}`;
+                            let bpTextL = `<b>${vitals.bp_sys_l || '?'}/${vitals.bp_dia_l || '?'}</b>`;
                             if (vitals.pulse_pressure_l) bpTextL += ` <b class="text-red-400">${vitals.pulse_pressure_l}</b>`;
                             if (vitals.bp_sys_l || vitals.bp_dia_l) html += format('fa-droplet', '血圧(L)', bpTextL, '', true);
 
@@ -1930,6 +1930,7 @@
                         }
                     }
                 },
+                // ユーティリティ関数
                 utils: {
                     initFirebaseConfig() {
                         if (typeof __firebase_config !== 'undefined' && __firebase_config) {
