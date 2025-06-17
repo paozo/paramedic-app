@@ -5,17 +5,14 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>救急隊員向け臨床推論サポートアプリ</title>
     
+    <!-- スタイルシートとフォント -->
     <script src="https://cdn.tailwindcss.com"></script>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Noto+Sans+JP:wght@400;500;700&display=swap" rel="stylesheet">
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.7.2/css/all.min.css" crossorigin="anonymous" referrerpolicy="no-referrer" />
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css" xintegrity="sha512-SnH5WK+bZxgPHs44uWIX+LLJAJ9/2PkPKZ5QiAj6Ta86w+fsb2TkcmfRyVX3pBnMFcV7oQPJkl9QevSCWr3W6A==" crossorigin="anonymous" referrerpolicy="no-referrer" />
     <style>
         :root {
-            --font-size-base: 14px;
-            --font-size-sm: 12px;
-            --font-size-xs: 11px;
-            --font-size-lg: 16px;
-            --font-size-xl: 18px;
-            --font-size-2xl: 20px;
+            --font-size-base: 14px; --font-size-sm: 12px; --font-size-xs: 11px;
+            --font-size-lg: 16px; --font-size-xl: 18px; --font-size-2xl: 20px;
         }
         html.text-sm {
             --font-size-base: 13px; --font-size-sm: 11px; --font-size-xs: 10px; --font-size-lg: 15px; --font-size-xl: 17px; --font-size-2xl: 19px;
@@ -29,7 +26,7 @@
         
         ::-webkit-scrollbar { width: 8px; } ::-webkit-scrollbar-track { background: #1f2937; } ::-webkit-scrollbar-thumb { background: #4b5563; border-radius: 4px; } ::-webkit-scrollbar-thumb:hover { background: #6b7280; }
         
-        .modal, .content-card { transition: all 0.3s ease-in-out; }
+        .modal { transition: opacity 0.3s ease-in-out, transform 0.3s ease-in-out; }
         .modal.hidden { opacity: 0; transform: scale(0.95); pointer-events: none; }
         
         .highlight { background-color: yellow; color: #1f2937; padding: 0 2px; border-radius: 2px; }
@@ -46,13 +43,15 @@
         .nav-item.active-nav { background-color: #2563eb; color: white; }
         
         #logic-switch-container { position: relative; display: inline-flex; background-color: #374151; border-radius: 9999px; padding: 2px; cursor: pointer; }
-        .switch-label { padding: 2px 10px; font-weight: 500; color: #d1d5db; transition: color 0.2s ease-in-out; z-index: 10; }
+        .switch-label { padding: 2px 10px; font-weight: 500; color: #d1d5db; transition: color 0.2s ease-in-out; z-index: 10; user-select: none; }
         .switch-label.active-logic { color: #111827; }
-        #switch-bg { position: absolute; top: 2px; bottom: 2px; left: 2px; width: calc(50% - 2px); background-color: #fBBF24; border-radius: 9999px; transition: transform 0.2s ease-in-out; }
-        #logic-switch-container[data-mode="AND"] #switch-bg { transform: translateX(100%); }
+        #switch-bg { position: absolute; top: 2px; bottom: 2px; background-color: #fBBF24; border-radius: 9999px; transition: transform 0.2s ease-in-out; }
+        #logic-switch-container[data-mode="OR"] #switch-bg { width: calc(50% - 2px); left: 2px; transform: translateX(0); }
+        #logic-switch-container[data-mode="AND"] #switch-bg { width: calc(50% - 2px); left: 2px; transform: translateX(100%); }
+
         
         #filter-favorites-btn.active, #mobile-filter-favorites-btn.active, #keywords-panel-toggle-btn.active { color: #fBBF24; }
-        .gender-btn.active, .vitals-btn.active, .pupil-btn.active, .pupil-reflex-btn.active, .jcs-btn.active { background-color: #3b82f6; color: white; }
+        .gender-btn.active, .vitals-tag.active, .pupil-btn.active, .pupil-reflex-btn.active, .jcs-btn.active, .era-btn.active { background-color: #3b82f6; color: white; }
         .font-size-btn.active { background-color: #2563eb; }
 
         #stopwatch.running { background-color: #166534; }
@@ -66,10 +65,12 @@
 <body class="bg-gray-900 text-gray-100 antialiased text-sm">
 
     <div id="app" class="flex h-screen overflow-hidden">
+        <!-- サイドナビゲーション -->
         <nav id="jump-nav" class="w-48 bg-gray-800 p-2 overflow-y-auto fixed top-0 left-0 h-full z-40 transform -translate-x-full transition-transform md:relative md:w-28 md:translate-x-0 shadow-lg"></nav>
         <div id="sidebar-backdrop" class="hidden fixed inset-0 bg-black bg-opacity-50 z-30 md:hidden"></div>
 
         <main class="flex-1 flex flex-col">
+            <!-- ヘッダー -->
             <header class="bg-gray-800/50 backdrop-blur-sm p-2 md:p-3 sticky top-0 z-20 shadow-lg">
                 <div class="flex flex-wrap items-center gap-2">
                     <button id="sidebar-toggle-btn" class="p-2 text-white hover:text-blue-400 flex-shrink-0" aria-label="ナビゲーションを開く"><i class="fas fa-bars fa-lg"></i></button>
@@ -85,10 +86,15 @@
                     
                     <input type="text" id="temp-memo" placeholder="一時メモ..." class="flex-grow min-w-[120px] bg-gray-700 text-white placeholder-gray-400 rounded-lg p-2 focus:outline-none focus:ring-2 focus:ring-blue-500" aria-label="一時メモ">
 
-                    <div class="w-24 md:w-48 flex items-center bg-gray-700 rounded-lg relative">
-                        <input type="text" id="search-input" placeholder="検索..." class="w-full bg-transparent text-white placeholder-gray-400 rounded-lg py-2 px-4 focus:outline-none" aria-label="鑑別検索">
+                    <div class="flex items-center bg-gray-700 rounded-lg relative">
+                        <input type="text" id="search-input" placeholder="検索..." class="w-24 md:w-32 bg-transparent text-white placeholder-gray-400 rounded-l-lg py-2 pl-4 pr-0 focus:outline-none" aria-label="鑑別検索">
+                        <button id="search-clear-btn" class="text-gray-400 hover:text-white px-2" title="検索文字のクリア" aria-label="検索文字のクリア"><i class="fas fa-times"></i></button>
+                        <div class="flex items-center text-gray-400">
+                             <button id="search-prev-btn" class="hover:text-white disabled:text-gray-600" title="前の検索結果へ"><i class="fas fa-chevron-left"></i></button>
+                             <span id="search-count" class="text-xs px-1">0/0</span>
+                             <button id="search-next-btn" class="hover:text-white disabled:text-gray-600" title="次の検索結果へ"><i class="fas fa-chevron-right"></i></button>
+                        </div>
                         <button id="search-history-btn" class="text-gray-400 hover:text-white px-2" title="検索履歴の表示" aria-label="検索履歴の表示"><i class="fas fa-history"></i></button>
-                        <button id="search-clear-btn" class="text-gray-400 hover:text-white pr-2" title="検索文字のクリア" aria-label="検索文字のクリア"><i class="fas fa-times"></i></button>
                         <div id="search-history-dropdown" class="hidden absolute top-full left-0 mt-2 w-full bg-gray-800 border border-gray-700 rounded-lg shadow-xl z-30"></div>
                     </div>
 
@@ -113,12 +119,9 @@
                         <button id="random-btn" class="bg-purple-600 hover:bg-purple-700 text-white font-bold py-2 px-3 rounded-lg flex-shrink-0" title="ランダム表示" aria-label="ランダム表示"><i class="fas fa-dice"></i></button>
                         <button id="add-new-btn" class="bg-green-600 hover:bg-green-700 text-white font-bold py-2 px-3 rounded-lg flex-shrink-0"><i class="fas fa-plus"></i> <span class="hidden lg:inline">新規</span></button>
                         <button id="settings-btn" class="bg-gray-600 hover:bg-gray-500 text-white font-bold py-2 px-3 rounded-lg flex-shrink-0" title="データ管理" aria-label="データ管理"><i class="fas fa-cog"></i></button>
-                        <button id="keywords-panel-toggle-btn" class="p-2 text-white hover:text-blue-400 flex-shrink-0" aria-label="キーワードパネルを開く"><i class="fas fa-tags fa-lg"></i></button>
                     </div>
-                </div>
-
-                <div id="keywords-container" class="mt-2 hidden">
-                    <div id="selected-keywords-area" class="p-2 bg-gray-900/50 rounded-lg border border-gray-700 space-y-2"></div>
+                    <!-- キーワードパネルを開くボタンを右端に配置 -->
+                    <button id="keywords-panel-toggle-btn" class="ml-auto bg-gray-600 hover:bg-gray-500 text-white font-bold py-2 px-3 rounded-lg flex-shrink-0" aria-label="キーワードパネルを開く"><i class="fas fa-tags fa-lg"></i></button>
                 </div>
                 
                 <div id="vitals-summary-container" class="w-full mt-2 hidden">
@@ -128,7 +131,7 @@
                     </div>
                  </div>
             </header>
-
+            <!-- メインコンテンツ -->
             <div id="content-area" class="flex-1 overflow-y-auto p-2 sm:p-4">
                  <div id="loading" class="text-center p-8">
                     <i class="fas fa-spinner fa-spin text-4xl text-blue-500"></i>
@@ -141,22 +144,214 @@
             </footer>
         </main>
 
-        <aside id="keywords-panel" class="w-64 bg-gray-800 flex flex-col fixed top-0 right-0 h-full z-40 transform translate-x-full transition-transform shadow-lg">
+        <!-- キーワードパネル -->
+        <aside id="keywords-panel-right" class="w-64 bg-gray-800 flex flex-col fixed top-0 right-0 h-full z-40 transform translate-x-full transition-transform shadow-lg">
             <div class="p-4 border-b border-gray-700 flex justify-between items-center">
                 <h3 class="text-lg font-bold text-white">キーワードフィルター</h3>
                 <button id="keywords-panel-close-btn" class="text-gray-400 hover:text-white"><i class="fas fa-times fa-lg"></i></button>
             </div>
-            <div id="selected-keywords-area" class="flex-1 p-2 space-y-4 overflow-y-auto"></div>
+            <div id="keywords-panel-content-area" class="flex-1 p-4 space-y-4 overflow-y-auto"></div>
         </aside>
         <div id="keywords-panel-backdrop" class="hidden fixed inset-0 bg-black bg-opacity-50 z-30"></div>
     </div>
 
-    <div id="vitals-modal" class="modal hidden fixed inset-0 bg-black bg-opacity-80 flex items-center justify-center z-50 p-4">...</div>
-    <div id="settings-modal" class="modal hidden fixed inset-0 bg-black bg-opacity-70 flex items-center justify-center z-50 p-4">...</div>
-    <div id="data-modal" class="modal hidden fixed inset-0 bg-black bg-opacity-70 flex items-center justify-center z-50 p-4">...</div>
-    <div id="confirm-modal" class="modal hidden fixed inset-0 bg-black bg-opacity-80 flex items-center justify-center z-50 p-4">...</div>
-    <div id="compare-modal" class="modal hidden fixed inset-0 bg-black bg-opacity-80 flex items-center justify-center z-50 p-4">...</div>
-    <div id="dob-era-modal" class="modal hidden fixed inset-0 bg-black bg-opacity-70 flex items-center justify-center z-50 p-4">...</div>
+    <!-- Modals -->
+    <div id="vitals-modal" class="modal hidden fixed inset-0 bg-black bg-opacity-80 flex items-center justify-center z-50 p-4">
+        <div class="bg-gray-800 rounded-lg shadow-xl w-full max-w-4xl max-h-[90vh] flex flex-col text-gray-200">
+            <header class="p-4 border-b border-gray-700 flex justify-between items-center">
+                <h2 class="text-xl font-bold text-cyan-400 flex items-center"><i class="fas fa-wave-square mr-3"></i>バイタルサイン入力</h2>
+                <button id="vitals-modal-close-btn" class="text-gray-400 hover:text-white"><i class="fas fa-times fa-lg"></i></button>
+            </header>
+            <main class="p-4 flex-1 overflow-y-auto">
+                <form id="vitals-form" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                    <!-- 意識レベル -->
+                    <div class="space-y-4 bg-gray-900 p-4 rounded-lg">
+                        <h3 class="font-bold text-lg border-b border-gray-700 pb-2">意識レベル</h3>
+                        <div>
+                            <label class="block text-sm font-medium mb-2">JCS (Japan Coma Scale)</label>
+                            <div id="vitals-jcs-group" class="grid grid-cols-4 sm:grid-cols-5 gap-2"></div>
+                        </div>
+                        <div>
+                            <label class="block text-sm font-medium mb-2">GCS (Glasgow Coma Scale) - <span id="gcs-total" class="font-bold">3</span>点</label>
+                            <div class="space-y-2">
+                                <select id="gcs-e-select" name="gcs_e" class="gcs-select w-full bg-gray-700 p-2 rounded-md border border-gray-600 focus:ring-2 focus:ring-blue-500"></select>
+                                <select id="gcs-v-select" name="gcs_v" class="gcs-select w-full bg-gray-700 p-2 rounded-md border border-gray-600 focus:ring-2 focus:ring-blue-500"></select>
+                                <select id="gcs-m-select" name="gcs_m" class="gcs-select w-full bg-gray-700 p-2 rounded-md border border-gray-600 focus:ring-2 focus:ring-blue-500"></select>
+                            </div>
+                        </div>
+                    </div>
+                    <!-- 呼吸・循環 -->
+                    <div class="space-y-4 bg-gray-900 p-4 rounded-lg">
+                         <h3 class="font-bold text-lg border-b border-gray-700 pb-2">呼吸・循環</h3>
+                         <div class="grid grid-cols-2 gap-4">
+                            <div><label for="resp-rate" class="text-sm">呼吸数</label><input name="resp" type="number" id="resp-rate" class="w-full bg-gray-700 p-2 mt-1 rounded-md" placeholder="回/分"></div>
+                            <div><label for="spo2" class="text-sm">SpO2</label><input name="spo2" type="number" id="spo2" class="w-full bg-gray-700 p-2 mt-1 rounded-md" placeholder="%"></div>
+                            <div><label for="pulse-rate" class="text-sm">脈拍数</label><input name="pulse" type="number" id="pulse-rate" class="w-full bg-gray-700 p-2 mt-1 rounded-md" placeholder="回/分"></div>
+                            <div><label for="body-temp" class="text-sm">体温</label><input name="temp" type="number" step="0.1" id="body-temp" class="w-full bg-gray-700 p-2 mt-1 rounded-md" placeholder="℃"></div>
+                         </div>
+                         <div>
+                            <label class="block text-sm font-medium mb-2">血圧 (mmHg)</label>
+                            <div class="grid grid-cols-2 gap-4">
+                                <div><label for="bp-sys-r" class="text-xs">収縮期 (右)</label><input name="bp_sys_r" type="number" id="bp-sys-r" class="w-full bg-gray-700 p-2 mt-1 rounded-md" placeholder="R-Sys"></div>
+                                <div><label for="bp-dia-r" class="text-xs">拡張期 (右)</label><input name="bp_dia_r" type="number" id="bp-dia-r" class="w-full bg-gray-700 p-2 mt-1 rounded-md" placeholder="R-Dia"></div>
+                                <div><label for="bp-sys-l" class="text-xs">収縮期 (左)</label><input name="bp_sys_l" type="number" id="bp-sys-l" class="w-full bg-gray-700 p-2 mt-1 rounded-md" placeholder="L-Sys"></div>
+                                <div><label for="bp-dia-l" class="text-xs">拡張期 (左)</label><input name="bp_dia_l" type="number" id="bp-dia-l" class="w-full bg-gray-700 p-2 mt-1 rounded-md" placeholder="L-Dia"></div>
+                            </div>
+                         </div>
+                    </div>
+                     <!-- 瞳孔・その他 -->
+                    <div class="space-y-4 bg-gray-900 p-4 rounded-lg">
+                        <h3 class="font-bold text-lg border-b border-gray-700 pb-2">瞳孔・その他</h3>
+                         <div>
+                            <label class="block text-sm font-medium mb-2">瞳孔所見</label>
+                            <div class="grid grid-cols-2 gap-4">
+                                <input type="text" id="pupil-r" class="w-full bg-gray-700 p-2 rounded-md" placeholder="右瞳孔" readonly>
+                                <input type="text" id="pupil-l" class="w-full bg-gray-700 p-2 rounded-md" placeholder="左瞳孔" readonly>
+                            </div>
+                            <div class="grid grid-cols-2 gap-4 mt-2">
+                                <div>
+                                    <label class="text-xs">サイズ(R)</label><div id="pupil-size-group-r" class="flex flex-wrap gap-1 mt-1"></div>
+                                    <label class="text-xs mt-2">対光反射(R)</label><div id="pupil-reflex-group-r" class="flex flex-wrap gap-1 mt-1"></div>
+                                </div>
+                                <div>
+                                    <label class="text-xs">サイズ(L)</label><div id="pupil-size-group-l" class="flex flex-wrap gap-1 mt-1"></div>
+                                    <label class="text-xs mt-2">対光反射(L)</label><div id="pupil-reflex-group-l" class="flex flex-wrap gap-1 mt-1"></div>
+                                </div>
+                            </div>
+                        </div>
+                        <div>
+                            <label class="block text-sm font-medium mb-2">外観・様子</label>
+                            <div id="vitals-appearance-tags" class="flex flex-wrap gap-2"></div>
+                        </div>
+                    </div>
+                </form>
+            </main>
+            <footer class="p-4 border-t border-gray-700 flex justify-end items-center gap-3">
+                <button id="vitals-clear-btn" class="bg-red-800 hover:bg-red-700 text-white font-bold py-2 px-4 rounded-lg">クリア</button>
+                <button id="vitals-save-btn" class="bg-blue-600 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded-lg">保存して閉じる</button>
+            </footer>
+        </div>
+    </div>
+    
+    <div id="settings-modal" class="modal hidden fixed inset-0 bg-black bg-opacity-70 flex items-center justify-center z-50 p-4">
+         <div class="bg-gray-800 rounded-lg shadow-xl w-full max-w-md text-gray-200">
+            <header class="p-4 border-b border-gray-700 flex justify-between items-center">
+                <h2 class="text-xl font-bold text-gray-300 flex items-center"><i class="fas fa-cog mr-3"></i>設定</h2>
+                <button id="settings-modal-close-btn" class="text-gray-400 hover:text-white"><i class="fas fa-times fa-lg"></i></button>
+            </header>
+            <main class="p-6 space-y-6">
+                <div>
+                    <h3 class="font-semibold mb-2">データ管理</h3>
+                    <div class="flex gap-4">
+                        <button id="export-data-btn" class="flex-1 bg-green-600 hover:bg-green-700 text-white font-bold py-2 px-4 rounded-lg"><i class="fas fa-file-export mr-2"></i>エクスポート</button>
+                        <button id="import-data-btn" class="flex-1 bg-blue-600 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded-lg"><i class="fas fa-file-import mr-2"></i>インポート</button>
+                        <input type="file" id="import-file-input" class="hidden" accept=".json">
+                    </div>
+                </div>
+                <div>
+                    <h3 class="font-semibold mb-2">表示設定</h3>
+                    <div class="bg-gray-700/50 p-4 rounded-lg space-y-4">
+                         <div class="flex items-center justify-between">
+                            <label for="show-random-btn-toggle" class="font-medium">「ランダム表示」ボタンを表示</label>
+                            <label class="relative inline-flex items-center cursor-pointer">
+                                <input type="checkbox" id="show-random-btn-toggle" class="sr-only peer">
+                                <div class="w-11 h-6 bg-gray-600 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-blue-600"></div>
+                            </label>
+                        </div>
+                        <div class="flex items-center justify-between">
+                            <span class="font-medium">フォントサイズ</span>
+                            <div id="font-size-controls" class="flex items-center bg-gray-600 rounded-lg p-1">
+                                <button data-size="sm" class="font-size-btn px-3 py-1 text-sm rounded-md hover:bg-gray-500">小</button>
+                                <button data-size="base" class="font-size-btn px-3 py-1 text-sm rounded-md hover:bg-gray-500 active">中</button>
+                                <button data-size="lg" class="font-size-btn px-3 py-1 text-sm rounded-md hover:bg-gray-500">大</button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </main>
+         </div>
+    </div>
+    
+    <div id="data-modal" class="modal hidden fixed inset-0 bg-black bg-opacity-70 flex items-center justify-center z-50 p-4">
+         <div class="bg-gray-800 rounded-lg shadow-xl w-full max-w-2xl max-h-[90vh] flex flex-col">
+            <header class="p-4 border-b border-gray-700 flex justify-between items-center">
+                <h2 id="modal-title" class="text-xl font-bold"></h2>
+                <button id="modal-close-btn" class="text-gray-400 hover:text-white"><i class="fas fa-times fa-lg"></i></button>
+            </header>
+            <main class="p-4 flex-1 overflow-y-auto">
+                <form id="data-form" class="space-y-4">
+                    <input type="hidden" id="entry-id">
+                    <div>
+                        <label for="chief-complaint" class="block font-medium mb-1">主訴</label>
+                        <input type="text" id="chief-complaint" class="w-full bg-gray-700 p-2 rounded-md" required>
+                    </div>
+                     <div>
+                        <label for="chief-complaint-description" class="block font-medium mb-1">主訴の説明</label>
+                        <textarea id="chief-complaint-description" rows="2" class="w-full bg-gray-700 p-2 rounded-md"></textarea>
+                    </div>
+                    <div>
+                        <label for="chief-complaint-memo" class="block font-medium mb-1">主訴メモ</label>
+                        <textarea id="chief-complaint-memo" rows="2" class="w-full bg-gray-700 p-2 rounded-md"></textarea>
+                    </div>
+                    <div class="border-t border-gray-700 pt-4">
+                        <h3 class="text-lg font-semibold mb-2">鑑別疾患</h3>
+                        <div id="diseases-container" class="space-y-4"></div>
+                        <button type="button" id="add-disease-btn" class="mt-4 bg-blue-600 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded-lg"><i class="fas fa-plus mr-2"></i>疾患を追加</button>
+                    </div>
+                </form>
+            </main>
+            <footer class="p-4 border-t border-gray-700 flex justify-between">
+                <button type="button" id="delete-btn" class="bg-red-800 hover:bg-red-700 text-white font-bold py-2 px-4 rounded-lg">削除</button>
+                <button type="submit" form="data-form" class="bg-green-600 hover:bg-green-700 text-white font-bold py-2 px-4 rounded-lg">保存</button>
+            </footer>
+        </div>
+    </div>
+    
+    <div id="confirm-modal" class="modal hidden fixed inset-0 bg-black bg-opacity-80 flex items-center justify-center z-50 p-4">
+        <div class="bg-gray-800 rounded-lg shadow-xl w-full max-w-sm">
+            <div class="p-6 text-center">
+                <div id="alert-icon" class="mx-auto mb-4"></div>
+                <h3 id="confirm-title" class="text-lg font-bold mb-2"></h3>
+                <p id="confirm-message" class="text-sm text-gray-300"></p>
+            </div>
+            <div id="confirm-buttons" class="bg-gray-700/50 p-4 flex justify-end gap-3 rounded-b-lg"></div>
+        </div>
+    </div>
+    
+    <div id="compare-modal" class="modal hidden fixed inset-0 bg-black bg-opacity-80 flex items-center justify-center z-50 p-4">
+        <div class="bg-gray-800 rounded-lg shadow-xl w-full max-w-4xl max-h-[90vh] flex flex-col">
+            <header class="p-4 border-b border-gray-700 flex justify-between items-center">
+                <h2 class="text-xl font-bold text-indigo-400 flex items-center"><i class="fas fa-exchange-alt mr-3"></i>疾患の比較</h2>
+                <button id="compare-modal-close-btn" class="text-gray-400 hover:text-white"><i class="fas fa-times fa-lg"></i></button>
+            </header>
+            <main id="compare-modal-body" class="p-4 flex-1 overflow-y-auto"></main>
+        </div>
+    </div>
+
+    <div id="dob-era-modal" class="modal hidden fixed inset-0 bg-black bg-opacity-70 flex items-center justify-center z-50 p-4">
+         <div class="bg-gray-800 rounded-lg shadow-xl w-full max-w-sm">
+            <header class="p-4 border-b border-gray-700 flex justify-between items-center">
+                <h2 class="text-xl font-bold">生年月日から計算</h2>
+                <button id="dob-modal-close-btn" class="text-gray-400 hover:text-white"><i class="fas fa-times fa-lg"></i></button>
+            </header>
+            <main class="p-6 space-y-4">
+                <div class="grid grid-cols-5 gap-2" id="era-buttons">
+                    <button class="era-btn bg-gray-600 p-2 rounded-md" data-era="M">明治</button>
+                    <button class="era-btn bg-gray-600 p-2 rounded-md" data-era="T">大正</button>
+                    <button class="era-btn bg-gray-600 p-2 rounded-md" data-era="S">昭和</button>
+                    <button class="era-btn bg-gray-600 p-2 rounded-md" data-era="H">平成</button>
+                    <button class="era-btn bg-gray-600 p-2 rounded-md" data-era="R">令和</button>
+                </div>
+                <div class="flex items-center gap-2">
+                    <input type="number" id="era-year" class="w-full bg-gray-700 p-2 rounded-md" placeholder="年">
+                    <input type="number" id="era-month" class="w-full bg-gray-700 p-2 rounded-md" placeholder="月">
+                    <input type="number" id="era-day" class="w-full bg-gray-700 p-2 rounded-md" placeholder="日">
+                </div>
+                <button id="dob-calc-btn" class="w-full bg-blue-600 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded-lg">年齢を計算</button>
+            </main>
+        </div>
+    </div>
+
 
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/11.9.1/firebase-app.js";
@@ -172,6 +367,8 @@
                         showRandomBtn: `paramedic_app_show_random_button`,
                         fontSize: `paramedic_app_font_size`,
                         vitals: `paramedic_app_vitals`,
+                        tempMemo: `paramedic_app_temp_memo`,
+                        ageAndGender: `paramedic_app_age_gender`
                     },
                     stopwatchResetDelay: 700,
                     vitalsClearResetDelay: 700,
@@ -199,33 +396,39 @@
                 },
                 init() {
                     this.cacheDomElements();
+                    this.components.patientInfo.init(); // Load patient info first
                     this.utils.initFirebaseConfig();
                     this.services.auth.init();
                     this.bindEventListeners();
                     Object.values(this.components).forEach(component => component.init?.());
                 },
+                // DOM要素をキャッシュする
                 cacheDomElements() {
                     const D = document;
                     this.elements = {
+                        // General
                         html: D.documentElement, body: D.body, app: D.getElementById('app'),
                         contentArea: D.getElementById('content-area'),
-                        jumpNav: D.getElementById('jump-nav'),
                         loading: D.getElementById('loading'),
                         userIdDisplay: D.getElementById('user-id-display'),
+                        // Sidebar
+                        jumpNav: D.getElementById('jump-nav'),
                         sidebarToggleBtn: D.getElementById('sidebar-toggle-btn'),
                         sidebarBackdrop: D.getElementById('sidebar-backdrop'),
-                        keywordsPanel: D.getElementById('keywords-panel'),
+                        // Keywords Panel (Right)
+                        keywordsPanelRight: D.getElementById('keywords-panel-right'),
                         keywordsPanelToggleBtn: D.getElementById('keywords-panel-toggle-btn'),
                         keywordsPanelCloseBtn: D.getElementById('keywords-panel-close-btn'),
                         keywordsPanelBackdrop: D.getElementById('keywords-panel-backdrop'),
-                        
+                        keywordsPanelContentArea: D.getElementById('keywords-panel-content-area'),
+                        // Header
                         stopwatch: D.getElementById('stopwatch'),
                         ageInput: D.getElementById('age-input'),
                         dobBtn: D.getElementById('dob-btn'),
                         genderBtns: D.querySelectorAll('.gender-btn'),
                         vitalsBtn: D.getElementById('vitals-btn'),
                         tempMemo: D.getElementById('temp-memo'),
-
+                        // Search
                         searchInput: D.getElementById('search-input'),
                         searchExecBtn: D.getElementById('search-exec-btn'),
                         searchClearBtn: D.getElementById('search-clear-btn'),
@@ -234,12 +437,12 @@
                         searchCount: D.getElementById('search-count'),
                         searchPrevBtn: D.getElementById('search-prev-btn'),
                         searchNextBtn: D.getElementById('search-next-btn'),
-
+                        // Header Buttons
                         filterFavoritesBtn: D.getElementById('filter-favorites-btn'),
                         randomBtn: D.getElementById('random-btn'),
                         addNewBtn: D.getElementById('add-new-btn'),
                         settingsBtn: D.getElementById('settings-btn'),
-                        
+                        // Mobile Menu
                         menuBtn: D.getElementById('menu-btn'),
                         mobileMenu: D.getElementById('mobile-menu'),
                         mobileKeywordsPanelToggleBtn: D.getElementById('mobile-keywords-panel-toggle-btn'),
@@ -247,18 +450,16 @@
                         mobileFilterFavoritesBtn: D.getElementById('mobile-filter-favorites-btn'),
                         mobileRandomBtn: D.getElementById('mobile-random-btn'),
                         mobileSettingsBtn: D.getElementById('mobile-settings-btn'),
-
-                        selectedKeywordsArea: D.getElementById('selected-keywords-area'),
+                        // Vitals Summary
                         vitalsSummaryContainer: D.getElementById('vitals-summary-container'),
                         vitalsSummaryArea: D.getElementById('vitals-summary-area'),
                         toggleVitalsSummaryBtn: D.getElementById('toggle-vitals-summary-btn'),
-                        
+                        // Vitals Modal
                         vitalsModal: D.getElementById('vitals-modal'),
                         vitalsModalCloseBtn: D.getElementById('vitals-modal-close-btn'),
                         vitalsSaveBtn: D.getElementById('vitals-save-btn'),
                         vitalsClearBtn: D.getElementById('vitals-clear-btn'),
                         vitalsForm: D.getElementById('vitals-form'),
-                        vitalsAppearance: D.getElementById('vitals-appearance'),
                         gcsTotalEl: D.getElementById('gcs-total'),
                         gcsESelect: D.getElementById('gcs-e-select'),
                         gcsVSelect: D.getElementById('gcs-v-select'),
@@ -271,7 +472,7 @@
                         pupilReflexGroupL: D.getElementById('pupil-reflex-group-l'),
                         vitalsAppearanceTags: D.getElementById('vitals-appearance-tags'),
                         vitalsJcsGroup: D.getElementById('vitals-jcs-group'),
-                        
+                        // Settings Modal
                         settingsModal: D.getElementById('settings-modal'),
                         settingsModalCloseBtn: D.getElementById('settings-modal-close-btn'),
                         exportDataBtn: D.getElementById('export-data-btn'),
@@ -279,17 +480,39 @@
                         importFileInput: D.getElementById('import-file-input'),
                         showRandomBtnToggle: D.getElementById('show-random-btn-toggle'),
                         fontSizeControls: D.getElementById('font-size-controls'),
-
+                        // Data Modal
+                        dataModal: D.getElementById('data-modal'),
+                        modalTitle: D.getElementById('modal-title'),
+                        dataForm: D.getElementById('data-form'),
+                        modalCloseBtn: D.getElementById('modal-close-btn'),
+                        addDiseaseBtn: D.getElementById('add-disease-btn'),
+                        deleteBtn: D.getElementById('delete-btn'),
+                        entryIdInput: D.getElementById('entry-id'),
+                        chiefComplaintInput: D.getElementById('chief-complaint'),
+                        chiefComplaintDescInput: D.getElementById('chief-complaint-description'),
+                        chiefComplaintMemoInput: D.getElementById('chief-complaint-memo'),
+                        diseasesContainer: D.getElementById('diseases-container'),
+                        // Confirm Modal
                         confirmModal: D.getElementById('confirm-modal'),
                         confirmTitle: D.getElementById('confirm-title'),
                         confirmMessage: D.getElementById('confirm-message'),
                         confirmButtons: D.getElementById('confirm-buttons'),
                         alertIcon: D.getElementById('alert-icon'),
-                        
-                        dataModal: D.getElementById('data-modal'),
+                        // Compare Modal
+                        compareModal: D.getElementById('compare-modal'),
+                        compareModalCloseBtn: D.getElementById('compare-modal-close-btn'),
+                        compareModalBody: D.getElementById('compare-modal-body'),
+                         // DOB Modal
                         dobEraModal: D.getElementById('dob-era-modal'),
+                        dobModalCloseBtn: D.getElementById('dob-modal-close-btn'),
+                        eraBtns: D.getElementById('era-buttons'),
+                        eraYearInput: D.getElementById('era-year'),
+                        eraMonthInput: D.getElementById('era-month'),
+                        eraDayInput: D.getElementById('era-day'),
+                        dobCalcBtn: D.getElementById('dob-calc-btn'),
                     };
                 },
+                // イベントリスナーをバインドする
                 bindEventListeners() {
                     const { elements: el, handlers: h } = this;
                     
@@ -308,19 +531,23 @@
                     
                     el.menuBtn.addEventListener('click', e => { e.stopPropagation(); el.mobileMenu.classList.toggle('hidden'); });
                     
+                    el.toggleVitalsSummaryBtn.addEventListener('click', () => h.handleToggleVisibility(el.vitalsSummaryArea, el.toggleVitalsSummaryBtn, true));
+                    
                     document.addEventListener('click', e => {
                         if (el.searchHistoryBtn && !el.searchHistoryBtn.parentElement.contains(e.target)) this.utils.hide(el.searchHistoryDropdown);
-                        if (el.menuBtn && !el.menuBtn.contains(e.target) && !el.mobileMenu.contains(e.target)) this.utils.hide(el.mobileMenu);
+                        if (el.menuBtn && !el.menuBtn.parentElement.contains(e.target)) this.utils.hide(el.mobileMenu);
                     });
                     
+                    // 各コンポーネントのイベントリスナーを初期化
                     Object.values(this.components).forEach(component => component.bindEventListeners?.());
                 },
+                // イベントハンドラ
                 handlers: {
                     handleSearch() {
                         App.state.filters.activeKeywords.clear();
                         const searchTerm = App.elements.searchInput.value.trim();
                         App.state.filters.searchTerm = searchTerm;
-                        App.components.searchHistory.save(searchTerm);
+                        if (searchTerm) App.components.searchHistory.save(searchTerm);
                         App.renderer.renderAll();
                     },
                     handleSearchClear() {
@@ -336,11 +563,8 @@
                     handleToggleVisibility(area, button, isCollapsed = false) {
                         const isHidden = area.classList.toggle('hidden');
                         const chevron = button.querySelector('.toggle-chevron');
-                        if (isCollapsed) {
-                            chevron.classList.toggle('collapsed');
-                        } else {
-                           chevron.classList.toggle('fa-chevron-down', isHidden);
-                           chevron.classList.toggle('fa-chevron-up', !isHidden);
+                        if (chevron) {
+                            chevron.classList.toggle('collapsed', isHidden);
                         }
                     },
                     handleRandomSelect() {
@@ -356,7 +580,7 @@
                             'edit-btn': el => App.components.dataModal.openForEdit(el.dataset.id),
                             'favorite-btn': el => App.services.db.toggleFavorite('complaint', el.dataset.id),
                             'favorite-disease-btn': el => App.services.db.toggleFavorite('disease', el.dataset.complaintId, el.dataset.diseaseName),
-                            'content-keyword-tag': el => this.handleKeywordTagClick(el.textContent),
+                            'content-keyword-tag': el => this.handleKeywordTagClick(el.textContent.trim()),
                         };
                         for (const className in actions) {
                             const el = target.closest(`.${className}`);
@@ -387,15 +611,35 @@
                             App.state.ui.selectedItems.delete(uniqueId);
                         }
                         
-                        const mainCheckbox = App.elements.contentArea.querySelector(`.item-checkbox[data-id='${id}']${name ? `[data-name='${name}']` : ''}`);
-                        const navCheckbox = App.elements.jumpNav.querySelector(`.nav-item-checkbox[data-id='${id}']`);
-
-                        if (mainCheckbox && mainCheckbox.checked !== checkbox.checked) mainCheckbox.checked = checkbox.checked;
-                        if (navCheckbox && navCheckbox.checked !== checkbox.checked) navCheckbox.checked = checkbox.checked;
+                        const allCheckboxes = document.querySelectorAll(`.item-checkbox[data-id='${id}']${name ? `[data-name='${name}']` : ''}, .nav-item-checkbox[data-id='${id}']`);
+                        allCheckboxes.forEach(cb => { if (cb.checked !== checkbox.checked) cb.checked = checkbox.checked; });
                         
-                        App.renderer.renderSelectedKeywords();
+                        App.renderer.renderKeywordsPanel();
+                    },
+                     handleKeywordLogicToggle() {
+                        const { filters } = App.state;
+                        filters.keywordMode = filters.keywordMode === 'OR' ? 'AND' : 'OR';
+                        App.renderer.renderAll();
+                    },
+                    handleClearKeywordFilter() {
+                        App.state.filters.activeKeywords.clear();
+                        App.renderer.renderAll();
+                    },
+                    handleClearAllSelections() {
+                        App.state.ui.selectedItems.clear();
+                        document.querySelectorAll('.item-checkbox, .nav-item-checkbox').forEach(cb => cb.checked = false);
+                        App.renderer.renderKeywordsPanel();
+                    },
+                    handlePatientInfoChange() {
+                        const data = {
+                            age: App.elements.ageInput.value,
+                            gender: document.querySelector('.gender-btn.active')?.dataset.gender || null
+                        };
+                        App.utils.saveToStorage(App.config.storageKeys.ageAndGender, data);
+                        App.renderer.renderVitalsSummary(); // サマリーを再描画
                     },
                 },
+                // サービス（Firebaseなど）
                 services: {
                     auth: {
                         init() {
@@ -438,10 +682,13 @@
                         getCollectionRef() {
                             const { db, userId } = App.state;
                             const { appId, collectionName } = App.config;
+                            if (!userId) return null;
                             return collection(db, 'artifacts', appId, 'users', userId, collectionName);
                         },
                         listenForChanges() {
-                            onSnapshot(this.getCollectionRef(), (snapshot) => {
+                            const collectionRef = this.getCollectionRef();
+                            if (!collectionRef) return;
+                            onSnapshot(collectionRef, (snapshot) => {
                                 App.utils.hide(App.elements.loading);
                                 App.state.isLoading = false;
                                 
@@ -460,11 +707,13 @@
                             });
                         },
                         async seedInitialData() {
-                            const initialData = [ { chiefComplaint: "気分不良", diseases: [ { name: "脳血管障害", keywords: ["突然の片麻痺", "顔面神経麻痺", "言語障害", "意識障害"], pitfalls: ["TIAの見過ごし"] }, { name: "急性冠症候群", keywords: ["胸痛", "放散痛", "冷や汗"], pitfalls: ["非典型的な胸痛"] } ] }, { chiefComplaint: "呼吸困難", diseases: [ { name: "心不全", keywords: ["起坐呼吸", "下腿浮腫"], pitfalls: ["喘息との鑑別困難"] } ] }];
+                            const initialData = [ { chiefComplaint: "気分不良", isFavorite: false, diseases: [ { name: "脳血管障害", keywords: ["突然の片麻痺", "顔面神経麻痺", "言語障害", "意識障害"], pitfalls: ["TIAの見過ごし"], isFavorite: false }, { name: "急性冠症候群", keywords: ["胸痛", "放散痛", "冷や汗"], pitfalls: ["非典型的な胸痛"], isFavorite: false } ] }, { chiefComplaint: "呼吸困難", isFavorite: true, diseases: [ { name: "心不全", keywords: ["起坐呼吸", "下腿浮腫"], pitfalls: ["喘息との鑑別困難"], isFavorite: true } ] }];
                             try {
+                                const collectionRef = this.getCollectionRef();
+                                if (!collectionRef) return;
                                 const batch = writeBatch(App.state.db);
                                 initialData.forEach(item => {
-                                    const docRef = doc(this.getCollectionRef());
+                                    const docRef = doc(collectionRef);
                                     batch.set(docRef, item);
                                 });
                                 await batch.commit();
@@ -474,44 +723,49 @@
                             const entryIndex = App.state.dataStore.findIndex(e => e.id === id);
                             if (entryIndex === -1) return;
                             
-                            const entry = App.state.dataStore[entryIndex];
-                            let newFavoriteStatus;
-                            let docRef = doc(this.getCollectionRef(), id);
+                            const entry = { ...App.state.dataStore[entryIndex] };
+                            const collectionRef = this.getCollectionRef();
+                            if (!collectionRef) return;
+                            const docRef = doc(collectionRef, id);
+
                             let updatePayload = {};
 
                             if(type === 'complaint') {
-                                newFavoriteStatus = !entry.isFavorite;
-                                entry.isFavorite = newFavoriteStatus;
-                                updatePayload = { isFavorite: newFavoriteStatus };
+                                entry.isFavorite = !entry.isFavorite;
+                                updatePayload = { isFavorite: entry.isFavorite };
                             } else {
-                                const diseaseIndex = entry.diseases.findIndex(d => d.name === diseaseName);
-                                if(diseaseIndex === -1) return;
-                                newFavoriteStatus = !entry.diseases[diseaseIndex].isFavorite;
-                                entry.diseases[diseaseIndex].isFavorite = newFavoriteStatus;
+                                entry.diseases = entry.diseases.map(d => {
+                                    if(d.name === diseaseName) {
+                                        return {...d, isFavorite: !d.isFavorite};
+                                    }
+                                    return d;
+                                });
                                 updatePayload = { diseases: entry.diseases };
                             }
-
+                            
+                            App.state.dataStore[entryIndex] = entry;
                             App.renderer.renderAll();
                 
                             try {
                                 await updateDoc(docRef, updatePayload);
                             } catch (error) {
                                 console.error("Error updating favorite status:", error);
-                                if(type === 'complaint') entry.isFavorite = !newFavoriteStatus;
-                                else entry.diseases.find(d => d.name === diseaseName).isFavorite = !newFavoriteStatus;
+                                // Revert UI change on error
+                                App.state.dataStore[entryIndex].isFavorite = !App.state.dataStore[entryIndex].isFavorite; 
                                 App.renderer.renderAll();
                                 App.utils.customAlert("お気に入り状態の更新に失敗しました。");
                             }
                         },
                     }
                 },
+                // レンダリング関連
                 renderer: {
                     renderAll() {
                         this.search.unhighlight();
                         const dataToRender = this.filterAndSortData();
                         this.renderContent(dataToRender);
                         this.renderNav(dataToRender);
-                        this.renderSelectedKeywords();
+                        this.renderKeywordsPanel();
                         this.renderVitalsSummary();
                         this.search.updateNav();
                         this.search.applyHighlights();
@@ -519,13 +773,17 @@
                     },
                     filterAndSortData() {
                         const { dataStore, filters } = App.state;
-                        let processedData = [...dataStore];
+                        let processedData = JSON.parse(JSON.stringify(dataStore));
 
                         if (filters.isFavoritesOnly) {
                              processedData = processedData.map(entry => {
                                 const favoriteDiseases = (entry.diseases || []).filter(d => d.isFavorite);
-                                if (entry.isFavorite) return entry;
-                                if (favoriteDiseases.length > 0) return { ...entry, diseases: favoriteDiseases };
+                                if (entry.isFavorite) {
+                                    return entry;
+                                }
+                                if (favoriteDiseases.length > 0) {
+                                    return { ...entry, diseases: favoriteDiseases };
+                                }
                                 return null;
                             }).filter(Boolean);
                         }
@@ -541,20 +799,34 @@
                                         return activeKeywords.every(filter => keywords.includes(filter));
                                     }
                                 });
-                                if (matchingDiseases.length > 0) return { ...entry, diseases: matchingDiseases };
+                                if (matchingDiseases.length > 0) {
+                                    return { ...entry, diseases: matchingDiseases };
+                                }
                                 return null;
                             }).filter(Boolean);
                         } else if (filters.searchTerm) {
-                            const regex = new RegExp(filters.searchTerm.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'), 'i');
-                            processedData = processedData.filter(entry => 
-                                regex.test(entry.chiefComplaint) || 
-                                (entry.diseases || []).some(d => regex.test(d.name) || (d.keywords && d.keywords.some(k => regex.test(k))) || (d.pitfalls && d.pitfalls.some(p => regex.test(p))))
-                            );
+                            const regex = new RegExp(App.utils.escapeRegExp(filters.searchTerm), 'i');
+                            processedData = processedData.map(entry => {
+                                const matchingDiseases = (entry.diseases || []).filter(d => 
+                                    regex.test(d.name) || 
+                                    (d.keywords && d.keywords.some(k => regex.test(k))) || 
+                                    (d.pitfalls && d.pitfalls.some(p => regex.test(p)))
+                                );
+                                if(regex.test(entry.chiefComplaint)) {
+                                    return entry; 
+                                }
+                                if (matchingDiseases.length > 0) {
+                                    return { ...entry, diseases: matchingDiseases };
+                                }
+                                return null;
+                            }).filter(Boolean);
                         }
 
                         processedData.sort((a, b) => {
-                            if (a.isFavorite && !b.isFavorite) return -1;
-                            if (!a.isFavorite && b.isFavorite) return 1;
+                            const aIsFav = a.isFavorite || (a.diseases || []).some(d => d.isFavorite);
+                            const bIsFav = b.isFavorite || (b.diseases || []).some(d => d.isFavorite);
+                            if (aIsFav && !bIsFav) return -1;
+                            if (!aIsFav && bIsFav) return 1;
                             const indexA = App.state.originalDataOrder.indexOf(a.id);
                             const indexB = App.state.originalDataOrder.indexOf(b.id);
                             return indexA - indexB;
@@ -565,34 +837,46 @@
                     renderNav(data) {
                         const { jumpNav } = App.elements;
                         jumpNav.innerHTML = '';
+                        const fragment = document.createDocumentFragment();
                         data.forEach(entry => {
                             const complaintId = `complaint-${entry.id}`;
+                            const originalData = App.state.dataStore.find(d => d.id === entry.id);
+                            if (!originalData) return;
+                            
                             const originalIndex = App.state.originalDataOrder.indexOf(entry.id);
                             const navItem = document.createElement('a');
                             navItem.href = `#${complaintId}`;
                             navItem.className = 'nav-item block text-gray-300 hover:bg-blue-600 hover:text-white font-bold py-3 px-2 rounded-lg transition-colors flex items-center';
-                            const starIcon = entry.isFavorite ? `<i class="fas fa-star text-yellow-400 mr-2"></i>` : '';
-                            navItem.innerHTML = `<input type="checkbox" class="nav-item-checkbox" data-type="complaint" data-id="${entry.id}"> ${starIcon}${(originalIndex + 1).toString().padStart(2, '0')}. ${entry.chiefComplaint}`;
+                            const isChecked = App.state.ui.selectedItems.has(`c_${entry.id}`);
+                            const starIcon = originalData.isFavorite ? `<i class="fas fa-star text-yellow-400 mr-2"></i>` : '';
+                            
+                            navItem.innerHTML = `<input type="checkbox" class="nav-item-checkbox" data-type="complaint" data-id="${entry.id}" ${isChecked ? 'checked' : ''}> ${starIcon}${(originalIndex + 1).toString().padStart(2, '0')}. ${entry.chiefComplaint}`;
                             navItem.title = entry.chiefComplaint;
                             navItem.querySelector('.nav-item-checkbox').addEventListener('click', e => e.stopPropagation());
-                            navItem.onclick = (e) => { 
+                            navItem.addEventListener('click', (e) => { 
                                 e.preventDefault(); 
-                                document.getElementById(complaintId)?.scrollIntoView({ behavior: 'smooth' }); 
+                                const targetEl = document.getElementById(complaintId);
+                                if (targetEl) {
+                                    targetEl.scrollIntoView({ behavior: 'smooth' }); 
+                                }
                                 App.components.sidebar.toggle(false);
-                            };
-                            jumpNav.appendChild(navItem);
+                            });
+                            fragment.appendChild(navItem);
                         });
+                        jumpNav.appendChild(fragment);
                     },
                     renderContent(data) {
                         const { contentArea } = App.elements;
                         contentArea.innerHTML = '';
-                        if (data.length === 0) {
+                        if (data.length === 0 && !App.state.isLoading) {
                             contentArea.innerHTML = `<div class="text-center p-8 text-gray-400"><i class="fas fa-search-minus fa-3x mb-4"></i><p>該当するデータが見つかりませんでした。</p></div>`;
                             return;
                         }
                         
                         const fragment = document.createDocumentFragment();
                         data.forEach(entry => {
+                            const originalData = App.state.dataStore.find(d => d.id === entry.id);
+                             if (!originalData) return;
                             const originalIndex = App.state.originalDataOrder.indexOf(entry.id);
                             const complaintId = `complaint-${entry.id}`;
                             const isComplaintChecked = App.state.ui.selectedItems.has(`c_${entry.id}`);
@@ -600,12 +884,14 @@
                             entryDiv.className = 'content-card mb-6 bg-gray-800 rounded-xl shadow-md p-5';
                             entryDiv.id = complaintId;
                             
-                            const memoHTML = entry.memo ? `<div class="mt-4 pl-6 text-sm text-amber-300 bg-gray-900/50 p-3 rounded-lg border-l-4 border-amber-400"><div class="font-bold mb-1 flex items-center"><i class="fas fa-pencil-alt mr-2"></i>主訴メモ</div><div>${entry.memo.replace(/\n/g, '<br>')}</div></div>` : '';
-                            const favoriteClass = entry.isFavorite ? 'fas text-yellow-400' : 'far text-gray-500';
+                            const memoHTML = originalData.memo ? `<div class="mt-4 pl-6 text-sm text-amber-300 bg-gray-900/50 p-3 rounded-lg border-l-4 border-amber-400"><div class="font-bold mb-1 flex items-center"><i class="fas fa-pencil-alt mr-2"></i>主訴メモ</div><div>${originalData.memo.replace(/\n/g, '<br>')}</div></div>` : '';
+                            const favoriteClass = originalData.isFavorite ? 'fas text-yellow-400' : 'far text-gray-500';
             
                             const diseasesHTML = (entry.diseases || []).map(disease => { 
-                                const isDiseaseChecked = App.state.ui.selectedItems.has(`d_${entry.id}_${disease.name.replace(/\s/g, '_')}`);
-                                const diseaseFavoriteClass = disease.isFavorite ? 'fas text-yellow-400' : 'far text-gray-500';
+                                const uniqueDiseaseId = `d_${entry.id}_${disease.name.replace(/\s/g, '_')}`;
+                                const isDiseaseChecked = App.state.ui.selectedItems.has(uniqueDiseaseId);
+                                const originalDisease = (originalData.diseases || []).find(d => d.name === disease.name) || {};
+                                const diseaseFavoriteClass = originalDisease.isFavorite ? 'fas text-yellow-400' : 'far text-gray-500';
                                 const diseaseMemoHTML = disease.memo ? `<div class="mt-3 text-sm text-amber-300 bg-gray-900/50 p-2 rounded-lg"><div class="font-bold mb-1 flex items-center"><i class="fas fa-pencil-alt mr-2"></i>疾患メモ</div><div>${disease.memo.replace(/\n/g, '<br>')}</div></div>` : '';
                                 return `
                                     <div class="pl-4 border-l-4 border-gray-700">
@@ -620,63 +906,72 @@
                                             <p class="text-sm text-gray-400 mt-1">${disease.description || ''}</p>
                                             ${diseaseMemoHTML}
                                             <h4 class="font-bold text-sm text-gray-300 mt-3"><i class="fas fa-lightbulb text-yellow-400 mr-2"></i>キーワード</h4><div class="flex flex-wrap gap-2 mt-1">${(disease.keywords || []).map(k => `<span class="content-keyword-tag bg-gray-700 text-sm text-gray-200 rounded-full px-3 py-1 hover:bg-gray-500 ${App.state.filters.activeKeywords.has(k) ? 'active' : ''}">${k}</span>`).join('')}</div>
-                                            <h4 class="font-bold text-sm text-gray-300 mt-3"><i class="fas fa-exclamation-triangle text-red-400 mr-2"></i>落とし穴</h4><ul class="list-disc list-inside mt-1 text-sm text-gray-300 space-y-1">${(disease.pitfalls || []).map(p => `<li>${p}</li>`).join('')}</ul>
+                                            <h4 class="font-bold text-sm text-gray-300 mt-3"><i class="fas fa-exclamation-triangle text-red-400 mr-2"></i>落とし穴</h4><ul class="list-disc list-inside mt-1 text-sm text-gray-300 space-y-1">${(disease.pitfalls || []).map(p => `<li>${App.utils.highlightText(p, App.state.filters.searchTerm)}</li>`).join('')}</ul>
                                         </div>
                                     </div>`;
-                            }).join('');
+                            }).join('<div class="my-4"></div>');
 
                             entryDiv.innerHTML = `
                                 <div class="flex justify-between items-center">
                                     <div class="flex items-center">
                                         <input type="checkbox" class="item-checkbox" data-type="complaint" data-id="${entry.id}" ${isComplaintChecked ? 'checked' : ''}>
-                                        <h2 class="text-xl md:text-2xl font-bold text-blue-400">${(originalIndex + 1).toString().padStart(2, '0')}. ${entry.chiefComplaint}</h2>
+                                        <h2 class="text-xl md:text-2xl font-bold text-blue-400">${(originalIndex + 1).toString().padStart(2, '0')}. ${originalData.chiefComplaint}</h2>
                                     </div>
                                     <div class="flex items-center">
                                         <button class="favorite-btn text-xl mr-4" data-id="${entry.id}" title="お気に入り登録"><i class="${favoriteClass} fa-star"></i></button>
                                         <button class="edit-btn text-gray-400 hover:text-white" data-id="${entry.id}"><i class="fas fa-edit"></i></button>
                                     </div>
                                 </div>
-                                <p class="text-sm text-gray-400 mt-1 ml-10">${entry.description || ''}</p>
+                                <p class="text-sm text-gray-400 mt-1 ml-10">${originalData.description || ''}</p>
                                 ${memoHTML}
                                 <div class="mt-4 space-y-4 pl-6">${diseasesHTML}</div>`;
                             fragment.appendChild(entryDiv);
                         });
                         contentArea.appendChild(fragment);
                     },
-                    renderSelectedKeywords() {
-                        const { selectedKeywordsArea, keywordsContainer } = App.elements;
-                        selectedKeywordsArea.innerHTML = '';
+                    renderKeywordsPanel() {
+                        const { keywordsPanelContentArea } = App.elements;
+                        if (!keywordsPanelContentArea) return;
+                        
+                        keywordsPanelContentArea.innerHTML = '';
+                        const fragment = document.createDocumentFragment();
                         
                         const allAvailableKeywords = new Set();
-                        if (App.state.ui.selectedItems.size === 0) {
-                            App.state.dataStore.forEach(entry => (entry.diseases || []).forEach(d => (d.keywords || []).forEach(k => allAvailableKeywords.add(k))));
-                        } else {
-                            App.state.ui.selectedItems.forEach(itemId => {
-                                const parts = itemId.split('_'); const type = parts[0]; const entryId = parts[1];
-                                const entry = App.state.dataStore.find(e => e.id === entryId); if (!entry) return;
-                                if (type === 'c') { (entry.diseases || []).forEach(d => (d.keywords || []).forEach(k => allAvailableKeywords.add(k))); } 
-                                else if (type === 'd') { const diseaseName = parts.slice(2).join(' ').replace(/_/g, ' '); const disease = (entry.diseases || []).find(d => d.name === diseaseName); if (disease) { (disease.keywords || []).forEach(k => allAvailableKeywords.add(k)); } }
-                            });
-                        }
-                        
-                        App.utils.hide(keywordsContainer);
-                        if(allAvailableKeywords.size === 0) return;
-                        
-                        App.utils.show(keywordsContainer);
+                        if (App.state.ui.selectedItems.size > 0) {
+                             App.state.ui.selectedItems.forEach(itemId => {
+                                const parts = itemId.split('_'); 
+                                const type = parts[0]; 
+                                const entryId = parts[1];
+                                const entry = App.state.dataStore.find(e => e.id === entryId);
+                                if (!entry) return;
 
-                        const keywordTags = document.createElement('div');
-                        keywordTags.className = 'flex flex-wrap gap-2';
-                        [...allAvailableKeywords].sort((a,b) => a.localeCompare(b, 'ja')).forEach(keyword => { 
-                            const tag = document.createElement('span'); 
-                            tag.className = `keyword-tag bg-gray-700 hover:bg-gray-600 text-sm py-1 px-3 rounded-full transition-colors ${App.state.filters.activeKeywords.has(keyword) ? 'active' : ''}`;
-                            tag.textContent = keyword; 
-                            tag.onclick = () => App.handlers.handleKeywordTagClick(keyword);
-                            keywordTags.appendChild(tag); 
-                        });
-                        selectedKeywordsArea.appendChild(keywordTags);
+                                if (type === 'c') {
+                                    (entry.diseases || []).forEach(d => (d.keywords || []).forEach(k => allAvailableKeywords.add(k)));
+                                } else if (type === 'd') {
+                                    const diseaseName = parts.slice(2).join(' ').replace(/_/g, ' ');
+                                    const disease = (entry.diseases || []).find(d => d.name === diseaseName);
+                                    if (disease) { (disease.keywords || []).forEach(k => allAvailableKeywords.add(k)); }
+                                }
+                            });
+                        } else {
+                            App.state.dataStore.forEach(entry => (entry.diseases || []).forEach(d => (d.keywords || []).forEach(k => allAvailableKeywords.add(k))));
+                        }
+
+                        if (allAvailableKeywords.size > 0) {
+                            const keywordTags = document.createElement('div');
+                            keywordTags.className = 'flex flex-wrap gap-2';
+                            [...allAvailableKeywords].sort((a, b) => a.localeCompare(b, 'ja')).forEach(keyword => {
+                                const tag = document.createElement('span');
+                                tag.className = `keyword-tag bg-gray-700 hover:bg-gray-600 text-sm py-1 px-3 rounded-full transition-colors ${App.state.filters.activeKeywords.has(keyword) ? 'active' : ''}`;
+                                tag.textContent = keyword;
+                                tag.onclick = () => App.handlers.handleKeywordTagClick(keyword);
+                                keywordTags.appendChild(tag);
+                            });
+                            fragment.appendChild(keywordTags);
+                        }
 
                         const controlsContainer = document.createElement('div');
-                        controlsContainer.className = "mt-4 pt-4 border-t border-gray-700 flex flex-col gap-3";
+                        controlsContainer.className = "mt-4 pt-4 border-t border-gray-700 flex flex-col items-center gap-3";
                         
                         if (App.state.filters.activeKeywords.size > 0) {
                             if (App.state.filters.activeKeywords.size > 1) {
@@ -693,27 +988,33 @@
                         }
                         
                         let diseaseCount = 0;
-                        App.state.ui.selectedItems.forEach(itemId => { if(itemId.startsWith('d_')) diseaseCount++; });
+                        App.state.ui.selectedItems.forEach(itemId => { if (itemId.startsWith('d_')) diseaseCount++; });
                 
                         if (diseaseCount >= 2) {
-                            const compareBtn = App.utils.createButton('<i class="fas fa-exchange-alt mr-2"></i>選択した疾患を比較', 'text-sm bg-indigo-600 hover:bg-indigo-700 text-white font-bold py-2 px-4 rounded-lg flex items-center justify-center', () => App.components.compareModal.render());
+                            const compareBtn = App.utils.createButton('<i class="fas fa-exchange-alt mr-2"></i>選択した疾患を比較', 'w-full text-sm bg-indigo-600 hover:bg-indigo-700 text-white font-bold py-2 px-4 rounded-lg flex items-center justify-center', () => App.components.compareModal.open());
                             controlsContainer.appendChild(compareBtn);
                         }
                 
-                        if(App.state.ui.selectedItems.size > 0){
-                            const clearSelectionBtn = App.utils.createButton('<i class="fas fa-times mr-2"></i>選択をすべて解除', 'text-sm bg-gray-500 hover:bg-gray-600 text-white font-bold py-2 px-4 rounded-lg flex items-center justify-center', () => App.handlers.handleClearAllSelections());
+                        if (App.state.ui.selectedItems.size > 0) {
+                            const clearSelectionBtn = App.utils.createButton('<i class="fas fa-times mr-2"></i>選択をすべて解除', 'w-full text-sm bg-gray-500 hover:bg-gray-600 text-white font-bold py-2 px-4 rounded-lg flex items-center justify-center', () => App.handlers.handleClearAllSelections());
                             controlsContainer.appendChild(clearSelectionBtn);
                         }
 
-                        if(controlsContainer.children.length > 0) {
-                           selectedKeywordsArea.appendChild(controlsContainer);
+                        if (controlsContainer.children.length > 0) {
+                           fragment.appendChild(controlsContainer);
                         }
+                        
+                        keywordsPanelContentArea.appendChild(fragment);
                     },
                     renderVitalsSummary() {
                         const { vitalsSummaryContainer, vitalsSummaryArea } = App.elements;
                         const vitals = App.state.vitals;
+                        const patientInfo = App.utils.loadFromStorage(App.config.storageKeys.ageAndGender, {});
                         
-                        if (!vitals || Object.keys(vitals).length === 0) {
+                        const hasVitals = vitals && Object.keys(vitals).length > 0;
+                        const hasPatientInfo = patientInfo && (patientInfo.age || patientInfo.gender);
+
+                        if (!hasVitals && !hasPatientInfo) {
                             App.utils.hide(vitalsSummaryContainer);
                             return;
                         }
@@ -721,16 +1022,20 @@
                         let html = '';
                         const format = (icon, label, value, unit = '') => (value !== null && value !== undefined && value !== '') ? `<span class="flex items-center gap-1"><i class="fa-solid ${icon} fa-fw text-gray-400"></i> ${label}: <b>${value}${unit}</b></span>` : '';
                         
-                        html += format('fa-user', '患者', `${vitals.age || ''}歳 ${vitals.gender || ''}`.trim());
-                        html += format('fa-brain', 'JCS', vitals.jcs);
-                        if(vitals.gcs) html += format('fa-arrows-to-dot', 'GCS', vitals.gcs, ` (E${vitals.gcs_e}V${vitals.gcs_v}M${vitals.gcs_m})`);
-                        html += format('fa-lungs', '呼吸', vitals.resp, '回');
-                        html += format('fa-heart-pulse', '脈拍', vitals.pulse, '回');
-                        html += format('fa-o', 'SpO2', vitals.spo2, '%');
-                        html += format('fa-temperature-half', '体温', vitals.temp, '℃');
-                        if (vitals.bp_sys_r || vitals.bp_dia_r) html += format('fa-droplet', '血圧(R)', `${vitals.bp_sys_r || '?'}/${vitals.bp_dia_r || '?'}`);
-                        if (vitals.bp_sys_l || vitals.bp_dia_l) html += format('fa-droplet', '血圧(L)', `${vitals.bp_sys_l || '?'}/${vitals.bp_dia_l || '?'}`);
-                        if (vitals.pupil_r || vitals.pupil_l) html += format('fa-eye', '瞳孔', `R:${vitals.pupil_r || '?'} L:${vitals.pupil_l || '?'}`);
+                        const genderText = patientInfo.gender === 'male' ? '男性' : patientInfo.gender === 'female' ? '女性' : '';
+                        html += format('fa-user', '患者', `${patientInfo.age || ''}歳 ${genderText}`.trim());
+
+                        if(hasVitals){
+                            html += format('fa-brain', 'JCS', vitals.jcs);
+                            if(vitals.gcs) html += format('fa-arrows-to-dot', 'GCS', vitals.gcs, ` (E${vitals.gcs_e || '?'}V${vitals.gcs_v || '?'}M${vitals.gcs_m || '?'})`);
+                            html += format('fa-lungs', '呼吸', vitals.resp, '回');
+                            html += format('fa-heart-pulse', '脈拍', vitals.pulse, '回');
+                            html += format('fa-o', 'SpO2', vitals.spo2, '%');
+                            html += format('fa-temperature-half', '体温', vitals.temp, '℃');
+                            if (vitals.bp_sys_r || vitals.bp_dia_r) html += format('fa-droplet', '血圧(R)', `${vitals.bp_sys_r || '?'}/${vitals.bp_dia_r || '?'}`);
+                            if (vitals.bp_sys_l || vitals.bp_dia_l) html += format('fa-droplet', '血圧(L)', `${vitals.bp_sys_l || '?'}/${vitals.bp_dia_l || '?'}`);
+                            if (vitals.pupil_r || vitals.pupil_l) html += format('fa-eye', '瞳孔', `R:${vitals.pupil_r || '?'} L:${vitals.pupil_l || '?'}`);
+                        }
                         
                         vitalsSummaryArea.innerHTML = html;
                         App.utils.show(vitalsSummaryContainer);
@@ -738,35 +1043,62 @@
                     setupIntersectionObserver() {
                         if (App.state.intersectionObserver) App.state.intersectionObserver.disconnect();
                         
-                        const options = { root: App.elements.contentArea, rootMargin: '-50% 0px -50% 0px', threshold: 0 };
+                        const options = { root: App.elements.contentArea, rootMargin: '0px 0px -90% 0px', threshold: 0 };
                         
                         App.state.intersectionObserver = new IntersectionObserver((entries) => {
-                            entries.forEach(entry => {
-                                const navLink = App.elements.jumpNav.querySelector(`a[href="#${entry.target.id}"]`);
-                                if (entry.isIntersecting && navLink) {
+                             const intersectingEntry = entries.find(e => e.isIntersecting);
+                             if (intersectingEntry) {
+                                 const navLink = App.elements.jumpNav.querySelector(`a[href="#${intersectingEntry.target.id}"]`);
+                                 if (navLink) {
                                      document.querySelectorAll('.nav-item').forEach(link => link.classList.remove('active-nav'));
                                      navLink.classList.add('active-nav');
-                                }
-                            });
+                                 }
+                             }
                         }, options);
                         document.querySelectorAll('.content-card').forEach(card => App.state.intersectionObserver.observe(card));
                     },
                     search: {
                         applyHighlights() {
+                            this.unhighlight();
                             const { filters, ui } = App.state;
-                            let termToHighlight = [];
-                            if (filters.activeKeywords.size > 0) termToHighlight = [...filters.activeKeywords];
-                            else if (filters.searchTerm) termToHighlight = [filters.searchTerm];
-
-                            if(termToHighlight.length > 0) {
-                                const regex = new RegExp(`(${termToHighlight.map(t => t.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')).join('|')})`, 'gi');
-                                App.elements.contentArea.innerHTML = App.elements.contentArea.innerHTML.replace(regex, `<mark class="highlight">$1</mark>`);
+                            const searchTerm = filters.searchTerm;
+                    
+                            if (!searchTerm) {
+                                this.updateNav();
+                                return;
                             }
-                            
+                    
+                            const regex = new RegExp(App.utils.escapeRegExp(searchTerm), 'gi');
+                            const walker = document.createTreeWalker(App.elements.contentArea, NodeFilter.SHOW_TEXT, null, false);
+                            let node;
+                            while (node = walker.nextNode()) {
+                                if (node.parentElement.tagName === 'MARK' || node.parentElement.closest('button, a, input, textarea, select')) continue;
+                                const matches = node.textContent.match(regex);
+                                if (matches) {
+                                    const fragment = document.createDocumentFragment();
+                                    let lastIndex = 0;
+                                    node.textContent.replace(regex, (match, offset) => {
+                                        const textBefore = node.textContent.substring(lastIndex, offset);
+                                        if(textBefore) fragment.appendChild(document.createTextNode(textBefore));
+                                        
+                                        const mark = document.createElement('mark');
+                                        mark.className = 'highlight';
+                                        mark.textContent = match;
+                                        fragment.appendChild(mark);
+                                        
+                                        lastIndex = offset + match.length;
+                                    });
+                                    const textAfter = node.textContent.substring(lastIndex);
+                                    if(textAfter) fragment.appendChild(document.createTextNode(textAfter));
+                                    
+                                    node.parentNode.replaceChild(fragment, node);
+                                }
+                            }
+                    
                             ui.highlightedElements = App.elements.contentArea.querySelectorAll('.highlight');
-                            if(ui.highlightedElements.length > 0) {
+                            if (ui.highlightedElements.length > 0) {
                                 ui.currentHighlightIndex = 0;
-                                this.navigateToHighlight(0, false);
+                                this.navigateToHighlight(0); 
                             } else {
                                 ui.currentHighlightIndex = -1;
                             }
@@ -776,35 +1108,74 @@
                             const { ui } = App.state;
                             const { searchCount, searchPrevBtn, searchNextBtn } = App.elements;
                             const count = ui.highlightedElements.length;
-                            searchCount.textContent = `${count > 0 ? ui.currentHighlightIndex + 1 : 0}/${count}`;
-                            searchPrevBtn.disabled = count === 0;
-                            searchNextBtn.disabled = count === 0;
+                            if (searchCount) searchCount.textContent = `${count > 0 ? ui.currentHighlightIndex + 1 : 0}/${count}`;
+                            if (searchPrevBtn) searchPrevBtn.disabled = count === 0;
+                            if (searchNextBtn) searchNextBtn.disabled = count === 0;
                         },
-                        navigateToHighlight(direction, shouldScroll = true) {
+                        navigateToHighlight(direction) {
                             const { ui } = App.state;
                             const count = ui.highlightedElements.length;
                             if (count === 0) return;
                             
-                            ui.currentHighlightIndex = (ui.currentHighlightIndex + direction + count) % count;
+                            let newIndex = ui.currentHighlightIndex + direction;
+                            
+                            if (newIndex < 0) newIndex = count - 1;
+                            if (newIndex >= count) newIndex = 0;
+                            
+                            ui.currentHighlightIndex = newIndex;
 
                             ui.highlightedElements.forEach(el => el.classList.remove('current-highlight'));
                             const currentEl = ui.highlightedElements[ui.currentHighlightIndex];
-                            currentEl.classList.add('current-highlight');
-                            if(shouldScroll) currentEl.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                            if(currentEl) {
+                                currentEl.classList.add('current-highlight');
+                                currentEl.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                            }
                             this.updateNav();
                         },
                         unhighlight() {
-                            App.state.ui.highlightedElements = [];
-                            App.state.ui.currentHighlightIndex = -1;
-                            App.elements.contentArea.querySelectorAll('mark.highlight').forEach(el => { el.outerHTML = el.innerHTML; });
+                            App.elements.contentArea.querySelectorAll('mark.highlight').forEach(el => {
+                                const parent = el.parentNode;
+                                parent.replaceChild(document.createTextNode(el.textContent), el);
+                                parent.normalize();
+                            });
+                             App.state.ui.highlightedElements = [];
+                             App.state.ui.currentHighlightIndex = -1;
                         },
                     },
                 },
+                // 各UIコンポーネント
                 components: {
+                    patientInfo: {
+                        init() {
+                            this.loadInfo();
+                            this.bindEventListeners();
+                        },
+                        bindEventListeners() {
+                            const { elements: el, handlers: h } = App;
+                             el.ageInput.addEventListener('change', h.handlePatientInfoChange);
+                            el.genderBtns.forEach(btn => btn.addEventListener('click', () => {
+                                el.genderBtns.forEach(b => b.classList.remove('active'));
+                                btn.classList.add('active');
+                                h.handlePatientInfoChange();
+                            }));
+                            el.tempMemo.addEventListener('input', (e) => App.utils.saveToStorage(App.config.storageKeys.tempMemo, e.target.value));
+                        },
+                        loadInfo() {
+                            const { elements: el, config } = App;
+                            const patientInfo = App.utils.loadFromStorage(config.storageKeys.ageAndGender, {});
+                            if (patientInfo.age) el.ageInput.value = patientInfo.age;
+                            if (patientInfo.gender) {
+                                el.genderBtns.forEach(b => b.classList.toggle('active', b.dataset.gender === patientInfo.gender));
+                            }
+                            
+                            const tempMemo = App.utils.loadFromStorage(config.storageKeys.tempMemo, '');
+                            el.tempMemo.value = tempMemo;
+                        }
+                    },
                     sidebar: {
                         init() {
                             App.elements.body.addEventListener('touchstart', e => this.handleTouchStart(e), { passive: true });
-                            App.elements.body.addEventListener('touchmove', e => this.handleTouchMove(e), { passive: true });
+                            App.elements.body.addEventListener('touchmove', e => this.handleTouchMove(e), { passive: false });
                             App.elements.body.addEventListener('touchend', e => this.handleTouchEnd(e));
                         },
                         bindEventListeners() {
@@ -813,7 +1184,12 @@
                         },
                         handleTouchStart(e) {
                             const s = App.state.sidebar;
-                            if (e.touches[0].clientX < 40) {
+                            const isOpen = !App.elements.jumpNav.classList.contains('-translate-x-full');
+                            if (!isOpen && e.touches[0].clientX < 40) {
+                                s.isDragging = true;
+                                s.touchStartX = e.touches[0].clientX;
+                            }
+                            if(isOpen && e.target === App.elements.sidebarBackdrop) {
                                 s.isDragging = true;
                                 s.touchStartX = e.touches[0].clientX;
                             }
@@ -821,24 +1197,36 @@
                         handleTouchMove(e) {
                             const s = App.state.sidebar;
                             if (!s.isDragging) return;
+                            e.preventDefault();
+                            
                             s.touchCurrentX = e.touches[0].clientX;
                             const diff = s.touchCurrentX - s.touchStartX;
-                            if (diff > 0) {
+                            const navWidth = App.elements.jumpNav.offsetWidth;
+                            const isOpen = !App.elements.jumpNav.classList.contains('-translate-x-full');
+
+                            if (!isOpen && diff > 0) { // Opening
                                 App.elements.jumpNav.style.transition = 'none';
-                                App.elements.jumpNav.style.transform = `translateX(${Math.min(diff - 192, 0)}px)`;
+                                App.elements.jumpNav.style.transform = `translateX(${Math.min(diff - navWidth, 0)}px)`;
+                            } else if (isOpen && diff < 0) { // Closing
+                                App.elements.jumpNav.style.transition = 'none';
+                                App.elements.jumpNav.style.transform = `translateX(${Math.max(diff, -navWidth)}px)`;
                             }
                         },
                         handleTouchEnd() {
                             const s = App.state.sidebar;
                             if (!s.isDragging) return;
                             s.isDragging = false;
+                            
+                            const diff = s.touchCurrentX - s.touchStartX;
+                            const isOpen = !App.elements.jumpNav.classList.contains('-translate-x-full');
+                            
                             App.elements.jumpNav.style.transition = '';
                             App.elements.jumpNav.style.transform = '';
-                            const diff = s.touchCurrentX - s.touchStartX;
-                            if (diff > App.config.swipeThreshold) {
-                                this.toggle(true);
+
+                            if (Math.abs(diff) > App.config.swipeThreshold) {
+                                this.toggle(!isOpen);
                             } else {
-                                this.toggle(false);
+                                this.toggle(isOpen);
                             }
                         },
                         toggle(forceShow) {
@@ -849,6 +1237,7 @@
                         }
                     },
                     keywordsPanel: {
+                        init(){ /* No init needed */ },
                         bindEventListeners() {
                             App.elements.keywordsPanelToggleBtn.addEventListener('click', () => this.toggle());
                             App.elements.keywordsPanelCloseBtn.addEventListener('click', () => this.toggle(false));
@@ -860,31 +1249,37 @@
                             App.elements.keywordsPanelBackdrop.addEventListener('click', () => this.toggle(false));
                         },
                         toggle(forceShow) {
-                            const { keywordsPanel, keywordsPanelBackdrop, keywordsPanelToggleBtn } = App.elements;
-                            const shouldShow = typeof forceShow === 'boolean' ? forceShow : keywordsPanel.classList.contains('translate-x-full');
-                            keywordsPanel.classList.toggle('translate-x-full', !shouldShow);
+                            const { keywordsPanelRight, keywordsPanelBackdrop, keywordsPanelToggleBtn } = App.elements;
+                            const shouldShow = typeof forceShow === 'boolean' ? forceShow : keywordsPanelRight.classList.contains('translate-x-full');
+                            keywordsPanelRight.classList.toggle('translate-x-full', !shouldShow);
                             keywordsPanelBackdrop.classList.toggle('hidden', !shouldShow);
                             keywordsPanelToggleBtn.classList.toggle('active', shouldShow);
                         }
                     },
                     stopwatch: {
+                        init(){ /* No init needed */ },
                         bindEventListeners() {
                            const el = App.elements.stopwatch;
                            el.addEventListener('mousedown', e => this.handlePress(e));
                            el.addEventListener('mouseup', e => this.handleRelease(e));
-                           el.addEventListener('mouseleave', e => this.handleRelease(e));
+                           el.addEventListener('mouseleave', e => this.handleRelease(e, true));
                            el.addEventListener('touchstart', e => this.handlePress(e));
                            el.addEventListener('touchend', e => this.handleRelease(e));
                         },
                         handlePress(e) {
                             e.preventDefault();
-                            App.state.stopwatch.pressTimer = setTimeout(() => this.reset(), App.config.stopwatchResetDelay);
+                            App.state.stopwatch.pressTimer = setTimeout(() => {
+                                this.reset();
+                                App.state.stopwatch.pressTimer = null; 
+                            }, App.config.stopwatchResetDelay);
                         },
-                        handleRelease() {
+                        handleRelease(e, isMouseLeave = false) {
                             if (App.state.stopwatch.pressTimer) {
                                 clearTimeout(App.state.stopwatch.pressTimer);
                                 App.state.stopwatch.pressTimer = null;
-                                this.toggle();
+                                if (!isMouseLeave) {
+                                    this.toggle();
+                                }
                             }
                         },
                         toggle() {
@@ -916,9 +1311,10 @@
                         },
                     },
                     vitalsModal: {
-                        init() {
+                         init() {
                             this.populateSelectors();
-                            App.state.vitals = App.utils.loadFromStorage(App.config.storageKeys.vitals, {});
+                            const savedVitals = App.utils.loadFromStorage(App.config.storageKeys.vitals, {});
+                            App.state.vitals = savedVitals;
                             this.updateFormFromState();
                         },
                         bindEventListeners() {
@@ -926,14 +1322,16 @@
                             el.vitalsBtn.addEventListener('click', () => { this.updateFormFromState(); App.utils.showModal(el.vitalsModal); });
                             el.vitalsModalCloseBtn.addEventListener('click', () => App.utils.hideModal(el.vitalsModal));
                             el.vitalsSaveBtn.addEventListener('click', () => this.saveAndClose());
-                            el.vitalsForm.addEventListener('input', () => this.updateStateFromForm());
-                            el.vitalsForm.addEventListener('click', (e) => {
-                                if(e.target.closest('.jcs-btn') || e.target.closest('.pupil-btn') || e.target.closest('.pupil-reflex-btn')) {
+                            el.vitalsClearBtn.addEventListener('click', () => this.clear());
+                            el.vitalsForm.addEventListener('input', e => this.updateStateFromForm());
+                            el.vitalsForm.addEventListener('change', e => this.updateStateFromForm());
+                             el.vitalsForm.addEventListener('click', e => {
+                                if (e.target.closest('.jcs-btn, .pupil-btn, .pupil-reflex-btn, .vitals-tag')) {
                                     this.updateStateFromForm();
                                 }
                             });
                         },
-                        populateSelectors() {
+                         populateSelectors() {
                             const { gcsOptions, jcsOptions, appearanceOptions, pupilSizeOptions, pupilReflexOptions } = App.config;
                             ['E', 'V', 'M'].forEach(type => {
                                 const select = App.elements[`gcs${type.toUpperCase()}Select`];
@@ -941,67 +1339,88 @@
                                 gcsOptions[type].forEach(opt => select.add(new Option(opt.t, opt.v)));
                             });
                             App.elements.vitalsJcsGroup.innerHTML = '';
-                            jcsOptions.forEach(val => App.elements.vitalsJcsGroup.appendChild(App.utils.createButton(val, 'jcs-btn bg-gray-600 p-2 rounded-md', e => this.handleJcsClick(e))));
+                            jcsOptions.forEach(val => App.elements.vitalsJcsGroup.appendChild(App.utils.createButton(val, 'jcs-btn bg-gray-700 hover:bg-gray-600 p-2 rounded-md flex-grow text-center', e => this.handleJcsClick(e))));
                             
                             App.elements.vitalsAppearanceTags.innerHTML = '';
-                            appearanceOptions.forEach(val => App.elements.vitalsAppearanceTags.appendChild(App.utils.createButton(val, 'vitals-btn bg-gray-600 hover:bg-gray-500 text-sm py-1 px-3 rounded-full', e => e.target.classList.toggle('active'))));
+                            appearanceOptions.forEach(val => App.elements.vitalsAppearanceTags.appendChild(App.utils.createButton(val, 'vitals-tag bg-gray-600 hover:bg-gray-500 text-sm py-1 px-3 rounded-full', e => e.target.classList.toggle('active'))));
                             
                             ['R', 'L'].forEach(side => {
-                                const sizeGroup = App.elements[`pupilSizeGroup${side}`];
-                                const reflexGroup = App.elements[`pupilReflexGroup${side}`];
+                                const sizeGroup = App.elements[`pupilSizeGroup${side.toUpperCase()}`];
+                                const reflexGroup = App.elements[`pupilReflexGroup${side.toUpperCase()}`];
                                 sizeGroup.innerHTML = '';
                                 reflexGroup.innerHTML = '';
-                                pupilSizeOptions.forEach(val => sizeGroup.appendChild(App.utils.createButton(val, 'pupil-btn bg-gray-700 w-8 h-8 rounded-full', e => this.handlePupilClick(e, 'size', side.toLowerCase()))));
-                                pupilReflexOptions.forEach(val => reflexGroup.appendChild(App.utils.createButton(val, 'pupil-reflex-btn bg-gray-700 h-8 px-2 rounded-md', e => this.handlePupilClick(e, 'reflex', side.toLowerCase()))));
+                                pupilSizeOptions.forEach(val => sizeGroup.appendChild(App.utils.createButton(String(val), 'pupil-btn bg-gray-700 hover:bg-gray-600 w-8 h-8 rounded-full flex items-center justify-center', e => this.handlePupilClick(e, 'size', side.toLowerCase()))));
+                                pupilReflexOptions.forEach(val => reflexGroup.appendChild(App.utils.createButton(val, 'pupil-reflex-btn bg-gray-700 hover:bg-gray-600 h-8 px-2 rounded-md flex items-center justify-center', e => this.handlePupilClick(e, 'reflex', side.toLowerCase()))));
                             });
                         },
-                        handleJcsClick(e) {
+                         handleJcsClick(e) {
                             App.elements.vitalsJcsGroup.querySelectorAll('.active').forEach(b => b.classList.remove('active'));
                             e.target.classList.add('active');
                         },
-                        handlePupilClick(e, type, side) {
+                         handlePupilClick(e, type, side) {
                             const groupEl = type === 'size' ? App.elements[`pupilSizeGroup${side.toUpperCase()}`] : App.elements[`pupilReflexGroup${side.toUpperCase()}`];
                             const alreadyActive = e.target.classList.contains('active');
                             groupEl.querySelectorAll('.active').forEach(b => b.classList.remove('active'));
                             if (!alreadyActive) e.target.classList.add('active');
                         },
-                        updateGcsTotal() {
+                         updateGcsTotal() {
                             const { gcsESelect, gcsVSelect, gcsMSelect, gcsTotalEl } = App.elements;
-                            const total = parseInt(gcsESelect.value || 1) + parseInt(gcsVSelect.value || 1) + parseInt(gcsMSelect.value || 1);
-                            gcsTotalEl.textContent = total;
+                            const total = parseInt(gcsESelect.value || 0) + parseInt(gcsVSelect.value || 0) + parseInt(gcsMSelect.value || 0);
+                            gcsTotalEl.textContent = isNaN(total) ? '?' : total;
                             return total;
                         },
-                        updateStateFromForm() {
+                         updateStateFromForm() {
                              const form = App.elements.vitalsForm;
-                             const vitals = App.state.vitals;
+                             const vitals = {};
                              
-                             vitals.jcs = form.querySelector('#vitals-jcs-group .active')?.textContent.trim() || null;
-                             vitals.gcs = this.updateGcsTotal();
-                             vitals.gcs_e = App.elements.gcsESelect.value;
-                             vitals.gcs_v = App.elements.gcsVSelect.value;
-                             vitals.gcs_m = App.elements.gcsMSelect.value;
+                             const formData = new FormData(form);
+                             for(const [key, value] of formData.entries()){
+                                 if(value) vitals[key] = value;
+                             }
 
+                             vitals.jcs = form.querySelector('#vitals-jcs-group .active')?.textContent.trim() || null;
+                             
+                             vitals.gcs = this.updateGcsTotal();
+                            
                              ['r', 'l'].forEach(side => {
-                                const size = form.querySelector(`#pupil-size-group-${side} .active`)?.textContent.trim() || null;
-                                const reflex = form.querySelector(`#pupil-reflex-group-${side} .active`)?.textContent.trim() || null;
-                                vitals[`pupil_${side}`] = [size, reflex].filter(Boolean).join('/') || null;
+                                const size = form.querySelector(`#pupil-size-group-${side.toUpperCase()} .active`)?.textContent.trim() || null;
+                                const reflex = form.querySelector(`#pupil-reflex-group-${side.toUpperCase()} .active`)?.textContent.trim() || null;
+                                vitals[`pupil_${side}`] = [size, reflex].filter(Boolean).join(' / ') || null;
                              });
                              
+                             vitals.appearance = Array.from(form.querySelectorAll('#vitals-appearance-tags .active')).map(t => t.textContent.trim());
+
+                             App.state.vitals = vitals;
                              this.updatePupilDisplay();
                         },
                         updateFormFromState() {
-                            const vitals = App.state.vitals;
+                            const vitals = App.state.vitals || {};
+                            const form = App.elements.vitalsForm;
+                            
+                            form.reset();
+                            
+                            for (const key in vitals) {
+                                const el = form.elements[key];
+                                if (el && el.type !== 'hidden') {
+                                    el.value = vitals[key];
+                                }
+                            }
+                            
+                            App.elements.vitalsJcsGroup.querySelectorAll('.jcs-btn').forEach(b => b.classList.toggle('active', b.textContent === vitals.jcs));
+                            
                             this.updateGcsTotal();
-                            this.updatePupilDisplay();
                             this.updatePupilSelectors('r');
                             this.updatePupilSelectors('l');
+                            this.updatePupilDisplay();
+
+                             App.elements.vitalsAppearanceTags.querySelectorAll('.vitals-tag').forEach(b => b.classList.toggle('active', (vitals.appearance || []).includes(b.textContent)));
                         },
-                        updatePupilDisplay() {
+                         updatePupilDisplay() {
                             App.elements.pupilR.value = App.state.vitals.pupil_r || '';
                             App.elements.pupilL.value = App.state.vitals.pupil_l || '';
                         },
-                        updatePupilSelectors(side) {
-                             const [size, reflex] = (App.state.vitals[`pupil_${side}`] || '/').split('/');
+                         updatePupilSelectors(side) {
+                             const [size, reflex] = (App.state.vitals[`pupil_${side}`] || '/').split(' / ');
                              const sizeGroup = App.elements[`pupilSizeGroup${side.toUpperCase()}`];
                              const reflexGroup = App.elements[`pupilReflexGroup${side.toUpperCase()}`];
                              if (sizeGroup) sizeGroup.querySelectorAll('button').forEach(b => b.classList.toggle('active', b.textContent === size));
@@ -1014,22 +1433,20 @@
                             App.utils.hideModal(App.elements.vitalsModal);
                         },
                         async clear() {
-                            const confirmed = await App.utils.customConfirm("バイタル入力をすべてクリアしますか？", "確認");
+                             const confirmed = await App.utils.customConfirm("バイタル入力をすべてクリアしますか？", "確認");
                              if(confirmed) {
                                 App.state.vitals = {};
                                 App.utils.saveToStorage(App.config.storageKeys.vitals, {});
-                                App.elements.vitalsForm.reset();
-                                App.elements.vitalsForm.querySelectorAll('.active').forEach(b => b.classList.remove('active'));
                                 this.updateFormFromState();
                                 App.renderer.renderVitalsSummary();
                              }
                         },
                     },
                     settings: {
-                        init() {
-                             const showRandom = App.utils.loadFromStorage(App.config.storageKeys.showRandomBtn) === 'true';
+                        init(){
+                             const showRandom = App.utils.loadFromStorage(App.config.storageKeys.showRandomBtn, true);
                              App.elements.showRandomBtnToggle.checked = showRandom;
-                             App.elements.randomBtn.classList.toggle('hidden', !showRandom);
+                             this.toggleRandomButtonVisibility(showRandom);
                              
                              const fontSize = App.utils.loadFromStorage(App.config.storageKeys.fontSize, 'base');
                              this.applyFontSize(fontSize);
@@ -1046,6 +1463,7 @@
                         },
                         toggleRandomButtonVisibility(isVisible) {
                              App.elements.randomBtn.classList.toggle('hidden', !isVisible);
+                              App.elements.mobileRandomBtn.classList.toggle('hidden', !isVisible);
                              App.utils.saveToStorage(App.config.storageKeys.showRandomBtn, isVisible);
                         },
                         handleFontSizeChange(e) {
@@ -1058,9 +1476,62 @@
                                 b.classList.toggle('active', b.dataset.size === size);
                             });
                             App.utils.saveToStorage(App.config.storageKeys.fontSize, size);
+                        },
+                        exportData() {
+                            const dataStr = JSON.stringify(App.state.dataStore, null, 2);
+                            const blob = new Blob([dataStr], {type: "application/json"});
+                            const url = URL.createObjectURL(blob);
+                            const a = document.createElement('a');
+                            a.href = url;
+                            a.download = `paramedic_data_${new Date().toISOString().slice(0,10)}.json`;
+                            a.click();
+                            URL.revokeObjectURL(url);
+                        },
+                        handleFileSelect(event) {
+                            const file = event.target.files[0];
+                            if (!file) return;
+                            const reader = new FileReader();
+                            reader.onload = async (e) => {
+                                try {
+                                    const importedData = JSON.parse(e.target.result);
+                                    if (Array.isArray(importedData)) {
+                                        const confirmed = await App.utils.customConfirm('現在のデータをすべて削除し、インポートしますか？', 'インポートの確認');
+                                        if (confirmed) {
+                                            this.importData(importedData);
+                                        }
+                                    } else {
+                                        throw new Error("Invalid data format");
+                                    }
+                                } catch (error) {
+                                    App.utils.customAlert('ファイルの読み込みに失敗しました。JSON形式が正しくありません。');
+                                    console.error("Import error:", error);
+                                }
+                            };
+                            reader.readAsText(file);
+                        },
+                        async importData(data) {
+                            const collectionRef = App.services.db.getCollectionRef();
+                            if (!collectionRef) return;
+                            
+                            // Delete all existing documents
+                            const snapshot = await getDocs(collectionRef);
+                            const batchDelete = writeBatch(App.state.db);
+                            snapshot.docs.forEach(d => batchDelete.delete(d.ref));
+                            await batchDelete.commit();
+
+                            // Add new documents
+                            const batchAdd = writeBatch(App.state.db);
+                            data.forEach(item => {
+                                const { id, ...itemData } = item; // Don't preserve old IDs
+                                batchAdd.set(doc(collectionRef), itemData);
+                            });
+                            await batchAdd.commit();
+                            
+                            App.utils.customAlert('データのインポートが完了しました。');
                         }
                     },
                     searchHistory: {
+                        init(){/* No init needed */},
                         bindEventListeners() {
                             App.elements.searchHistoryBtn.addEventListener('click', e => { e.stopPropagation(); this.toggleDropdown(); });
                         },
@@ -1111,17 +1582,16 @@
                         }
                     },
                     dataModal: {
+                        init(){/* No init needed */},
                         bindEventListeners() {
                             const el = App.elements;
                             el.addNewBtn.addEventListener('click', () => this.openForNew());
                             el.mobileAddNewBtn.addEventListener('click', (e) => { e.preventDefault(); this.openForNew(); App.utils.hide(el.mobileMenu); });
-                            const modal = el.dataModal;
-                            if(modal) {
-                                modal.querySelector('#modal-close-btn').addEventListener('click', () => App.utils.hideModal(modal));
-                                modal.querySelector('#add-disease-btn').addEventListener('click', () => this.addDiseaseForm());
-                                modal.querySelector('#data-form').addEventListener('submit', e => { e.preventDefault(); this.submit(); });
-                                modal.querySelector('#delete-btn').addEventListener('click', () => this.delete());
-                            }
+                           
+                            el.modalCloseBtn.addEventListener('click', () => App.utils.hideModal(el.dataModal));
+                            el.addDiseaseBtn.addEventListener('click', () => this.addDiseaseForm());
+                            el.dataForm.addEventListener('submit', e => { e.preventDefault(); this.submit(); });
+                            el.deleteBtn.addEventListener('click', () => this.delete());
                         },
                         openForNew() {
                              const { dataModal, modalTitle, dataForm, diseasesContainer, deleteBtn } = App.elements;
@@ -1137,40 +1607,238 @@
                             const entry = App.state.dataStore.find(e => e.id === id);
                             if (!entry) return;
 
-                             const { dataModal, modalTitle, dataForm, chiefComplaintInput, descriptionInput, chiefComplaintMemoInput, diseasesContainer, deleteBtn } = App.elements;
-                            modalTitle.textContent = '主訴の編集';
-                            dataForm.querySelector('#entry-id').value = id;
-                            chiefComplaintInput.value = entry.chiefComplaint;
-                            descriptionInput.value = entry.description || '';
-                            chiefComplaintMemoInput.value = entry.memo || '';
-                            diseasesContainer.innerHTML = '';
-                            (entry.diseases || []).forEach(d => this.addDiseaseForm(d));
-                            App.utils.show(deleteBtn);
-                            App.utils.showModal(dataModal);
+                             const { dataModal, modalTitle, dataForm, chiefComplaintInput, chiefComplaintDescInput, chiefComplaintMemoInput, diseasesContainer, deleteBtn, entryIdInput } = App.elements;
+                             modalTitle.textContent = '主訴の編集';
+                             entryIdInput.value = id;
+                             chiefComplaintInput.value = entry.chiefComplaint;
+                             chiefComplaintDescInput.value = entry.description || '';
+                             chiefComplaintMemoInput.value = entry.memo || '';
+                             diseasesContainer.innerHTML = '';
+                             (entry.diseases || []).forEach(d => this.addDiseaseForm(d));
+                             App.utils.show(deleteBtn);
+                             App.utils.showModal(dataModal);
                         },
                         addDiseaseForm(disease = {}) {
-                            // ... (implementation restored from original)
+                            const container = App.elements.diseasesContainer;
+                            const diseaseDiv = document.createElement('div');
+                            diseaseDiv.className = 'disease-form-group bg-gray-700/50 p-4 rounded-lg space-y-2 relative';
+                            
+                            const diseaseId = `disease_${Date.now()}_${Math.random()}`;
+
+                            diseaseDiv.innerHTML = `
+                                <button type="button" class="remove-disease-btn absolute top-2 right-2 text-gray-500 hover:text-red-500"><i class="fas fa-times-circle"></i></button>
+                                <div><label class="text-sm">疾患名</label><input type="text" name="${diseaseId}_name" class="w-full bg-gray-600 p-2 rounded-md mt-1" value="${disease.name || ''}" required></div>
+                                <div><label class="text-sm">説明</label><textarea name="${diseaseId}_description" rows="2" class="w-full bg-gray-600 p-2 rounded-md mt-1">${disease.description || ''}</textarea></div>
+                                <div><label class="text-sm">キーワード (カンマ区切り)</label><input type="text" name="${diseaseId}_keywords" class="w-full bg-gray-600 p-2 rounded-md mt-1" value="${(disease.keywords || []).join(', ')}"></div>
+                                <div><label class="text-sm">落とし穴 (カンマ区切り)</label><input type="text" name="${diseaseId}_pitfalls" class="w-full bg-gray-600 p-2 rounded-md mt-1" value="${(disease.pitfalls || []).join(', ')}"></div>
+                                <div><label class="text-sm">疾患メモ</label><textarea name="${diseaseId}_memo" rows="2" class="w-full bg-gray-600 p-2 rounded-md mt-1">${disease.memo || ''}</textarea></div>
+                            `;
+                            diseaseDiv.querySelector('.remove-disease-btn').onclick = () => diseaseDiv.remove();
+                            container.appendChild(diseaseDiv);
                         },
                         async submit() {
-                            // ... (implementation restored from original)
+                            const form = App.elements.dataForm;
+                            const entryId = form.querySelector('#entry-id').value;
+                            const diseases = [];
+                            form.querySelectorAll('.disease-form-group').forEach(group => {
+                                const nameInput = group.querySelector('input[name$="_name"]');
+                                if(!nameInput || !nameInput.value) return;
+
+                                const disease = {
+                                    name: nameInput.value.trim(),
+                                    description: group.querySelector('textarea[name$="_description"]').value.trim(),
+                                    keywords: group.querySelector('input[name$="_keywords"]').value.split(',').map(k => k.trim()).filter(Boolean),
+                                    pitfalls: group.querySelector('input[name$="_pitfalls"]').value.split(',').map(p => p.trim()).filter(Boolean),
+                                    memo: group.querySelector('textarea[name$="_memo"]').value.trim(),
+                                    isFavorite: false, // Default value
+                                };
+                                diseases.push(disease);
+                            });
+
+                            const data = {
+                                chiefComplaint: form.querySelector('#chief-complaint').value,
+                                description: form.querySelector('#chief-complaint-description').value,
+                                memo: form.querySelector('#chief-complaint-memo').value,
+                                diseases: diseases,
+                                isFavorite: false, // Default value
+                            };
+                            
+                            try {
+                                const collectionRef = App.services.db.getCollectionRef();
+                                if (entryId) {
+                                    const existingData = App.state.dataStore.find(d => d.id === entryId);
+                                    if(existingData) {
+                                        data.isFavorite = existingData.isFavorite;
+                                        data.diseases.forEach(d => {
+                                            const existingDisease = (existingData.diseases || []).find(ed => ed.name === d.name);
+                                            if (existingDisease) d.isFavorite = existingDisease.isFavorite;
+                                        });
+                                    }
+                                    await setDoc(doc(collectionRef, entryId), data);
+                                    App.utils.customAlert('データが更新されました。');
+                                } else {
+                                    await addDoc(collectionRef, data);
+                                    App.utils.customAlert('データが追加されました。');
+                                }
+                                App.utils.hideModal(App.elements.dataModal);
+                            } catch(error) {
+                                console.error("Error saving data:", error);
+                                App.utils.customAlert('データの保存に失敗しました。');
+                            }
                         },
                         async delete() {
-                            // ... (implementation restored from original)
+                            const entryId = App.elements.entryIdInput.value;
+                            if (!entryId) return;
+
+                            const confirmed = await App.utils.customConfirm('この主訴を本当に削除しますか？', '削除の確認');
+                            if (confirmed) {
+                                try {
+                                    await deleteDoc(doc(App.services.db.getCollectionRef(), entryId));
+                                    App.utils.customAlert('データが削除されました。');
+                                    App.utils.hideModal(App.elements.dataModal);
+                                } catch (error) {
+                                    console.error("Error deleting data:", error);
+                                    App.utils.customAlert('データの削除に失敗しました。');
+                                }
+                            }
                         }
                     },
-                    compareModal: {},
+                    compareModal: {
+                        init(){/* No init needed */},
+                        open() {
+                            const { compareModal, compareModalBody } = App.elements;
+                            compareModalBody.innerHTML = '';
+                            const selectedDiseases = [];
+
+                            App.state.ui.selectedItems.forEach(itemId => {
+                                if (!itemId.startsWith('d_')) return;
+                                const parts = itemId.split('_');
+                                const entryId = parts[1];
+                                const diseaseName = parts.slice(2).join(' ').replace(/_/g, ' ');
+                                const entry = App.state.dataStore.find(e => e.id === entryId);
+                                if (entry) {
+                                    const disease = (entry.diseases || []).find(d => d.name === diseaseName);
+                                    if (disease) {
+                                        selectedDiseases.push({ ...disease, complaint: entry.chiefComplaint });
+                                    }
+                                }
+                            });
+                            
+                            if (selectedDiseases.length < 2) {
+                                App.utils.customAlert('比較するには、疾患を2つ以上選択してください。');
+                                return;
+                            }
+                            
+                            const allKeywords = [...new Set(selectedDiseases.flatMap(d => d.keywords || []))];
+                            const allPitfalls = [...new Set(selectedDiseases.flatMap(d => d.pitfalls || []))];
+
+                            let tableHTML = `<div class="overflow-x-auto"><table class="w-full text-left border-collapse">`;
+                            // Header
+                            tableHTML += '<thead><tr class="bg-gray-700">';
+                            tableHTML += '<th class="p-2 border border-gray-600">特徴</th>';
+                            selectedDiseases.forEach(d => {
+                                tableHTML += `<th class="p-2 border border-gray-600 text-teal-400">${d.name} <span class="text-xs text-gray-400">(${d.complaint})</span></th>`;
+                            });
+                            tableHTML += '</tr></thead>';
+
+                            // Body
+                            tableHTML += '<tbody>';
+                            // Keywords
+                            tableHTML += `<tr><td class="p-2 border border-gray-600 font-bold bg-gray-700/50" colspan="${selectedDiseases.length + 1}">キーワード</td></tr>`;
+                            allKeywords.forEach(keyword => {
+                                tableHTML += '<tr>';
+                                tableHTML += `<td class="p-2 border border-gray-600">${keyword}</td>`;
+                                selectedDiseases.forEach(d => {
+                                    const hasKeyword = (d.keywords || []).includes(keyword);
+                                    tableHTML += `<td class="p-2 border border-gray-600 text-center">${hasKeyword ? '<i class="fas fa-check text-green-400"></i>' : '<i class="fas fa-times text-red-400"></i>'}</td>`;
+                                });
+                                tableHTML += '</tr>';
+                            });
+                             // Pitfalls
+                            tableHTML += `<tr><td class="p-2 border border-gray-600 font-bold bg-gray-700/50" colspan="${selectedDiseases.length + 1}">落とし穴</td></tr>`;
+                            allPitfalls.forEach(pitfall => {
+                                tableHTML += '<tr>';
+                                tableHTML += `<td class="p-2 border border-gray-600">${pitfall}</td>`;
+                                selectedDiseases.forEach(d => {
+                                    const hasPitfall = (d.pitfalls || []).includes(pitfall);
+                                    tableHTML += `<td class="p-2 border border-gray-600 text-center">${hasPitfall ? '<i class="fas fa-check text-green-400"></i>' : ''}</td>`;
+                                });
+                                tableHTML += '</tr>';
+                            });
+                            tableHTML += '</tbody></table></div>';
+                            compareModalBody.innerHTML = tableHTML;
+
+                            App.utils.showModal(compareModal);
+                        },
+                        bindEventListeners() {
+                             App.elements.compareModalCloseBtn.addEventListener('click', () => App.utils.hideModal(App.elements.compareModal));
+                        }
+                    },
                     dobModal: {
+                        init(){/* No init needed */},
                         bindEventListeners() {
                             const el = App.elements;
                             el.dobBtn.addEventListener('click', () => App.utils.showModal(el.dobEraModal));
+                            el.dobModalCloseBtn.addEventListener('click', () => App.utils.hideModal(el.dobEraModal));
+                            el.dobCalcBtn.addEventListener('click', () => this.calculateAge());
+                            el.eraBtns.querySelectorAll('.era-btn').forEach(btn => {
+                                btn.addEventListener('click', (e) => {
+                                    el.eraBtns.querySelectorAll('.era-btn').forEach(b => b.classList.remove('active'));
+                                    e.currentTarget.classList.add('active');
+                                });
+                            });
+                        },
+                        calculateAge() {
+                            const eraBtn = App.elements.eraBtns.querySelector('.active');
+                            if (!eraBtn) {
+                                App.utils.customAlert('元号を選択してください。');
+                                return;
+                            }
+                            const era = eraBtn.dataset.era;
+                            const year = parseInt(App.elements.eraYearInput.value);
+                            const month = parseInt(App.elements.eraMonthInput.value);
+                            const day = parseInt(App.elements.eraDayInput.value);
+
+                            if (isNaN(year) || isNaN(month) || isNaN(day)) {
+                                App.utils.customAlert('年月日を正しく入力してください。');
+                                return;
+                            }
+                            
+                            let birthYear;
+                            switch (era) {
+                                case 'M': birthYear = 1867 + year; break;
+                                case 'T': birthYear = 1911 + year; break;
+                                case 'S': birthYear = 1925 + year; break;
+                                case 'H': birthYear = 1988 + year; break;
+                                case 'R': birthYear = 2018 + year; break;
+                                default: return;
+                            }
+
+                            const today = new Date();
+                            const birthDate = new Date(birthYear, month - 1, day);
+                            let age = today.getFullYear() - birthDate.getFullYear();
+                            const m = today.getMonth() - birthDate.getMonth();
+                            if (m < 0 || (m === 0 && today.getDate() < birthDate.getDate())) {
+                                age--;
+                            }
+                            
+                            App.elements.ageInput.value = age;
+                            App.handlers.handlePatientInfoChange();
+                            App.utils.hideModal(App.elements.dobEraModal);
                         }
                     }
                 },
+                // ユーティリティ関数
                 utils: {
                     initFirebaseConfig() {
                         if (typeof __firebase_config !== 'undefined' && __firebase_config) {
-                            App.config.firebaseConfig = JSON.parse(__firebase_config);
-                        } else {
+                            try {
+                                App.config.firebaseConfig = JSON.parse(__firebase_config);
+                            } catch(e) {
+                                console.error("Failed to parse firebase config:", e);
+                            }
+                        } 
+                        if (!App.config.firebaseConfig) {
                             console.warn("Firebase config not found globally. Using fallback local config.");
                              App.config.firebaseConfig = {
                                 apiKey: "AIzaSyC6umJXFGulRAkwdhx-Hoj1_5DbEbSdBOQ",
@@ -1186,8 +1854,8 @@
                     },
                     show(el) { if(el) el.classList.remove('hidden'); },
                     hide(el) { if(el) el.classList.add('hidden'); },
-                    showModal(el) { if(el) el.classList.remove('hidden'); },
-                    hideModal(el) { if(el) el.classList.add('hidden'); },
+                    showModal(el) { if(el) { el.classList.remove('hidden'); el.style.opacity = 1; el.style.transform = 'scale(1)';} },
+                    hideModal(el) { if(el) { el.style.opacity = 0; el.style.transform = 'scale(0.95)'; setTimeout(() => el.classList.add('hidden'), 300); }},
                     createButton(html, classes, onClick) {
                         const btn = document.createElement('button');
                         btn.type = 'button';
@@ -1199,7 +1867,7 @@
                     customAlert(message, title = '情報') {
                         return new Promise((resolve) => {
                             const { confirmModal, confirmTitle, confirmMessage, alertIcon, confirmButtons } = App.elements;
-                            if(!confirmModal) return resolve(true);
+                            if(!confirmModal) { resolve(true); return; }
                             confirmTitle.textContent = title;
                             confirmMessage.textContent = message;
                             alertIcon.innerHTML = `<i class="fas fa-info-circle text-blue-400 text-2xl"></i>`;
@@ -1211,7 +1879,7 @@
                     customConfirm(message, title = '確認') {
                         return new Promise((resolve) => {
                             const { confirmModal, confirmTitle, confirmMessage, alertIcon, confirmButtons } = App.elements;
-                            if(!confirmModal) return resolve(false);
+                            if(!confirmModal) { resolve(false); return; }
                             confirmTitle.textContent = title;
                             confirmMessage.textContent = message;
                             alertIcon.innerHTML = `<i class="fas fa-exclamation-triangle text-yellow-400 text-2xl"></i>`;
@@ -1239,6 +1907,14 @@
                             localStorage.setItem(key, value);
                         }
                     },
+                    escapeRegExp(string) {
+                        return string.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'); 
+                    },
+                    highlightText(text, term) {
+                        if (!term || !text) return text;
+                        const regex = new RegExp(this.escapeRegExp(term), 'gi');
+                        return text.replace(regex, `<mark class="highlight">$&</mark>`);
+                    }
                 }
             };
 
