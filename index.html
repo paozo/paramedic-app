@@ -109,14 +109,15 @@
                              <a href="#" id="mobile-keywords-panel-toggle-btn" class="block px-4 py-2 text-white hover:bg-gray-700"><i class="fas fa-tags w-6"></i> キーワード</a>
                              <a href="#" id="mobile-add-new-btn" class="block px-4 py-2 text-white hover:bg-gray-700"><i class="fas fa-plus w-6"></i> 新規追加</a>
                              <a href="#" id="mobile-filter-favorites-btn" class="block px-4 py-2 text-white hover:bg-gray-700"><i class="fas fa-star w-6"></i> お気に入り</a>
-                             <a href="#" id="mobile-random-btn" class="block px-4 py-2 text-white hover:bg-gray-700"><i class="fas fa-dice w-6"></i> ランダム表示</a>
+                             <a href="#" id="mobile-random-btn" class="block px-4 py-2 text-white hover:bg-gray-700 hidden"><i class="fas fa-dice w-6"></i> ランダム表示</a>
+                              <a href="#" id="mobile-clear-selections-btn" class="block px-4 py-2 text-white hover:bg-gray-700"><i class="fas fa-check-double w-6"></i> 選択を解除</a>
                              <a href="#" id="mobile-settings-btn" class="block px-4 py-2 text-white hover:bg-gray-700"><i class="fas fa-cog w-6"></i> 設定</a>
                          </div>
                     </div>
 
                     <div class="hidden md:flex items-center space-x-2">
                         <button id="filter-favorites-btn" class="bg-gray-600 hover:bg-gray-500 text-white font-bold py-2 px-3 rounded-lg flex-shrink-0" title="お気に入りフィルター" aria-label="お気に入りフィルター"><i class="fas fa-star"></i></button>
-                        <button id="random-btn" class="bg-purple-600 hover:bg-purple-700 text-white font-bold py-2 px-3 rounded-lg flex-shrink-0" title="ランダム表示" aria-label="ランダム表示"><i class="fas fa-dice"></i></button>
+                        <button id="random-btn" class="bg-purple-600 hover:bg-purple-700 text-white font-bold py-2 px-3 rounded-lg flex-shrink-0 hidden" title="ランダム表示" aria-label="ランダム表示"><i class="fas fa-dice"></i></button>
                         <button id="add-new-btn" class="bg-green-600 hover:bg-green-700 text-white font-bold py-2 px-3 rounded-lg flex-shrink-0"><i class="fas fa-plus"></i> <span class="hidden lg:inline">新規</span></button>
                         <button id="settings-btn" class="bg-gray-600 hover:bg-gray-500 text-white font-bold py-2 px-3 rounded-lg flex-shrink-0" title="データ管理" aria-label="データ管理"><i class="fas fa-cog"></i></button>
                     </div>
@@ -163,65 +164,75 @@
                 <button id="vitals-modal-close-btn" class="text-gray-400 hover:text-white"><i class="fas fa-times fa-lg"></i></button>
             </header>
             <main class="p-4 flex-1 overflow-y-auto">
-                <form id="vitals-form" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                    <!-- 意識レベル -->
-                    <div class="space-y-4 bg-gray-900 p-4 rounded-lg">
-                        <h3 class="font-bold text-lg border-b border-gray-700 pb-2">意識レベル</h3>
-                        <div>
-                            <label class="block text-sm font-medium mb-2">JCS (Japan Coma Scale)</label>
-                            <div id="vitals-jcs-group" class="grid grid-cols-4 sm:grid-cols-5 gap-2"></div>
-                        </div>
-                        <div>
-                            <label class="block text-sm font-medium mb-2">GCS (Glasgow Coma Scale) - <span id="gcs-total" class="font-bold">3</span>点</label>
-                            <div class="space-y-2">
-                                <select id="gcs-e-select" name="gcs_e" class="gcs-select w-full bg-gray-700 p-2 rounded-md border border-gray-600 focus:ring-2 focus:ring-blue-500"></select>
-                                <select id="gcs-v-select" name="gcs_v" class="gcs-select w-full bg-gray-700 p-2 rounded-md border border-gray-600 focus:ring-2 focus:ring-blue-500"></select>
-                                <select id="gcs-m-select" name="gcs_m" class="gcs-select w-full bg-gray-700 p-2 rounded-md border border-gray-600 focus:ring-2 focus:ring-blue-500"></select>
-                            </div>
-                        </div>
+                <form id="vitals-form" class="space-y-6">
+                    <div class="bg-gray-900 p-4 rounded-lg">
+                        <h3 class="font-bold text-lg border-b border-gray-700 pb-2 mb-4">外観・様子</h3>
+                        <div id="vitals-appearance-tags" class="flex flex-wrap gap-2"></div>
                     </div>
-                    <!-- 呼吸・循環 -->
-                    <div class="space-y-4 bg-gray-900 p-4 rounded-lg">
-                         <h3 class="font-bold text-lg border-b border-gray-700 pb-2">呼吸・循環</h3>
-                         <div class="grid grid-cols-2 gap-4">
-                            <div><label for="resp-rate" class="text-sm">呼吸数</label><input name="resp" type="number" id="resp-rate" class="w-full bg-gray-700 p-2 mt-1 rounded-md" placeholder="回/分"></div>
-                            <div><label for="spo2" class="text-sm">SpO2</label><input name="spo2" type="number" id="spo2" class="w-full bg-gray-700 p-2 mt-1 rounded-md" placeholder="%"></div>
-                            <div><label for="pulse-rate" class="text-sm">脈拍数</label><input name="pulse" type="number" id="pulse-rate" class="w-full bg-gray-700 p-2 mt-1 rounded-md" placeholder="回/分"></div>
-                            <div><label for="body-temp" class="text-sm">体温</label><input name="temp" type="number" step="0.1" id="body-temp" class="w-full bg-gray-700 p-2 mt-1 rounded-md" placeholder="℃"></div>
-                         </div>
-                         <div>
-                            <label class="block text-sm font-medium mb-2">血圧 (mmHg)</label>
-                            <div class="grid grid-cols-2 gap-4">
-                                <div><label for="bp-sys-r" class="text-xs">収縮期 (右)</label><input name="bp_sys_r" type="number" id="bp-sys-r" class="w-full bg-gray-700 p-2 mt-1 rounded-md" placeholder="R-Sys"></div>
-                                <div><label for="bp-dia-r" class="text-xs">拡張期 (右)</label><input name="bp_dia_r" type="number" id="bp-dia-r" class="w-full bg-gray-700 p-2 mt-1 rounded-md" placeholder="R-Dia"></div>
-                                <div><label for="bp-sys-l" class="text-xs">収縮期 (左)</label><input name="bp_sys_l" type="number" id="bp-sys-l" class="w-full bg-gray-700 p-2 mt-1 rounded-md" placeholder="L-Sys"></div>
-                                <div><label for="bp-dia-l" class="text-xs">拡張期 (左)</label><input name="bp_dia_l" type="number" id="bp-dia-l" class="w-full bg-gray-700 p-2 mt-1 rounded-md" placeholder="L-Dia"></div>
+
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                        <div class="space-y-4 bg-gray-900 p-4 rounded-lg">
+                            <h3 class="font-bold text-lg border-b border-gray-700 pb-2">意識レベル</h3>
+                            <div>
+                                <label class="block text-sm font-medium mb-2">JCS (Japan Coma Scale)</label>
+                                <div id="vitals-jcs-group" class="grid grid-cols-4 sm:grid-cols-5 gap-2"></div>
                             </div>
-                         </div>
-                    </div>
-                     <!-- 瞳孔・その他 -->
-                    <div class="space-y-4 bg-gray-900 p-4 rounded-lg">
-                        <h3 class="font-bold text-lg border-b border-gray-700 pb-2">瞳孔・その他</h3>
-                         <div>
-                            <label class="block text-sm font-medium mb-2">瞳孔所見</label>
-                            <div class="grid grid-cols-2 gap-4">
-                                <input type="text" id="pupil-r" class="w-full bg-gray-700 p-2 rounded-md" placeholder="右瞳孔" readonly>
-                                <input type="text" id="pupil-l" class="w-full bg-gray-700 p-2 rounded-md" placeholder="左瞳孔" readonly>
-                            </div>
-                            <div class="grid grid-cols-2 gap-4 mt-2">
-                                <div>
-                                    <label class="text-xs">サイズ(R)</label><div id="pupil-size-group-r" class="flex flex-wrap gap-1 mt-1"></div>
-                                    <label class="text-xs mt-2">対光反射(R)</label><div id="pupil-reflex-group-r" class="flex flex-wrap gap-1 mt-1"></div>
-                                </div>
-                                <div>
-                                    <label class="text-xs">サイズ(L)</label><div id="pupil-size-group-l" class="flex flex-wrap gap-1 mt-1"></div>
-                                    <label class="text-xs mt-2">対光反射(L)</label><div id="pupil-reflex-group-l" class="flex flex-wrap gap-1 mt-1"></div>
+                            <div>
+                                <label class="block text-sm font-medium mb-2">GCS (Glasgow Coma Scale) - <span id="gcs-total" class="font-bold">3</span>点</label>
+                                <div class="space-y-2">
+                                    <select id="gcs-e-select" name="gcs_e" class="gcs-select w-full bg-gray-700 p-2 rounded-md border border-gray-600 focus:ring-2 focus:ring-blue-500"></select>
+                                    <select id="gcs-v-select" name="gcs_v" class="gcs-select w-full bg-gray-700 p-2 rounded-md border border-gray-600 focus:ring-2 focus:ring-blue-500"></select>
+                                    <select id="gcs-m-select" name="gcs_m" class="gcs-select w-full bg-gray-700 p-2 rounded-md border border-gray-600 focus:ring-2 focus:ring-blue-500"></select>
                                 </div>
                             </div>
                         </div>
-                        <div>
-                            <label class="block text-sm font-medium mb-2">外観・様子</label>
-                            <div id="vitals-appearance-tags" class="flex flex-wrap gap-2"></div>
+
+                        <div class="space-y-4 bg-gray-900 p-4 rounded-lg">
+                             <h3 class="font-bold text-lg border-b border-gray-700 pb-2">呼吸・循環</h3>
+                             <div class="grid grid-cols-2 gap-4">
+                                <div><label for="resp-rate" class="text-sm">呼吸数</label><input name="resp" type="number" id="resp-rate" class="w-full bg-gray-700 p-2 mt-1 rounded-md" placeholder="回/分"></div>
+                                <div><label for="spo2" class="text-sm">SpO2</label><input name="spo2" type="number" id="spo2" class="w-full bg-gray-700 p-2 mt-1 rounded-md" placeholder="%"></div>
+                                <div><label for="pulse-rate" class="text-sm">脈拍数</label><input name="pulse" type="number" id="pulse-rate" class="w-full bg-gray-700 p-2 mt-1 rounded-md" placeholder="回/分"></div>
+                                <div><label for="body-temp" class="text-sm">体温</label><input name="temp" type="number" step="0.1" id="body-temp" class="w-full bg-gray-700 p-2 mt-1 rounded-md" placeholder="℃"></div>
+                             </div>
+                             <div>
+                                <h4 class="block text-sm font-medium mt-4">血圧 (mmHg)</h4>
+                                <div class="grid grid-cols-2 gap-x-4 mt-2">
+                                    <div class="space-y-2">
+                                        <label for="bp-sys-r" class="text-xs">収縮期 (右)</label>
+                                        <input name="bp_sys_r" type="number" id="bp-sys-r" class="w-full bg-gray-700 p-2 rounded-md" placeholder="Sys">
+                                        <label for="bp-dia-r" class="text-xs">拡張期 (右)</label>
+                                        <input name="bp_dia_r" type="number" id="bp-dia-r" class="w-full bg-gray-700 p-2 rounded-md" placeholder="Dia">
+                                    </div>
+                                    <div class="space-y-2">
+                                        <label for="bp-sys-l" class="text-xs">収縮期 (左)</label>
+                                        <input name="bp_sys_l" type="number" id="bp-sys-l" class="w-full bg-gray-700 p-2 rounded-md" placeholder="Sys">
+                                        <label for="bp-dia-l" class="text-xs">拡張期 (左)</label>
+                                        <input name="bp_dia_l" type="number" id="bp-dia-l" class="w-full bg-gray-700 p-2 rounded-md" placeholder="Dia">
+                                    </div>
+                                </div>
+                             </div>
+                        </div>
+
+                        <div class="space-y-4 bg-gray-900 p-4 rounded-lg md:col-span-2 lg:col-span-1">
+                            <h3 class="font-bold text-lg border-b border-gray-700 pb-2">瞳孔</h3>
+                             <div>
+                                <label class="block text-sm font-medium mb-2">瞳孔所見</label>
+                                <div class="grid grid-cols-2 gap-4">
+                                    <input type="text" id="pupil-r" class="w-full bg-gray-700 p-2 rounded-md" placeholder="右瞳孔" readonly>
+                                    <input type="text" id="pupil-l" class="w-full bg-gray-700 p-2 rounded-md" placeholder="左瞳孔" readonly>
+                                </div>
+                                <div class="grid grid-cols-2 gap-4 mt-2">
+                                    <div>
+                                        <label class="text-xs">サイズ(R)</label><div id="pupil-size-group-r" class="flex flex-wrap gap-1 mt-1"></div>
+                                        <label class="text-xs mt-2">対光反射(R)</label><div id="pupil-reflex-group-r" class="flex flex-wrap gap-1 mt-1"></div>
+                                    </div>
+                                    <div>
+                                        <label class="text-xs">サイズ(L)</label><div id="pupil-size-group-l" class="flex flex-wrap gap-1 mt-1"></div>
+                                        <label class="text-xs mt-2">対光反射(L)</label><div id="pupil-reflex-group-l" class="flex flex-wrap gap-1 mt-1"></div>
+                                    </div>
+                                </div>
+                            </div>
                         </div>
                     </div>
                 </form>
@@ -396,10 +407,10 @@
                 },
                 init() {
                     this.cacheDomElements();
-                    this.components.patientInfo.init(); // Load patient info first
                     this.utils.initFirebaseConfig();
                     this.services.auth.init();
                     this.bindEventListeners();
+                    // Init all components
                     Object.values(this.components).forEach(component => component.init?.());
                 },
                 // DOM要素をキャッシュする
@@ -450,6 +461,7 @@
                         mobileFilterFavoritesBtn: D.getElementById('mobile-filter-favorites-btn'),
                         mobileRandomBtn: D.getElementById('mobile-random-btn'),
                         mobileSettingsBtn: D.getElementById('mobile-settings-btn'),
+                        mobileClearSelectionsBtn: D.getElementById('mobile-clear-selections-btn'),
                         // Vitals Summary
                         vitalsSummaryContainer: D.getElementById('vitals-summary-container'),
                         vitalsSummaryArea: D.getElementById('vitals-summary-area'),
@@ -995,11 +1007,6 @@
                             controlsContainer.appendChild(compareBtn);
                         }
                 
-                        if (App.state.ui.selectedItems.size > 0) {
-                            const clearSelectionBtn = App.utils.createButton('<i class="fas fa-times mr-2"></i>選択をすべて解除', 'w-full text-sm bg-gray-500 hover:bg-gray-600 text-white font-bold py-2 px-4 rounded-lg flex items-center justify-center', () => App.handlers.handleClearAllSelections());
-                            controlsContainer.appendChild(clearSelectionBtn);
-                        }
-
                         if (controlsContainer.children.length > 0) {
                            fragment.appendChild(controlsContainer);
                         }
@@ -1011,7 +1018,7 @@
                         const vitals = App.state.vitals;
                         const patientInfo = App.utils.loadFromStorage(App.config.storageKeys.ageAndGender, {});
                         
-                        const hasVitals = vitals && Object.keys(vitals).length > 0;
+                        const hasVitals = vitals && Object.values(vitals).some(v => v !== null && v !== '' && (!Array.isArray(v) || v.length > 0));
                         const hasPatientInfo = patientInfo && (patientInfo.age || patientInfo.gender);
 
                         if (!hasVitals && !hasPatientInfo) {
@@ -1020,14 +1027,14 @@
                         }
                         
                         let html = '';
-                        const format = (icon, label, value, unit = '') => (value !== null && value !== undefined && value !== '') ? `<span class="flex items-center gap-1"><i class="fa-solid ${icon} fa-fw text-gray-400"></i> ${label}: <b>${value}${unit}</b></span>` : '';
+                        const format = (icon, label, value, unit = '') => (value !== null && value !== undefined && value !== '' && !(Array.isArray(value) && value.length === 0)) ? `<span class="flex items-center gap-1"><i class="fa-solid ${icon} fa-fw text-gray-400"></i> ${label}: <b>${value}${unit}</b></span>` : '';
                         
                         const genderText = patientInfo.gender === 'male' ? '男性' : patientInfo.gender === 'female' ? '女性' : '';
                         html += format('fa-user', '患者', `${patientInfo.age || ''}歳 ${genderText}`.trim());
 
                         if(hasVitals){
                             html += format('fa-brain', 'JCS', vitals.jcs);
-                            if(vitals.gcs) html += format('fa-arrows-to-dot', 'GCS', vitals.gcs, ` (E${vitals.gcs_e || '?'}V${vitals.gcs_v || '?'}M${vitals.gcs_m || '?'})`);
+                            if(vitals.gcs && parseInt(vitals.gcs) > 0) html += format('fa-arrows-to-dot', 'GCS', vitals.gcs, ` (E${vitals.gcs_e || '?'}V${vitals.gcs_v || '?'}M${vitals.gcs_m || '?'})`);
                             html += format('fa-lungs', '呼吸', vitals.resp, '回');
                             html += format('fa-heart-pulse', '脈拍', vitals.pulse, '回');
                             html += format('fa-o', 'SpO2', vitals.spo2, '%');
@@ -1327,6 +1334,7 @@
                             el.vitalsForm.addEventListener('change', e => this.updateStateFromForm());
                              el.vitalsForm.addEventListener('click', e => {
                                 if (e.target.closest('.jcs-btn, .pupil-btn, .pupil-reflex-btn, .vitals-tag')) {
+                                    if(e.target.closest('.vitals-tag')) e.target.classList.toggle('active');
                                     this.updateStateFromForm();
                                 }
                             });
@@ -1342,7 +1350,7 @@
                             jcsOptions.forEach(val => App.elements.vitalsJcsGroup.appendChild(App.utils.createButton(val, 'jcs-btn bg-gray-700 hover:bg-gray-600 p-2 rounded-md flex-grow text-center', e => this.handleJcsClick(e))));
                             
                             App.elements.vitalsAppearanceTags.innerHTML = '';
-                            appearanceOptions.forEach(val => App.elements.vitalsAppearanceTags.appendChild(App.utils.createButton(val, 'vitals-tag bg-gray-600 hover:bg-gray-500 text-sm py-1 px-3 rounded-full', e => e.target.classList.toggle('active'))));
+                            appearanceOptions.forEach(val => App.elements.vitalsAppearanceTags.appendChild(App.utils.createButton(val, 'vitals-tag bg-gray-600 hover:bg-gray-500 text-sm py-1 px-3 rounded-full')));
                             
                             ['R', 'L'].forEach(side => {
                                 const sizeGroup = App.elements[`pupilSizeGroup${side.toUpperCase()}`];
@@ -1444,7 +1452,7 @@
                     },
                     settings: {
                         init(){
-                             const showRandom = App.utils.loadFromStorage(App.config.storageKeys.showRandomBtn, true);
+                             const showRandom = App.utils.loadFromStorage(App.config.storageKeys.showRandomBtn, false);
                              App.elements.showRandomBtnToggle.checked = showRandom;
                              this.toggleRandomButtonVisibility(showRandom);
                              
@@ -1582,7 +1590,9 @@
                         }
                     },
                     dataModal: {
-                        init(){/* No init needed */},
+                        init(){
+                            this.bindEventListeners();
+                        },
                         bindEventListeners() {
                             const el = App.elements;
                             el.addNewBtn.addEventListener('click', () => this.openForNew());
@@ -1704,7 +1714,7 @@
                         }
                     },
                     compareModal: {
-                        init(){/* No init needed */},
+                        init(){this.bindEventListeners()},
                         open() {
                             const { compareModal, compareModalBody } = App.elements;
                             compareModalBody.innerHTML = '';
@@ -1775,7 +1785,7 @@
                         }
                     },
                     dobModal: {
-                        init(){/* No init needed */},
+                        init(){this.bindEventListeners()},
                         bindEventListeners() {
                             const el = App.elements;
                             el.dobBtn.addEventListener('click', () => App.utils.showModal(el.dobEraModal));
@@ -1825,6 +1835,17 @@
                             App.elements.ageInput.value = age;
                             App.handlers.handlePatientInfoChange();
                             App.utils.hideModal(App.elements.dobEraModal);
+                        }
+                    },
+                    mobileMenu: {
+                        init() { this.bindEventListeners() },
+                        bindEventListeners() {
+                            const { mobileClearSelectionsBtn, mobileMenu } = App.elements;
+                            mobileClearSelectionsBtn.addEventListener('click', (e) => {
+                                e.preventDefault();
+                                App.handlers.handleClearAllSelections();
+                                App.utils.hide(mobileMenu);
+                            });
                         }
                     }
                 },
