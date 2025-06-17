@@ -51,7 +51,7 @@
 
         
         #filter-favorites-btn.active, #mobile-filter-favorites-btn.active, #keywords-panel-toggle-btn.active { color: #fBBF24; }
-        .gender-btn.active, .vitals-tag.active, .pupil-btn.active, .pupil-reflex-btn.active, .jcs-btn.active, .era-btn.active { background-color: #3b82f6; color: white; }
+        .gender-btn.active, .vitals-tag.active, .pupil-btn.active, .pupil-reflex-btn.active, .jcs-btn.active, .era-btn.active, .ecg-tag.active { background-color: #3b82f6; color: white; }
         .font-size-btn.active { background-color: #2563eb; }
 
         #stopwatch.running { background-color: #166534; }
@@ -178,7 +178,16 @@
                         <h3 class="font-bold text-lg border-b border-gray-700 pb-2 mb-4">外観・様子</h3>
                         <div id="vitals-appearance-tags" class="flex flex-wrap gap-2"></div>
                     </div>
-
+                    <div class="bg-gray-900 p-4 rounded-lg">
+                        <h3 class="font-bold text-lg border-b border-gray-700 pb-2 mb-4">心電図所見</h3>
+                        <div class="flex overflow-x-auto space-x-2 p-1">
+                            <div id="vitals-ecg-tags" class="flex space-x-2"></div>
+                        </div>
+                        <div>
+                            <label for="ecg-memo" class="text-sm">心電図自由記載</label>
+                            <textarea name="ecg_memo" id="ecg-memo" rows="2" class="w-full bg-gray-700 p-2 rounded-md mt-1"></textarea>
+                        </div>
+                    </div>
                     <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
                         <div class="space-y-4 bg-gray-900 p-4 rounded-lg">
                             <h3 class="font-bold text-lg border-b border-gray-700 pb-2">意識レベル</h3>
@@ -404,8 +413,10 @@
                     },
                     jcsOptions: ["清明", "1", "2", "3", "10", "20", "30", "100", "200", "300"],
                     appearanceOptions: ["起坐呼吸", "喘鳴", "顔面蒼白", "頸静脈怒張", "冷や汗"],
-                    pupilSizeOptions: [1, 1.5, 2, 2.5, 3, 3.5, 4, 4.5, 5, 5.5, 6],
+                    pupilSizeOptions: [1.5, 2, 2.5, 3, 3.5, 4, 4.5, 5, 5.5, 6],
                     pupilReflexOptions: ["迅速(+)", "鈍", "なし(-)"],
+                    ecgOptions: ["ショック適応", "ショック非適応", "不安定頻拍", "症候性徐脈", "ST上昇", "T波増高", "ST低下", "QT延長", "異常Q波", "J波", "PSVT", "VPC", "Af", "洞調律"]
+
                 },
                 state: {
                     db: null, auth: null, userId: null, dataStore: [], originalDataOrder: [], isLoading: true,
@@ -495,6 +506,10 @@
                         pupilReflexGroupL: D.getElementById('pupil-reflex-group-l'),
                         vitalsAppearanceTags: D.getElementById('vitals-appearance-tags'),
                         vitalsJcsGroup: D.getElementById('vitals-jcs-group'),
+                        pulsePressureR: D.getElementById('pulse-pressure-r'),
+                        pulsePressureL: D.getElementById('pulse-pressure-l'),
+                        vitalsEcgTags: D.getElementById('vitals-ecg-tags'),
+                        ecgMemo: D.getElementById('ecg-memo'),
                         // Settings Modal
                         settingsModal: D.getElementById('settings-modal'),
                         settingsModalCloseBtn: D.getElementById('settings-modal-close-btn'),
@@ -1038,7 +1053,11 @@
                         }
                         
                         let html = '';
-                        const format = (icon, label, value, unit = '') => (value !== null && value !== undefined && value !== '' && !(Array.isArray(value) && value.length === 0)) ? `<span class="flex items-center gap-1"><i class="fa-solid ${icon} fa-fw text-gray-400"></i> ${label}: <b>${value}${unit}</b></span>` : '';
+                        const format = (icon, label, value, unit = '', rawHtml = false) => {
+                            if(value === null || value === undefined || value === '' || (Array.isArray(value) && value.length === 0)) return '';
+                            const valueContent = rawHtml ? value : `<b>${value}${unit}</b>`;
+                            return `<span class="flex items-center gap-1"><i class="fa-solid ${icon} fa-fw text-gray-400"></i> ${label}: ${valueContent}</span>`;
+                        };
                         
                         const genderText = patientInfo.gender === 'male' ? '男性' : patientInfo.gender === 'female' ? '女性' : '';
                         html += format('fa-user', '患者', `${patientInfo.age || ''}歳 ${genderText}`.trim());
@@ -1060,6 +1079,10 @@
                             if (vitals.bp_sys_l || vitals.bp_dia_l) html += format('fa-droplet', '血圧(L)', bpTextL, '', true);
 
                             if (vitals.pupil_r || vitals.pupil_l) html += format('fa-eye', '瞳孔', `R:${vitals.pupil_r || '?'} L:${vitals.pupil_l || '?'}`);
+                        
+                            if(vitals.ecg_findings && vitals.ecg_findings.length > 0) {
+                                html += format('fa-heart-pulse', 'ECG', vitals.ecg_findings.join(', '));
+                            }
                         }
                         
                         vitalsSummaryArea.innerHTML = html;
@@ -1348,17 +1371,19 @@
                             el.vitalsModalCloseBtn.addEventListener('click', () => App.utils.hideModal(el.vitalsModal));
                             el.vitalsSaveBtn.addEventListener('click', () => this.saveAndClose());
                             el.vitalsClearBtn.addEventListener('click', () => this.clear());
-                            el.vitalsForm.addEventListener('input', e => this.updateStateFromForm());
-                            el.vitalsForm.addEventListener('change', e => this.updateStateFromForm());
+                            el.vitalsForm.addEventListener('input', e => {
+                                this.updateStateFromForm();
+                                this.checkPulsePressure();
+                            });
                              el.vitalsForm.addEventListener('click', e => {
-                                if (e.target.closest('.jcs-btn, .pupil-btn, .pupil-reflex-btn, .vitals-tag')) {
-                                    if(e.target.closest('.vitals-tag')) e.target.classList.toggle('active');
+                                if (e.target.closest('.jcs-btn, .pupil-btn, .pupil-reflex-btn, .vitals-tag, .ecg-tag')) {
+                                    if(e.target.closest('.vitals-tag, .ecg-tag')) e.target.classList.toggle('active');
                                     this.updateStateFromForm();
                                 }
                             });
                         },
                          populateSelectors() {
-                            const { gcsOptions, jcsOptions, appearanceOptions, pupilSizeOptions, pupilReflexOptions } = App.config;
+                            const { gcsOptions, jcsOptions, appearanceOptions, pupilSizeOptions, pupilReflexOptions, ecgOptions } = App.config;
                             ['E', 'V', 'M'].forEach(type => {
                                 const select = App.elements[`gcs${type.toUpperCase()}Select`];
                                 select.innerHTML = '';
@@ -1370,6 +1395,9 @@
                             App.elements.vitalsAppearanceTags.innerHTML = '';
                             appearanceOptions.forEach(val => App.elements.vitalsAppearanceTags.appendChild(App.utils.createButton(val, 'vitals-tag bg-gray-600 hover:bg-gray-500 text-sm py-1 px-3 rounded-full')));
                             
+                            App.elements.vitalsEcgTags.innerHTML = '';
+                            ecgOptions.forEach(val => App.elements.vitalsEcgTags.appendChild(App.utils.createButton(val, 'ecg-tag bg-gray-600 hover:bg-gray-500 text-sm py-1 px-3 rounded-full whitespace-nowrap')));
+
                             ['R', 'L'].forEach(side => {
                                 const sizeGroup = App.elements[`pupilSizeGroup${side.toUpperCase()}`];
                                 const reflexGroup = App.elements[`pupilReflexGroup${side.toUpperCase()}`];
@@ -1405,7 +1433,6 @@
                              }
 
                              vitals.jcs = form.querySelector('#vitals-jcs-group .active')?.textContent.trim() || null;
-                             
                              vitals.gcs = this.updateGcsTotal();
                             
                              ['r', 'l'].forEach(side => {
@@ -1415,9 +1442,43 @@
                              });
                              
                              vitals.appearance = Array.from(form.querySelectorAll('#vitals-appearance-tags .active')).map(t => t.textContent.trim());
+                             vitals.ecg_findings = Array.from(form.querySelectorAll('#vitals-ecg-tags .active')).map(t => t.textContent.trim());
 
                              App.state.vitals = vitals;
                              this.updatePupilDisplay();
+                        },
+                        checkPulsePressure() {
+                            ['r', 'l'].forEach(side => {
+                                const sysEl = App.elements.vitalsForm.querySelector(`#bp-sys-${side}`);
+                                const diaEl = App.elements.vitalsForm.querySelector(`#bp-dia-${side}`);
+                                if(!sysEl || !diaEl) return;
+
+                                const sys = parseInt(sysEl.value, 10);
+                                const dia = parseInt(diaEl.value, 10);
+                                const indicatorEl = document.getElementById(`pulse-pressure-${side}`);
+                                let indicatorText = null;
+
+                                if (sys && dia) {
+                                    const pulsePressure = sys - dia;
+                                    if (pulsePressure > sys / 2) {
+                                        indicatorText = '大脈圧';
+                                    } else if (pulsePressure < sys / 4) {
+                                        indicatorText = '小脈圧';
+                                    }
+                                }
+                                
+                                App.state.vitals[`pulse_pressure_${side}`] = indicatorText;
+
+                                if (indicatorEl) {
+                                    if (indicatorText) {
+                                        indicatorEl.textContent = indicatorText;
+                                        indicatorEl.classList.add('flashing-indicator');
+                                    } else {
+                                        indicatorEl.textContent = '';
+                                        indicatorEl.classList.remove('flashing-indicator');
+                                    }
+                                }
+                            });
                         },
                         updateFormFromState() {
                             const vitals = App.state.vitals || {};
@@ -1438,8 +1499,10 @@
                             this.updatePupilSelectors('r');
                             this.updatePupilSelectors('l');
                             this.updatePupilDisplay();
+                            this.checkPulsePressure();
 
                              App.elements.vitalsAppearanceTags.querySelectorAll('.vitals-tag').forEach(b => b.classList.toggle('active', (vitals.appearance || []).includes(b.textContent)));
+                             App.elements.vitalsEcgTags.querySelectorAll('.ecg-tag').forEach(b => b.classList.toggle('active', (vitals.ecg_findings || []).includes(b.textContent)));
                         },
                          updatePupilDisplay() {
                             App.elements.pupilR.value = App.state.vitals.pupil_r || '';
@@ -1867,7 +1930,6 @@
                         }
                     }
                 },
-                // ユーティリティ関数
                 utils: {
                     initFirebaseConfig() {
                         if (typeof __firebase_config !== 'undefined' && __firebase_config) {
