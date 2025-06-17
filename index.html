@@ -140,7 +140,7 @@
                                <span id="sort-menu-label" class="hidden md:inline">登録順</span>
                             </button>
                              <div id="sort-menu-dropdown" class="hidden absolute right-0 mt-2 w-40 bg-gray-800 rounded-lg shadow-xl z-30 py-1">
-                                 <a href="#" class="sort-item block px-4 py-2 text-white hover:bg-gray-700" data-sort="default">登録順</a>
+                                 <a href="#" class="sort-item block px-4 py-2 text-white hover:bg-gray-700 active" data-sort="default">登録順</a>
                                  <a href="#" class="sort-item block px-4 py-2 text-white hover:bg-gray-700" data-sort="name">名前順</a>
                                  <a href="#" class="sort-item block px-4 py-2 text-white hover:bg-gray-700" data-sort="updated">更新順</a>
                              </div>
@@ -455,7 +455,7 @@
 
                 },
                 state: {
-                    db: null, auth: null, userId: null, dataStore: [], originalDataOrder: [], isLoading: true,
+                    db: null, auth: null, userId: null, dataStore: [], isLoading: true,
                     intersectionObserver: null,
                     filters: { searchTerm: '', activeKeywords: new Set(), keywordMode: 'OR', isFavoritesOnly: false, sortBy: 'default' },
                     ui: { selectedItems: new Set(), highlightedElements: [], currentHighlightIndex: -1 },
@@ -801,7 +801,6 @@
                                 App.state.isLoading = false;
                                 
                                 const docs = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
-                                App.state.originalDataOrder = snapshot.docs.map(doc => doc.id);
                                 App.state.dataStore = docs;
                 
                                 if (snapshot.empty && App.state.dataStore.length === 0) { 
@@ -816,10 +815,10 @@
                             });
                         },
                         async seedInitialData() {
-                            const now = new Date().toISOString();
+                            const now = new Date();
                             const initialData = [ 
-                                { chiefComplaint: "気分不良", updatedAt: now, isFavorite: false, diseases: [ { name: "脳血管障害", keywords: ["突然の片麻痺", "顔面神経麻痺", "言語障害", "意識障害"], pitfalls: ["TIAの見過ごし"], isFavorite: false }, { name: "急性冠症候群", keywords: ["胸痛", "放散痛", "冷や汗"], pitfalls: ["非典型的な胸痛"], isFavorite: false } ] }, 
-                                { chiefComplaint: "呼吸困難", updatedAt: now, isFavorite: true, diseases: [ { name: "心不全", keywords: ["起坐呼吸", "下腿浮腫"], pitfalls: ["喘息との鑑別困難"], isFavorite: true } ] }
+                                { chiefComplaint: "気分不良", createdAt: new Date(now.getTime() - 1000).toISOString(), updatedAt: new Date(now.getTime() - 1000).toISOString(), isFavorite: false, diseases: [ { name: "脳血管障害", keywords: ["突然の片麻痺", "顔面神経麻痺", "言語障害", "意識障害"], pitfalls: ["TIAの見過ごし"], isFavorite: false }, { name: "急性冠症候群", keywords: ["胸痛", "放散痛", "冷や汗"], pitfalls: ["非典型的な胸痛"], isFavorite: false } ] }, 
+                                { chiefComplaint: "呼吸困難", createdAt: now.toISOString(), updatedAt: now.toISOString(), isFavorite: true, diseases: [ { name: "心不全", keywords: ["起坐呼吸", "下腿浮腫"], pitfalls: ["喘息との鑑別困難"], isFavorite: true } ] }
                             ];
                             try {
                                 const collectionRef = this.getCollectionRef();
@@ -932,11 +931,8 @@
                                 break;
                             case 'default':
                             default:
-                                processedData.sort((a, b) => {
-                                    const indexA = App.state.originalDataOrder.indexOf(a.id);
-                                    const indexB = App.state.originalDataOrder.indexOf(b.id);
-                                    return indexA - indexB;
-                                });
+                                // Sort by creation date (oldest first)
+                                processedData.sort((a, b) => (a.createdAt || '').localeCompare(b.createdAt || ''));
                                 break;
                         }
                         
@@ -1819,6 +1815,9 @@
                                 if (entryId) {
                                     const existingData = App.state.dataStore.find(d => d.id === entryId);
                                     data.isFavorite = existingData?.isFavorite || false;
+                                    if (existingData?.createdAt) {
+                                        data.createdAt = existingData.createdAt;
+                                    }
                                     data.diseases.forEach(d => {
                                         const existingDisease = (existingData.diseases || []).find(ed => ed.name === d.name);
                                         if (existingDisease) d.isFavorite = existingDisease.isFavorite;
@@ -1826,6 +1825,7 @@
                                     await setDoc(doc(collectionRef, entryId), data);
                                     App.utils.customAlert('データが更新されました。');
                                 } else {
+                                    data.createdAt = new Date().toISOString();
                                     data.isFavorite = false;
                                     await addDoc(collectionRef, data);
                                     App.utils.customAlert('データが追加されました。');
