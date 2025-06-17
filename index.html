@@ -668,7 +668,7 @@
                         App.elements.sortMenuDropdown.querySelectorAll('.sort-item').forEach(item => item.classList.remove('active'));
                         sortItem.classList.add('active');
                         
-                        this.utils.hide(App.elements.sortMenuDropdown);
+                        App.utils.hide(App.elements.sortMenuDropdown);
                         App.renderer.renderAll();
                     },
                     handleToggleFavoritesFilter() {
