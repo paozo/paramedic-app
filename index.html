@@ -53,7 +53,7 @@
         #logic-switch-container[data-mode="AND"] #switch-bg { transform: translateX(100%); }
         
         #filter-favorites-btn.active, #mobile-filter-favorites-btn.active, #keywords-panel-toggle-btn.active { color: #fBBF24; }
-        .gender-btn.active, .vitals-btn.active, .pupil-btn.active, .pupil-reflex-btn.active { background-color: #3b82f6; color: white; }
+        .gender-btn.active, .vitals-btn.active, .pupil-btn.active, .pupil-reflex-btn.active, .jcs-btn.active { background-color: #3b82f6; color: white; }
         .font-size-btn.active { background-color: #2563eb; }
 
         #stopwatch.running { background-color: #166534; }
@@ -97,12 +97,6 @@
 
                     <div id="stopwatch" class="bg-gray-700 text-white font-mono text-lg p-2 rounded-lg cursor-pointer flex-shrink-0" title="クリック: スタート/ストップ | 長押し: リセット">00:00</div>
                     <button id="vitals-btn" class="bg-cyan-600 hover:bg-cyan-700 text-white font-bold py-2 px-3 rounded-lg flex-shrink-0" title="バイタル入力" aria-label="バイタル入力モーダルを開く"><i class="fas fa-wave-square"></i></button>
-
-                    <div class="hidden sm:flex items-center space-x-2 bg-gray-700 p-1 rounded-lg">
-                         <span id="search-count" class="text-sm font-mono text-gray-300 w-14 text-center" aria-live="polite">0/0</span>
-                         <button id="search-prev-btn" class="search-nav-btn text-white hover:bg-gray-600 p-1 rounded-md" disabled title="前のハイライトへ" aria-label="前のハイライトへ"><i class="fas fa-arrow-up"></i></button>
-                         <button id="search-next-btn" class="search-nav-btn text-white hover:bg-gray-600 p-1 rounded-md" disabled title="次のハイライトへ" aria-label="次のハイライトへ"><i class="fas fa-arrow-down"></i></button>
-                    </div>
                     
                     <div class="relative md:hidden">
                          <button id="menu-btn" class="bg-gray-600 hover:bg-gray-500 text-white font-bold p-2 rounded-lg w-10 h-10 flex items-center justify-center" aria-label="メニューを開く"><i class="fas fa-ellipsis-v"></i></button>
@@ -122,6 +116,10 @@
                         <button id="settings-btn" class="bg-gray-600 hover:bg-gray-500 text-white font-bold py-2 px-3 rounded-lg flex-shrink-0" title="データ管理" aria-label="データ管理"><i class="fas fa-cog"></i></button>
                         <button id="keywords-panel-toggle-btn" class="p-2 text-white hover:text-blue-400 flex-shrink-0" aria-label="キーワードパネルを開く"><i class="fas fa-tags fa-lg"></i></button>
                     </div>
+                </div>
+
+                <div id="keywords-container" class="mt-2 hidden">
+                    <div id="selected-keywords-area" class="p-2 bg-gray-900/50 rounded-lg border border-gray-700 space-y-2"></div>
                 </div>
                 
                 <div id="vitals-summary-container" class="w-full mt-2 hidden">
@@ -291,6 +289,7 @@
                         alertIcon: D.getElementById('alert-icon'),
                         
                         dataModal: D.getElementById('data-modal'),
+                        dobEraModal: D.getElementById('dob-era-modal'),
                     };
                 },
                 bindEventListeners() {
@@ -647,7 +646,7 @@
                         contentArea.appendChild(fragment);
                     },
                     renderSelectedKeywords() {
-                        const { selectedKeywordsArea, keywordsPanelToggleBtn } = App.elements;
+                        const { selectedKeywordsArea, keywordsContainer } = App.elements;
                         selectedKeywordsArea.innerHTML = '';
                         
                         const allAvailableKeywords = new Set();
@@ -662,10 +661,10 @@
                             });
                         }
                         
-                        App.utils.hide(keywordsPanelToggleBtn);
+                        App.utils.hide(keywordsContainer);
                         if(allAvailableKeywords.size === 0) return;
                         
-                        App.utils.show(keywordsPanelToggleBtn);
+                        App.utils.show(keywordsContainer);
 
                         const keywordTags = document.createElement('div');
                         keywordTags.className = 'flex flex-wrap gap-2';
@@ -931,7 +930,7 @@
                             el.vitalsSaveBtn.addEventListener('click', () => this.saveAndClose());
                             el.vitalsForm.addEventListener('input', () => this.updateStateFromForm());
                             el.vitalsForm.addEventListener('click', (e) => {
-                                if(e.target.closest('.vitals-btn') || e.target.closest('.pupil-btn') || e.target.closest('.pupil-reflex-btn')) {
+                                if(e.target.closest('.jcs-btn') || e.target.closest('.pupil-btn') || e.target.closest('.pupil-reflex-btn')) {
                                     this.updateStateFromForm();
                                 }
                             });
@@ -944,7 +943,7 @@
                                 gcsOptions[type].forEach(opt => select.add(new Option(opt.t, opt.v)));
                             });
                             App.elements.vitalsJcsGroup.innerHTML = '';
-                            jcsOptions.forEach(val => App.elements.vitalsJcsGroup.appendChild(App.utils.createButton(val, 'vitals-btn bg-gray-600 p-2 rounded-md', e => this.handleJcsClick(e))));
+                            jcsOptions.forEach(val => App.elements.vitalsJcsGroup.appendChild(App.utils.createButton(val, 'jcs-btn bg-gray-600 p-2 rounded-md', e => this.handleJcsClick(e))));
                             
                             App.elements.vitalsAppearanceTags.innerHTML = '';
                             appearanceOptions.forEach(val => App.elements.vitalsAppearanceTags.appendChild(App.utils.createButton(val, 'vitals-btn bg-gray-600 hover:bg-gray-500 text-sm py-1 px-3 rounded-full', e => e.target.classList.toggle('active'))));
@@ -1038,8 +1037,8 @@
                              this.applyFontSize(fontSize);
                         },
                         bindEventListeners() {
-                           App.elements.addNewBtn.addEventListener('click', () => App.components.dataModal.openForNew());
                            App.elements.settingsBtn.addEventListener('click', () => App.utils.showModal(App.elements.settingsModal));
+                           App.elements.mobileSettingsBtn.addEventListener('click', (e) => { e.preventDefault(); App.utils.showModal(App.elements.settingsModal); App.utils.hide(App.elements.mobileMenu); });
                            App.elements.settingsModalCloseBtn.addEventListener('click', () => App.utils.hideModal(App.elements.settingsModal));
                            App.elements.exportDataBtn.addEventListener('click', () => this.exportData());
                            App.elements.importDataBtn.addEventListener('click', () => App.elements.importFileInput.click());
@@ -1162,7 +1161,12 @@
                         }
                     },
                     compareModal: {},
-                    dobModal: {}
+                    dobModal: {
+                        bindEventListeners() {
+                            const el = App.elements;
+                            el.dobBtn.addEventListener('click', () => App.utils.showModal(el.dobEraModal));
+                        }
+                    }
                 },
                 utils: {
                     initFirebaseConfig() {
