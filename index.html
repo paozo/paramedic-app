@@ -34,13 +34,11 @@
         
         button:disabled { opacity: 0.5; cursor: not-allowed; }
         
-        /* Changed: Make checkboxes more compact */
         .item-checkbox, .nav-item-checkbox { transform: scale(1.0); margin-right: 8px; accent-color: #3b82f6; }
         
         .keyword-tag, .content-keyword-tag { cursor: pointer; transition: background-color 0.2s ease, color 0.2s ease; }
         .keyword-tag.active, .content-keyword-tag.active { background-color: yellow; color: #1f2937; font-weight: bold; }
         
-        /* Changed: Adjust padding for compactness */
         .nav-item { padding-left: 0.75rem; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; transition: background-color 0.2s ease, color 0.2s ease; padding-top: 0.5rem; padding-bottom: 0.5rem; }
         .nav-item.active-nav { background-color: #2563eb; color: white; }
         
@@ -52,9 +50,10 @@
         #logic-switch-container[data-mode="AND"] #switch-bg { width: calc(50% - 2px); left: 2px; transform: translateX(100%); }
 
         
-        #filter-favorites-btn.active, #mobile-filter-favorites-btn.active, #keywords-panel-toggle-btn.active { color: #fBBF24; }
-        .gender-btn.active, .vitals-tag.active, .jcs-btn.active, .era-btn.active, .ecg-tag.active { background-color: #3b82f6; color: white; }
+        #keywords-panel-toggle-btn.active, #nav-menu-filter-favorites-btn.active { color: #fBBF24; }
+        .gender-btn.active, .vitals-tag.active, .jcs-btn.active, .era-btn.active, .ecg-tag.active, .nav-sort-item.active { background-color: #3b82f6; color: white; }
         .font-size-btn.active { background-color: #2563eb; }
+        .time-btn.active { background-color: #16a34a; color: white; }
 
         #stopwatch.running { background-color: #166534; }
         
@@ -72,7 +71,6 @@
           font-weight: bold;
         }
 
-        /* Custom styles for range slider */
         input[type="range"]::-webkit-slider-thumb { -webkit-appearance: none; appearance: none; width: 20px; height: 20px; background: #3b82f6; cursor: pointer; border-radius: 50%; border: 2px solid #fff; margin-top: -7px; }
         input[type="range"]::-moz-range-thumb { width: 16px; height: 16px; background: #3b82f6; cursor: pointer; border-radius: 50%; border: 2px solid #fff;}
     </style>
@@ -81,7 +79,28 @@
 
     <div id="app" class="flex h-screen overflow-hidden">
         <!-- サイドナビゲーション -->
-        <nav id="jump-nav" class="w-48 bg-gray-800 p-2 overflow-y-auto fixed top-0 left-0 h-full z-40 transform -translate-x-full transition-transform md:relative md:w-40 md:translate-x-0 shadow-lg"></nav>
+        <nav id="jump-nav" class="w-48 bg-gray-800 p-2 overflow-y-auto flex flex-col fixed top-0 left-0 h-full z-40 transform -translate-x-full transition-transform md:relative md:w-40 md:translate-x-0 shadow-lg">
+            <div class="relative mb-2">
+                <button id="nav-menu-btn" class="w-full text-left p-2 rounded-lg hover:bg-gray-700 flex justify-between items-center">
+                    <span class="font-bold">メニュー</span>
+                    <i class="fas fa-ellipsis-v"></i>
+                </button>
+                <div id="nav-menu-dropdown" class="hidden absolute top-full left-0 mt-1 w-full bg-gray-600 rounded-lg shadow-xl z-10 py-1">
+                    <a href="#" data-action="add-new" class="nav-menu-item block px-3 py-2 text-sm text-white hover:bg-gray-500"><i class="fas fa-plus w-6"></i> 新規追加</a>
+                    <a href="#" data-action="filter-favorites" id="nav-menu-filter-favorites-btn" class="nav-menu-item block px-3 py-2 text-sm text-white hover:bg-gray-500"><i class="fas fa-star w-6"></i> お気に入り</a>
+                    <a href="#" data-action="clear-selections" class="nav-menu-item block px-3 py-2 text-sm text-white hover:bg-gray-500"><i class="fas fa-check-double w-6"></i> 選択を解除</a>
+                    <a href="#" data-action="settings" class="nav-menu-item block px-3 py-2 text-sm text-white hover:bg-gray-500"><i class="fas fa-cog w-6"></i> 設定</a>
+                    <div class="border-t border-gray-500 my-1"></div>
+                    <div class="px-3 pt-2 pb-1 text-xs text-gray-300 font-bold">並び替え</div>
+                    <a href="#" class="nav-sort-item nav-menu-item block px-3 py-2 text-sm text-white hover:bg-gray-500" data-sort="default">登録順</a>
+                    <a href="#" class="nav-sort-item nav-menu-item block px-3 py-2 text-sm text-white hover:bg-gray-500" data-sort="name">名前順</a>
+                    <a href="#" class="nav-sort-item nav-menu-item block px-3 py-2 text-sm text-white hover:bg-gray-500" data-sort="updated">更新順</a>
+                </div>
+            </div>
+            <div id="nav-scroll-area" class="flex-1 overflow-y-auto">
+                <!-- Nav items will be injected here -->
+            </div>
+        </nav>
         <div id="sidebar-backdrop" class="hidden fixed inset-0 bg-black bg-opacity-50 z-30 md:hidden"></div>
 
         <main class="flex-1 flex flex-col">
@@ -114,34 +133,21 @@
                     </div>
 
                     <button id="search-exec-btn" class="bg-blue-600 hover:bg-blue-700 text-white p-2 rounded-lg flex-shrink-0 w-10 h-10 flex items-center justify-center" title="検索実行" aria-label="検索実行"><i class="fas fa-search"></i></button>
-
-                    <div id="stopwatch" class="bg-gray-700 text-white font-mono text-lg p-2 rounded-lg cursor-pointer flex-shrink-0" title="クリック: スタート/ストップ | 長押し: リセット">00:00</div>
                     
-                    <!-- Changed: Button Location -->
-                    <button id="vitals-btn" class="bg-cyan-600 hover:bg-cyan-700 text-white font-bold py-2 px-3 rounded-lg flex-shrink-0" title="バイタル入力" aria-label="バイタル入力モーダルを開く"><i class="fas fa-wave-square"></i></button>
-                    <button id="keywords-panel-toggle-btn" class="bg-gray-600 hover:bg-gray-500 text-white font-bold py-2 px-3 rounded-lg flex-shrink-0" aria-label="キーワードパネルを開く"><i class="fas fa-tags fa-lg"></i></button>
-                    
-                    <!-- Spacer to push next elements to the right -->
                     <div class="flex-grow"></div>
                     
-                    <div class="relative md:hidden">
-                         <button id="menu-btn" class="bg-gray-600 hover:bg-gray-500 text-white font-bold p-2 rounded-lg w-10 h-10 flex items-center justify-center" aria-label="メニューを開く"><i class="fas fa-ellipsis-v"></i></button>
-                         <div id="mobile-menu" class="hidden absolute right-0 mt-2 w-48 bg-gray-800 rounded-lg shadow-xl z-30">
-                             <a href="#" id="mobile-keywords-panel-toggle-btn" class="block px-4 py-2 text-white hover:bg-gray-700"><i class="fas fa-tags w-6"></i> キーワード</a>
-                             <a href="#" id="mobile-add-new-btn" class="block px-4 py-2 text-white hover:bg-gray-700"><i class="fas fa-plus w-6"></i> 新規追加</a>
-                             <a href="#" id="mobile-filter-favorites-btn" class="block px-4 py-2 text-white hover:bg-gray-700"><i class="fas fa-star w-6"></i> お気に入り</a>
-                             <a href="#" id="mobile-random-btn" class="block px-4 py-2 text-white hover:bg-gray-700 hidden"><i class="fas fa-dice w-6"></i> ランダム表示</a>
-                              <a href="#" id="mobile-clear-selections-btn" class="block px-4 py-2 text-white hover:bg-gray-700"><i class="fas fa-check-double w-6"></i> 選択を解除</a>
-                             <a href="#" id="mobile-settings-btn" class="block px-4 py-2 text-white hover:bg-gray-700"><i class="fas fa-cog w-6"></i> 設定</a>
-                         </div>
+                    <div id="action-buttons-group" class="flex items-center gap-2">
+                        <button id="random-btn" class="bg-purple-600 hover:bg-purple-700 text-white font-bold py-2 px-3 rounded-lg flex-shrink-0 hidden" title="ランダム表示" aria-label="ランダム表示"><i class="fas fa-dice"></i></button>
+                        <div id="stopwatch" class="bg-gray-700 text-white font-mono text-lg p-2 rounded-lg cursor-pointer flex-shrink-0" title="クリック: スタート/ストップ | 長押し: リセット">00:00</div>
+                        <button id="vitals-btn" class="bg-cyan-600 hover:bg-cyan-700 text-white font-bold py-2 px-3 rounded-lg flex-shrink-0" title="バイタル入力" aria-label="バイタル入力モーダルを開く"><i class="fas fa-wave-square"></i></button>
+                        <div class="flex items-center space-x-1 bg-gray-700 p-1 rounded-lg">
+                            <button id="arrival-btn" class="time-btn bg-gray-600 hover:bg-gray-500 text-white font-bold py-1 px-2 rounded-md" title="現着時刻を記録">着</button>
+                            <button id="contact-btn" class="time-btn bg-gray-600 hover:bg-gray-500 text-white font-bold py-1 px-2 rounded-md" title="接触時刻を記録">接</button>
+                            <button id="departure-btn" class="time-btn bg-gray-600 hover:bg-gray-500 text-white font-bold py-1 px-2 rounded-md" title="出発時刻を記録">出</button>
+                        </div>
+                        <button id="keywords-panel-toggle-btn" class="bg-gray-600 hover:bg-gray-500 text-white font-bold py-2 px-3 rounded-lg flex-shrink-0" aria-label="キーワードパネルを開く"><i class="fas fa-tags fa-lg"></i></button>
                     </div>
 
-                    <div class="hidden md:flex items-center space-x-2">
-                        <button id="filter-favorites-btn" class="bg-gray-600 hover:bg-gray-500 text-white font-bold py-2 px-3 rounded-lg flex-shrink-0" title="お気に入りフィルター" aria-label="お気に入りフィルター"><i class="fas fa-star"></i></button>
-                        <button id="random-btn" class="bg-purple-600 hover:bg-purple-700 text-white font-bold py-2 px-3 rounded-lg flex-shrink-0 hidden" title="ランダム表示" aria-label="ランダム表示"><i class="fas fa-dice"></i></button>
-                        <button id="add-new-btn" class="bg-green-600 hover:bg-green-700 text-white font-bold py-2 px-3 rounded-lg flex-shrink-0"><i class="fas fa-plus"></i> <span class="hidden lg:inline">新規</span></button>
-                        <button id="settings-btn" class="bg-gray-600 hover:bg-gray-500 text-white font-bold py-2 px-3 rounded-lg flex-shrink-0" title="データ管理" aria-label="データ管理"><i class="fas fa-cog"></i></button>
-                    </div>
                 </div>
                 
                 <div id="vitals-summary-container" class="w-full mt-2 hidden">
@@ -244,11 +250,9 @@
                              </div>
                         </div>
 
-                        <!-- Changed: Pupil input with sliders -->
                         <div class="space-y-4 bg-gray-900 p-4 rounded-lg md:col-span-2">
                             <h3 class="font-bold text-lg border-b border-gray-700 pb-2 mb-4">瞳孔</h3>
                             <div class="grid grid-cols-1 sm:grid-cols-2 gap-6">
-                                <!-- Right Pupil -->
                                 <div class="space-y-3">
                                     <div class="flex justify-between items-center">
                                         <label for="pupil-size-r" class="text-sm font-medium">瞳孔サイズ (R)</label>
@@ -260,11 +264,8 @@
                                         <label for="pupil-reflex-r" class="text-sm font-medium">対光反射 (R)</label>
                                         <span id="pupil-reflex-value-r" class="text-sm font-bold bg-gray-700 px-2 py-1 rounded-md w-20 text-center">迅速(+)</span>
                                     </div>
-                                    <!-- 0: なし(-), 1: 鈍, 2: 迅速(+) -->
                                     <input type="range" id="pupil-reflex-r" name="pupil_reflex_r" min="0" max="2" step="1" value="2" class="w-full h-2 bg-gray-600 rounded-lg appearance-none cursor-pointer">
                                 </div>
-
-                                <!-- Left Pupil -->
                                 <div class="space-y-3">
                                     <div class="flex justify-between items-center">
                                         <label for="pupil-size-l" class="text-sm font-medium">瞳孔サイズ (L)</label>
@@ -428,7 +429,6 @@
                         ageAndGender: `paramedic_app_age_gender`
                     },
                     stopwatchResetDelay: 700,
-                    vitalsClearResetDelay: 700,
                     swipeThreshold: 50,
                     firebaseConfig: null,
                     appId: 'default-app-id',
@@ -439,7 +439,6 @@
                     },
                     jcsOptions: ["清明", "1", "2", "3", "10", "20", "30", "100", "200", "300"],
                     appearanceOptions: ["起坐呼吸", "喘鳴", "顔面蒼白", "頸静脈怒張", "冷や汗"],
-                    // Changed: Replaced pupil options with a map for the slider
                     pupilReflexMap: ["なし(-)", "鈍", "迅速(+)"],
                     ecgOptions: ["ショック適応", "ショック非適応", "不安定頻拍", "症候性徐脈", "ST上昇", "T波増高", "ST低下", "QT延長", "異常Q波", "J波", "PSVT", "VPC", "Af", "洞調律"]
 
@@ -447,7 +446,7 @@
                 state: {
                     db: null, auth: null, userId: null, dataStore: [], originalDataOrder: [], isLoading: true,
                     intersectionObserver: null,
-                    filters: { searchTerm: '', activeKeywords: new Set(), keywordMode: 'OR', isFavoritesOnly: false },
+                    filters: { searchTerm: '', activeKeywords: new Set(), keywordMode: 'OR', isFavoritesOnly: false, sortBy: 'default' },
                     ui: { selectedItems: new Set(), highlightedElements: [], currentHighlightIndex: -1 },
                     stopwatch: { interval: null, isRunning: false, elapsedSeconds: 0, pressTimer: null },
                     vitals: {},
@@ -458,10 +457,8 @@
                     this.utils.initFirebaseConfig();
                     this.services.auth.init();
                     this.bindEventListeners();
-                    // Init all components
                     Object.values(this.components).forEach(component => component.init?.());
                 },
-                // DOM要素をキャッシュする
                 cacheDomElements() {
                     const D = document;
                     this.elements = {
@@ -472,8 +469,12 @@
                         userIdDisplay: D.getElementById('user-id-display'),
                         // Sidebar
                         jumpNav: D.getElementById('jump-nav'),
+                        navScrollArea: D.getElementById('nav-scroll-area'),
                         sidebarToggleBtn: D.getElementById('sidebar-toggle-btn'),
                         sidebarBackdrop: D.getElementById('sidebar-backdrop'),
+                        // Nav Menu
+                        navMenuBtn: D.getElementById('nav-menu-btn'),
+                        navMenuDropdown: D.getElementById('nav-menu-dropdown'),
                         // Keywords Panel (Right)
                         keywordsPanelRight: D.getElementById('keywords-panel-right'),
                         keywordsPanelToggleBtn: D.getElementById('keywords-panel-toggle-btn'),
@@ -487,6 +488,11 @@
                         genderBtns: D.querySelectorAll('.gender-btn'),
                         vitalsBtn: D.getElementById('vitals-btn'),
                         tempMemo: D.getElementById('temp-memo'),
+                        randomBtn: D.getElementById('random-btn'),
+                        // Time Buttons
+                        arrivalBtn: D.getElementById('arrival-btn'),
+                        contactBtn: D.getElementById('contact-btn'),
+                        departureBtn: D.getElementById('departure-btn'),
                         // Search
                         searchInput: D.getElementById('search-input'),
                         searchExecBtn: D.getElementById('search-exec-btn'),
@@ -496,20 +502,6 @@
                         searchCount: D.getElementById('search-count'),
                         searchPrevBtn: D.getElementById('search-prev-btn'),
                         searchNextBtn: D.getElementById('search-next-btn'),
-                        // Header Buttons
-                        filterFavoritesBtn: D.getElementById('filter-favorites-btn'),
-                        randomBtn: D.getElementById('random-btn'),
-                        addNewBtn: D.getElementById('add-new-btn'),
-                        settingsBtn: D.getElementById('settings-btn'),
-                        // Mobile Menu
-                        menuBtn: D.getElementById('menu-btn'),
-                        mobileMenu: D.getElementById('mobile-menu'),
-                        mobileKeywordsPanelToggleBtn: D.getElementById('mobile-keywords-panel-toggle-btn'),
-                        mobileAddNewBtn: D.getElementById('mobile-add-new-btn'),
-                        mobileFilterFavoritesBtn: D.getElementById('mobile-filter-favorites-btn'),
-                        mobileRandomBtn: D.getElementById('mobile-random-btn'),
-                        mobileSettingsBtn: D.getElementById('mobile-settings-btn'),
-                        mobileClearSelectionsBtn: D.getElementById('mobile-clear-selections-btn'),
                         // Vitals Summary
                         vitalsSummaryContainer: D.getElementById('vitals-summary-container'),
                         vitalsSummaryArea: D.getElementById('vitals-summary-area'),
@@ -530,7 +522,6 @@
                         pulsePressureL: D.getElementById('pulse-pressure-l'),
                         vitalsEcgTags: D.getElementById('vitals-ecg-tags'),
                         ecgMemo: D.getElementById('ecg-memo'),
-                        // Changed: Cache pupil slider elements
                         pupilSizeValueR: D.getElementById('pupil-size-value-r'),
                         pupilSizeSliderR: D.getElementById('pupil-size-r'),
                         pupilReflexValueR: D.getElementById('pupil-reflex-value-r'),
@@ -579,7 +570,6 @@
                         dobCalcBtn: D.getElementById('dob-calc-btn'),
                     };
                 },
-                // イベントリスナーをバインドする
                 bindEventListeners() {
                     const { elements: el, handlers: h } = this;
                     
@@ -591,24 +581,35 @@
                     
                     el.contentArea.addEventListener('click', e => h.handleContentAreaClick(e));
                     el.contentArea.addEventListener('change', e => h.handleCheckboxChange(e));
-                    el.jumpNav.addEventListener('change', e => h.handleCheckboxChange(e));
+                    el.navScrollArea.addEventListener('change', e => h.handleCheckboxChange(e));
 
-                    el.filterFavoritesBtn.addEventListener('click', () => h.handleToggleFavoritesFilter());
+                    el.navMenuBtn.addEventListener('click', (e) => {
+                        e.stopPropagation();
+                        el.navMenuDropdown.classList.toggle('hidden');
+                    });
+                    
+                    // Corrected: Event listener for nav menu items
+                    el.navMenuDropdown.addEventListener('click', e => {
+                        const target = e.target.closest('.nav-menu-item');
+                        if (target) {
+                            h.handleNavMenuClick(e);
+                        }
+                    });
+
                     el.randomBtn.addEventListener('click', () => h.handleRandomSelect());
-                    
-                    el.menuBtn.addEventListener('click', e => { e.stopPropagation(); el.mobileMenu.classList.toggle('hidden'); });
-                    
+                    el.arrivalBtn.addEventListener('click', () => h.handleTimestampClick('arrival'));
+                    el.contactBtn.addEventListener('click', () => h.handleTimestampClick('contact'));
+                    el.departureBtn.addEventListener('click', () => h.handleTimestampClick('departure'));
+
                     el.toggleVitalsSummaryBtn.addEventListener('click', () => h.handleToggleVisibility(el.vitalsSummaryArea, el.toggleVitalsSummaryBtn, true));
                     
                     document.addEventListener('click', e => {
                         if (el.searchHistoryBtn && !el.searchHistoryBtn.parentElement.contains(e.target)) this.utils.hide(el.searchHistoryDropdown);
-                        if (el.menuBtn && !el.menuBtn.parentElement.contains(e.target)) this.utils.hide(el.mobileMenu);
+                        if (el.navMenuBtn && !el.navMenuBtn.parentElement.contains(e.target)) this.utils.hide(el.navMenuDropdown);
                     });
                     
-                    // 各コンポーネントのイベントリスナーを初期化
                     Object.values(this.components).forEach(component => component.bindEventListeners?.());
                 },
-                // イベントハンドラ
                 handlers: {
                     handleSearch() {
                         App.state.filters.activeKeywords.clear();
@@ -621,17 +622,16 @@
                         App.elements.searchInput.value = '';
                         this.handleSearch();
                     },
-                    handleToggleFavoritesFilter() {
-                        App.state.filters.isFavoritesOnly = !App.state.filters.isFavoritesOnly;
-                        App.elements.filterFavoritesBtn.classList.toggle('active', App.state.filters.isFavoritesOnly);
-                        App.elements.mobileFilterFavoritesBtn.classList.toggle('active', App.state.filters.isFavoritesOnly);
-                        App.renderer.renderAll();
-                    },
-                    handleToggleVisibility(area, button, isCollapsed = false) {
-                        const isHidden = area.classList.toggle('hidden');
-                        const chevron = button.querySelector('.toggle-chevron');
-                        if (chevron) {
-                            chevron.classList.toggle('collapsed', isHidden);
+                    handleTimestampClick(type) {
+                        const now = new Date();
+                        const timeString = now.toTimeString().split(' ')[0]; // HH:mm:ss
+                        App.state.vitals[type] = timeString;
+                        App.components.vitalsModal.saveState(); // Save to localStorage
+                        App.renderer.renderVitalsSummary();
+                        const btn = App.elements[`${type}Btn`];
+                        if (btn) {
+                            btn.classList.add('active');
+                            setTimeout(() => btn.classList.remove('active'), 500);
                         }
                     },
                     handleRandomSelect() {
@@ -639,6 +639,58 @@
                         if (allComplaintCards.length > 0) {
                             const randomIndex = Math.floor(Math.random() * allComplaintCards.length);
                             allComplaintCards[randomIndex].scrollIntoView({ behavior: 'smooth', block: 'center' });
+                        }
+                    },
+                    handleNavMenuClick(e) {
+                        const target = e.target.closest('a');
+                        if (!target) return;
+                        e.preventDefault();
+
+                        if (target.classList.contains('nav-sort-item')) {
+                            this.handleSortChange(target);
+                        } else if (target.dataset.action) {
+                            this.handleNavMenuAction(target.dataset.action);
+                        }
+                    },
+                    handleSortChange(sortItem) {
+                         if (!sortItem) return;
+                        const sortBy = sortItem.dataset.sort;
+                        App.state.filters.sortBy = sortBy;
+                        
+                        App.elements.navMenuDropdown.querySelectorAll('.nav-sort-item').forEach(item => item.classList.remove('active'));
+                        sortItem.classList.add('active');
+                        
+                        this.utils.hide(App.elements.navMenuDropdown);
+                        App.renderer.renderAll();
+                    },
+                    handleNavMenuAction(action) {
+                        const { elements, handlers } = App;
+                        this.utils.hide(elements.navMenuDropdown);
+                        switch(action) {
+                            case 'add-new':
+                                App.components.dataModal.openForNew();
+                                break;
+                            case 'filter-favorites':
+                                handlers.handleToggleFavoritesFilter();
+                                break;
+                            case 'clear-selections':
+                                handlers.handleClearAllSelections();
+                                break;
+                            case 'settings':
+                                App.components.settings.open();
+                                break;
+                        }
+                    },
+                    handleToggleFavoritesFilter() {
+                        App.state.filters.isFavoritesOnly = !App.state.filters.isFavoritesOnly;
+                        document.getElementById('nav-menu-filter-favorites-btn').classList.toggle('active', App.state.filters.isFavoritesOnly);
+                        App.renderer.renderAll();
+                    },
+                    handleToggleVisibility(area, button, isCollapsed = false) {
+                        const isHidden = area.classList.toggle('hidden');
+                        const chevron = button.querySelector('.toggle-chevron');
+                        if (chevron) {
+                            chevron.classList.toggle('collapsed', isHidden);
                         }
                     },
                     handleContentAreaClick(event) {
@@ -703,10 +755,9 @@
                             gender: document.querySelector('.gender-btn.active')?.dataset.gender || null
                         };
                         App.utils.saveToStorage(App.config.storageKeys.ageAndGender, data);
-                        App.renderer.renderVitalsSummary(); // サマリーを再描画
+                        App.renderer.renderVitalsSummary();
                     },
                 },
-                // サービス（Firebaseなど）
                 services: {
                     auth: {
                         init() {
@@ -759,8 +810,9 @@
                                 App.utils.hide(App.elements.loading);
                                 App.state.isLoading = false;
                                 
+                                const docs = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
                                 App.state.originalDataOrder = snapshot.docs.map(doc => doc.id);
-                                App.state.dataStore = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+                                App.state.dataStore = docs;
                 
                                 if (snapshot.empty && App.state.dataStore.length === 0) { 
                                     this.seedInitialData(); 
@@ -774,7 +826,11 @@
                             });
                         },
                         async seedInitialData() {
-                            const initialData = [ { chiefComplaint: "気分不良", isFavorite: false, diseases: [ { name: "脳血管障害", keywords: ["突然の片麻痺", "顔面神経麻痺", "言語障害", "意識障害"], pitfalls: ["TIAの見過ごし"], isFavorite: false }, { name: "急性冠症候群", keywords: ["胸痛", "放散痛", "冷や汗"], pitfalls: ["非典型的な胸痛"], isFavorite: false } ] }, { chiefComplaint: "呼吸困難", isFavorite: true, diseases: [ { name: "心不全", keywords: ["起坐呼吸", "下腿浮腫"], pitfalls: ["喘息との鑑別困難"], isFavorite: true } ] }];
+                            const now = new Date().toISOString();
+                            const initialData = [ 
+                                { chiefComplaint: "気分不良", updatedAt: now, isFavorite: false, diseases: [ { name: "脳血管障害", keywords: ["突然の片麻痺", "顔面神経麻痺", "言語障害", "意識障害"], pitfalls: ["TIAの見過ごし"], isFavorite: false }, { name: "急性冠症候群", keywords: ["胸痛", "放散痛", "冷や汗"], pitfalls: ["非典型的な胸痛"], isFavorite: false } ] }, 
+                                { chiefComplaint: "呼吸困難", updatedAt: now, isFavorite: true, diseases: [ { name: "心不全", keywords: ["起坐呼吸", "下腿浮腫"], pitfalls: ["喘息との鑑別困難"], isFavorite: true } ] }
+                            ];
                             try {
                                 const collectionRef = this.getCollectionRef();
                                 if (!collectionRef) return;
@@ -795,11 +851,13 @@
                             if (!collectionRef) return;
                             const docRef = doc(collectionRef, id);
 
-                            let updatePayload = {};
+                            let updatePayload = {
+                                updatedAt: new Date().toISOString()
+                            };
 
                             if(type === 'complaint') {
                                 entry.isFavorite = !entry.isFavorite;
-                                updatePayload = { isFavorite: entry.isFavorite };
+                                updatePayload.isFavorite = entry.isFavorite;
                             } else {
                                 entry.diseases = entry.diseases.map(d => {
                                     if(d.name === diseaseName) {
@@ -807,7 +865,7 @@
                                     }
                                     return d;
                                 });
-                                updatePayload = { diseases: entry.diseases };
+                                updatePayload.diseases = entry.diseases;
                             }
                             
                             App.state.dataStore[entryIndex] = entry;
@@ -817,15 +875,13 @@
                                 await updateDoc(docRef, updatePayload);
                             } catch (error) {
                                 console.error("Error updating favorite status:", error);
-                                // Revert UI change on error
-                                App.state.dataStore[entryIndex].isFavorite = !App.state.dataStore[entryIndex].isFavorite; 
+                                App.state.dataStore[entryIndex] = App.state.dataStore.find(e => e.id === id);
                                 App.renderer.renderAll();
                                 App.utils.customAlert("お気に入り状態の更新に失敗しました。");
                             }
                         },
                     }
                 },
-                // レンダリング関連
                 renderer: {
                     renderAll() {
                         this.search.unhighlight();
@@ -845,12 +901,8 @@
                         if (filters.isFavoritesOnly) {
                              processedData = processedData.map(entry => {
                                 const favoriteDiseases = (entry.diseases || []).filter(d => d.isFavorite);
-                                if (entry.isFavorite) {
-                                    return entry;
-                                }
-                                if (favoriteDiseases.length > 0) {
-                                    return { ...entry, diseases: favoriteDiseases };
-                                }
+                                if (entry.isFavorite) return entry;
+                                if (favoriteDiseases.length > 0) return { ...entry, diseases: favoriteDiseases };
                                 return null;
                             }).filter(Boolean);
                         }
@@ -860,15 +912,11 @@
                              processedData = processedData.map(entry => {
                                 const matchingDiseases = (entry.diseases || []).filter(d => {
                                     const keywords = d.keywords || [];
-                                    if (filters.keywordMode === 'OR') {
-                                        return activeKeywords.some(filter => keywords.includes(filter));
-                                    } else {
-                                        return activeKeywords.every(filter => keywords.includes(filter));
-                                    }
+                                    return filters.keywordMode === 'OR'
+                                        ? activeKeywords.some(filter => keywords.includes(filter))
+                                        : activeKeywords.every(filter => keywords.includes(filter));
                                 });
-                                if (matchingDiseases.length > 0) {
-                                    return { ...entry, diseases: matchingDiseases };
-                                }
+                                if (matchingDiseases.length > 0) return { ...entry, diseases: matchingDiseases };
                                 return null;
                             }).filter(Boolean);
                         } else if (filters.searchTerm) {
@@ -879,31 +927,34 @@
                                     (d.keywords && d.keywords.some(k => regex.test(k))) || 
                                     (d.pitfalls && d.pitfalls.some(p => regex.test(p)))
                                 );
-                                if(regex.test(entry.chiefComplaint)) {
-                                    return entry; 
-                                }
-                                if (matchingDiseases.length > 0) {
-                                    return { ...entry, diseases: matchingDiseases };
-                                }
+                                if(regex.test(entry.chiefComplaint)) return entry; 
+                                if (matchingDiseases.length > 0) return { ...entry, diseases: matchingDiseases };
                                 return null;
                             }).filter(Boolean);
                         }
 
-                        processedData.sort((a, b) => {
-                            const aIsFav = a.isFavorite || (a.diseases || []).some(d => d.isFavorite);
-                            const bIsFav = b.isFavorite || (b.diseases || []).some(d => d.isFavorite);
-                            if (aIsFav && !bIsFav) return -1;
-                            if (!aIsFav && bIsFav) return 1;
-                            const indexA = App.state.originalDataOrder.indexOf(a.id);
-                            const indexB = App.state.originalDataOrder.indexOf(b.id);
-                            return indexA - indexB;
-                        });
+                        switch (filters.sortBy) {
+                            case 'name':
+                                processedData.sort((a, b) => a.chiefComplaint.localeCompare(b.chiefComplaint, 'ja'));
+                                break;
+                            case 'updated':
+                                processedData.sort((a, b) => (b.updatedAt || '').localeCompare(a.updatedAt || ''));
+                                break;
+                            case 'default':
+                            default:
+                                processedData.sort((a, b) => {
+                                    const indexA = App.state.originalDataOrder.indexOf(a.id);
+                                    const indexB = App.state.originalDataOrder.indexOf(b.id);
+                                    return indexA - indexB;
+                                });
+                                break;
+                        }
                         
                         return processedData;
                     },
                     renderNav(data) {
-                        const { jumpNav } = App.elements;
-                        jumpNav.innerHTML = '';
+                        const { navScrollArea } = App.elements;
+                        navScrollArea.innerHTML = '';
                         const fragment = document.createDocumentFragment();
                         data.forEach(entry => {
                             const complaintId = `complaint-${entry.id}`;
@@ -916,21 +967,18 @@
                             const isChecked = App.state.ui.selectedItems.has(`c_${entry.id}`);
                             const starIcon = originalData.isFavorite ? `<i class="fas fa-star text-yellow-400 mr-2"></i>` : '';
                             
-                            // Changed: Removed number prefix
                             navItem.innerHTML = `<input type="checkbox" class="nav-item-checkbox" data-type="complaint" data-id="${entry.id}" ${isChecked ? 'checked' : ''}> ${starIcon}${entry.chiefComplaint}`;
                             navItem.title = entry.chiefComplaint;
                             navItem.querySelector('.nav-item-checkbox').addEventListener('click', e => e.stopPropagation());
                             navItem.addEventListener('click', (e) => { 
                                 e.preventDefault(); 
                                 const targetEl = document.getElementById(complaintId);
-                                if (targetEl) {
-                                    targetEl.scrollIntoView({ behavior: 'smooth' }); 
-                                }
+                                if (targetEl) targetEl.scrollIntoView({ behavior: 'smooth' }); 
                                 App.components.sidebar.toggle(false);
                             });
                             fragment.appendChild(navItem);
                         });
-                        jumpNav.appendChild(fragment);
+                        navScrollArea.appendChild(fragment);
                     },
                     renderContent(data) {
                         const { contentArea } = App.elements;
@@ -947,7 +995,6 @@
                             const complaintId = `complaint-${entry.id}`;
                             const isComplaintChecked = App.state.ui.selectedItems.has(`c_${entry.id}`);
                             const entryDiv = document.createElement('div');
-                            // Changed: adjusted padding for compactness
                             entryDiv.className = 'content-card mb-6 bg-gray-800 rounded-xl shadow-md p-4';
                             entryDiv.id = complaintId;
                             
@@ -982,7 +1029,6 @@
                                 <div class="flex justify-between items-center">
                                     <div class="flex items-center">
                                         <input type="checkbox" class="item-checkbox" data-type="complaint" data-id="${entry.id}" ${isComplaintChecked ? 'checked' : ''}>
-                                        <!-- Changed: Removed number prefix -->
                                         <h2 class="text-xl md:text-2xl font-bold text-blue-400">${originalData.chiefComplaint}</h2>
                                     </div>
                                     <div class="flex items-center">
@@ -1093,6 +1139,9 @@
                         html += format('fa-user', '患者', `${patientInfo.age || ''}歳 ${genderText}`.trim());
 
                         if(hasVitals){
+                            html += format('fa-location-dot', '着', vitals.arrival);
+                            html += format('fa-handshake', '接', vitals.contact);
+                            html += format('fa-truck-fast', '出', vitals.departure);
                             html += format('fa-brain', 'JCS', vitals.jcs);
                             if(vitals.gcs && parseInt(vitals.gcs) > 0) html += format('fa-arrows-to-dot', 'GCS', vitals.gcs, ` (E${vitals.gcs_e || '?'}V${vitals.gcs_v || '?'}M${vitals.gcs_m || '?'})`);
                             html += format('fa-lungs', '呼吸', vitals.resp, '回');
@@ -1126,7 +1175,7 @@
                         App.state.intersectionObserver = new IntersectionObserver((entries) => {
                              const intersectingEntry = entries.find(e => e.isIntersecting);
                              if (intersectingEntry) {
-                                 const navLink = App.elements.jumpNav.querySelector(`a[href="#${intersectingEntry.target.id}"]`);
+                                 const navLink = App.elements.navScrollArea.querySelector(`a[href="#${intersectingEntry.target.id}"]`);
                                  if (navLink) {
                                      document.querySelectorAll('.nav-item').forEach(link => link.classList.remove('active-nav'));
                                      navLink.classList.add('active-nav');
@@ -1221,13 +1270,9 @@
                         },
                     },
                 },
-                // 各UIコンポーネント
                 components: {
                     patientInfo: {
-                        init() {
-                            this.loadInfo();
-                            this.bindEventListeners();
-                        },
+                        init() { this.loadInfo(); this.bindEventListeners(); },
                         bindEventListeners() {
                             const { elements: el, handlers: h } = App;
                              el.ageInput.addEventListener('change', h.handlePatientInfoChange);
@@ -1245,7 +1290,6 @@
                             if (patientInfo.gender) {
                                 el.genderBtns.forEach(b => b.classList.toggle('active', b.dataset.gender === patientInfo.gender));
                             }
-                            
                             const tempMemo = App.utils.loadFromStorage(config.storageKeys.tempMemo, '');
                             el.tempMemo.value = tempMemo;
                         }
@@ -1282,10 +1326,10 @@
                             const navWidth = App.elements.jumpNav.offsetWidth;
                             const isOpen = !App.elements.jumpNav.classList.contains('-translate-x-full');
 
-                            if (!isOpen && diff > 0) { // Opening
+                            if (!isOpen && diff > 0) {
                                 App.elements.jumpNav.style.transition = 'none';
                                 App.elements.jumpNav.style.transform = `translateX(${Math.min(diff - navWidth, 0)}px)`;
-                            } else if (isOpen && diff < 0) { // Closing
+                            } else if (isOpen && diff < 0) {
                                 App.elements.jumpNav.style.transition = 'none';
                                 App.elements.jumpNav.style.transform = `translateX(${Math.max(diff, -navWidth)}px)`;
                             }
@@ -1301,11 +1345,8 @@
                             App.elements.jumpNav.style.transition = '';
                             App.elements.jumpNav.style.transform = '';
 
-                            if (Math.abs(diff) > App.config.swipeThreshold) {
-                                this.toggle(!isOpen);
-                            } else {
-                                this.toggle(isOpen);
-                            }
+                            if (Math.abs(diff) > App.config.swipeThreshold) this.toggle(!isOpen);
+                             else this.toggle(isOpen);
                         },
                         toggle(forceShow) {
                             const { jumpNav, sidebarBackdrop } = App.elements;
@@ -1315,15 +1356,9 @@
                         }
                     },
                     keywordsPanel: {
-                        init(){ /* No init needed */ },
                         bindEventListeners() {
                             App.elements.keywordsPanelToggleBtn.addEventListener('click', () => this.toggle());
                             App.elements.keywordsPanelCloseBtn.addEventListener('click', () => this.toggle(false));
-                            App.elements.mobileKeywordsPanelToggleBtn.addEventListener('click', (e) => {
-                                e.preventDefault();
-                                this.toggle();
-                                App.utils.hide(App.elements.mobileMenu);
-                            });
                             App.elements.keywordsPanelBackdrop.addEventListener('click', () => this.toggle(false));
                         },
                         toggle(forceShow) {
@@ -1335,7 +1370,6 @@
                         }
                     },
                     stopwatch: {
-                        init(){ /* No init needed */ },
                         bindEventListeners() {
                            const el = App.elements.stopwatch;
                            el.addEventListener('mousedown', e => this.handlePress(e));
@@ -1355,21 +1389,19 @@
                             if (App.state.stopwatch.pressTimer) {
                                 clearTimeout(App.state.stopwatch.pressTimer);
                                 App.state.stopwatch.pressTimer = null;
-                                if (!isMouseLeave) {
-                                    this.toggle();
-                                }
+                                if (!isMouseLeave) this.toggle();
                             }
                         },
                         toggle() {
                             const s = App.state.stopwatch;
+                            s.isRunning = !s.isRunning;
                             if (s.isRunning) {
-                                clearInterval(s.interval);
-                                App.elements.stopwatch.classList.remove('running');
-                            } else {
                                 s.interval = setInterval(() => this.update(), 1000);
                                 App.elements.stopwatch.classList.add('running');
+                            } else {
+                                clearInterval(s.interval);
+                                App.elements.stopwatch.classList.remove('running');
                             }
-                            s.isRunning = !s.isRunning;
                         },
                         update() {
                             App.state.stopwatch.elapsedSeconds++;
@@ -1402,7 +1434,7 @@
                             el.vitalsSaveBtn.addEventListener('click', () => this.saveAndClose());
                             el.vitalsClearBtn.addEventListener('click', () => this.clear());
                             el.vitalsForm.addEventListener('input', e => {
-                                if (e.target.type === 'range') { // Handle sliders separately
+                                if (e.target.type === 'range') {
                                      const side = e.target.id.slice(-1).toUpperCase();
                                      this.handlePupilSliderChange(side);
                                 } else {
@@ -1426,10 +1458,8 @@
                             });
                             App.elements.vitalsJcsGroup.innerHTML = '';
                             jcsOptions.forEach(val => App.elements.vitalsJcsGroup.appendChild(App.utils.createButton(val, 'jcs-btn bg-gray-700 hover:bg-gray-600 p-2 rounded-md flex-grow text-center', e => this.handleJcsClick(e))));
-                            
                             App.elements.vitalsAppearanceTags.innerHTML = '';
                             appearanceOptions.forEach(val => App.elements.vitalsAppearanceTags.appendChild(App.utils.createButton(val, 'vitals-tag bg-gray-600 hover:bg-gray-500 text-sm py-1 px-3 rounded-full')));
-                            
                             App.elements.vitalsEcgTags.innerHTML = '';
                             ecgOptions.forEach(val => App.elements.vitalsEcgTags.appendChild(App.utils.createButton(val, 'ecg-tag bg-gray-600 hover:bg-gray-500 text-sm py-1 px-3 rounded-full whitespace-nowrap')));
                         },
@@ -1442,8 +1472,6 @@
                         
                             if(sizeValueEl) sizeValueEl.textContent = `${parseFloat(sizeSlider.value).toFixed(1)} mm`;
                             if(reflexValueEl) reflexValueEl.textContent = config.pupilReflexMap[reflexSlider.value];
-                            
-                            // Immediately update state as slider moves
                             this.updateStateFromForm();
                         },
                          handleJcsClick(e) {
@@ -1458,33 +1486,26 @@
                         },
                          updateStateFromForm() {
                              const form = App.elements.vitalsForm;
-                             const vitals = {};
+                             const vitals = App.state.vitals; // Keep existing timestamps
                              const { config } = App;
                              
                              const formData = new FormData(form);
                              for(const [key, value] of formData.entries()){
                                  if(value) vitals[key] = value;
                              }
-
                              vitals.jcs = form.querySelector('#vitals-jcs-group .active')?.textContent.trim() || null;
                              vitals.gcs = this.updateGcsTotal();
                             
-                             // Changed: Read from sliders and construct pupil string
                              ['r', 'l'].forEach(side => {
                                 const size = form.elements[`pupil_size_${side}`]?.value;
                                 const reflexIndex = form.elements[`pupil_reflex_${side}`]?.value;
-                                
-                                vitals[`pupil_size_${side}`] = size; // Save raw size value
-                                vitals[`pupil_reflex_${side}`] = reflexIndex; // Save raw reflex index
-                            
+                                vitals[`pupil_size_${side}`] = size;
+                                vitals[`pupil_reflex_${side}`] = reflexIndex;
                                 const reflexText = (reflexIndex !== null && reflexIndex !== undefined) ? config.pupilReflexMap[reflexIndex] : null;
-                                // Save combined string for summary display
                                 vitals[`pupil_${side}`] = [size ? `${parseFloat(size).toFixed(1)}mm` : null, reflexText].filter(Boolean).join(' / ') || null;
                              });
-                             
                              vitals.appearance = Array.from(form.querySelectorAll('#vitals-appearance-tags .active')).map(t => t.textContent.trim());
                              vitals.ecg_findings = Array.from(form.querySelectorAll('#vitals-ecg-tags .active')).map(t => t.textContent.trim());
-
                              App.state.vitals = vitals;
                         },
                         checkPulsePressure() {
@@ -1492,82 +1513,62 @@
                                 const sysEl = App.elements.vitalsForm.querySelector(`#bp-sys-${side}`);
                                 const diaEl = App.elements.vitalsForm.querySelector(`#bp-dia-${side}`);
                                 if(!sysEl || !diaEl) return;
-
                                 const sys = parseInt(sysEl.value, 10);
                                 const dia = parseInt(diaEl.value, 10);
                                 const indicatorEl = document.getElementById(`pulse-pressure-${side}`);
                                 let indicatorText = null;
-
                                 if (sys && dia) {
                                     const pulsePressure = sys - dia;
-                                    if (pulsePressure > sys / 2) {
-                                        indicatorText = '大脈圧';
-                                    } else if (pulsePressure < sys / 4) {
-                                        indicatorText = '小脈圧';
-                                    }
+                                    if (pulsePressure > sys / 2) indicatorText = '大脈圧';
+                                    else if (pulsePressure < sys / 4) indicatorText = '小脈圧';
                                 }
-                                
                                 App.state.vitals[`pulse_pressure_${side}`] = indicatorText;
-
                                 if (indicatorEl) {
-                                    if (indicatorText) {
-                                        indicatorEl.textContent = indicatorText;
-                                        indicatorEl.classList.add('flashing-indicator');
-                                    } else {
-                                        indicatorEl.textContent = '';
-                                        indicatorEl.classList.remove('flashing-indicator');
-                                    }
+                                    indicatorEl.textContent = indicatorText || '';
+                                    indicatorEl.classList.toggle('flashing-indicator', !!indicatorText);
                                 }
                             });
                         },
                         updateFormFromState() {
                             const vitals = App.state.vitals || {};
                             const form = App.elements.vitalsForm;
-                            
                             form.reset();
-                            
                             for (const key in vitals) {
                                 const el = form.elements[key];
-                                // Don't set pupil sliders here, handled below
-                                if (el && el.type !== 'hidden' && !key.startsWith('pupil')) {
+                                if (el && el.type !== 'hidden' && !key.startsWith('pupil') && !['arrival', 'contact', 'departure'].includes(key)) {
                                     el.value = vitals[key];
                                 }
                             }
-                            
                             App.elements.vitalsJcsGroup.querySelectorAll('.jcs-btn').forEach(b => b.classList.toggle('active', b.textContent === vitals.jcs));
-                            
                             this.updateGcsTotal();
                             this.checkPulsePressure();
-
-                            // Changed: Update pupil sliders from state
                             ['R', 'L'].forEach(side => {
                                 const s = side.toLowerCase();
-                                const size = vitals[`pupil_size_${s}`] || '3.5'; // Default value
-                                const reflexIndex = vitals[`pupil_reflex_${s}`] || '2'; // Default to '迅速(+)'
-
+                                const size = vitals[`pupil_size_${s}`] || '3.5';
+                                const reflexIndex = vitals[`pupil_reflex_${s}`] || '2';
                                 const sizeSlider = App.elements[`pupilSizeSlider${side}`];
                                 const reflexSlider = App.elements[`pupilReflexSlider${side}`];
-
                                 if(sizeSlider) sizeSlider.value = size;
                                 if(reflexSlider) reflexSlider.value = reflexIndex;
-                                
                                 this.handlePupilSliderChange(side);
                             });
-
                              App.elements.vitalsAppearanceTags.querySelectorAll('.vitals-tag').forEach(b => b.classList.toggle('active', (vitals.appearance || []).includes(b.textContent)));
                              App.elements.vitalsEcgTags.querySelectorAll('.ecg-tag').forEach(b => b.classList.toggle('active', (vitals.ecg_findings || []).includes(b.textContent)));
                         },
+                        saveState() {
+                            App.utils.saveToStorage(App.config.storageKeys.vitals, App.state.vitals);
+                        },
                         saveAndClose() {
                             this.updateStateFromForm();
-                            App.utils.saveToStorage(App.config.storageKeys.vitals, App.state.vitals);
+                            this.saveState();
                             App.renderer.renderVitalsSummary();
                             App.utils.hideModal(App.elements.vitalsModal);
                         },
                         async clear() {
-                             const confirmed = await App.utils.customConfirm("バイタル入力をすべてクリアしますか？", "確認");
+                             const confirmed = await App.utils.customConfirm("バイタル入力と記録時刻をすべてクリアしますか？", "確認");
                              if(confirmed) {
-                                App.state.vitals = {};
-                                App.utils.saveToStorage(App.config.storageKeys.vitals, {});
+                                App.state.vitals = {}; // Clears everything including timestamps
+                                this.saveState();
                                 this.updateFormFromState();
                                 App.renderer.renderVitalsSummary();
                              }
@@ -1578,24 +1579,22 @@
                              const showRandom = App.utils.loadFromStorage(App.config.storageKeys.showRandomBtn, false);
                              App.elements.showRandomBtnToggle.checked = showRandom;
                              this.toggleRandomButtonVisibility(showRandom);
-                             
                              const fontSize = App.utils.loadFromStorage(App.config.storageKeys.fontSize, 'base');
                              this.applyFontSize(fontSize);
                         },
                         bindEventListeners() {
-                           App.elements.settingsBtn.addEventListener('click', () => App.utils.showModal(App.elements.settingsModal));
-                           App.elements.mobileSettingsBtn.addEventListener('click', (e) => { e.preventDefault(); App.utils.showModal(App.elements.settingsModal); App.utils.hide(App.elements.mobileMenu); });
-                           App.elements.settingsModalCloseBtn.addEventListener('click', () => App.utils.hideModal(App.elements.settingsModal));
+                           App.elements.settingsModalCloseBtn.addEventListener('click', () => this.close());
                            App.elements.exportDataBtn.addEventListener('click', () => this.exportData());
                            App.elements.importDataBtn.addEventListener('click', () => App.elements.importFileInput.click());
                            App.elements.importFileInput.addEventListener('change', e => this.handleFileSelect(e));
                            App.elements.showRandomBtnToggle.addEventListener('change', e => this.toggleRandomButtonVisibility(e.target.checked));
                            App.elements.fontSizeControls.addEventListener('click', e => this.handleFontSizeChange(e));
                         },
+                        open() { App.utils.showModal(App.elements.settingsModal); },
+                        close() { App.utils.hideModal(App.elements.settingsModal); },
                         toggleRandomButtonVisibility(isVisible) {
-                             App.elements.randomBtn.classList.toggle('hidden', !isVisible);
-                              App.elements.mobileRandomBtn.classList.toggle('hidden', !isVisible);
                              App.utils.saveToStorage(App.config.storageKeys.showRandomBtn, isVisible);
+                             App.elements.randomBtn.classList.toggle('hidden', !isVisible)
                         },
                         handleFontSizeChange(e) {
                             const btn = e.target.closest('.font-size-btn');
@@ -1627,9 +1626,7 @@
                                     const importedData = JSON.parse(e.target.result);
                                     if (Array.isArray(importedData)) {
                                         const confirmed = await App.utils.customConfirm('現在のデータをすべて削除し、インポートしますか？', 'インポートの確認');
-                                        if (confirmed) {
-                                            this.importData(importedData);
-                                        }
+                                        if (confirmed) this.importData(importedData);
                                     } else {
                                         throw new Error("Invalid data format");
                                     }
@@ -1643,26 +1640,21 @@
                         async importData(data) {
                             const collectionRef = App.services.db.getCollectionRef();
                             if (!collectionRef) return;
-                            
-                            // Delete all existing documents
                             const snapshot = await getDocs(collectionRef);
                             const batchDelete = writeBatch(App.state.db);
                             snapshot.docs.forEach(d => batchDelete.delete(d.ref));
                             await batchDelete.commit();
-
-                            // Add new documents
                             const batchAdd = writeBatch(App.state.db);
                             data.forEach(item => {
-                                const { id, ...itemData } = item; // Don't preserve old IDs
+                                const { id, ...itemData } = item;
+                                if (!itemData.updatedAt) itemData.updatedAt = new Date().toISOString();
                                 batchAdd.set(doc(collectionRef), itemData);
                             });
                             await batchAdd.commit();
-                            
                             App.utils.customAlert('データのインポートが完了しました。');
                         }
                     },
                     searchHistory: {
-                        init(){/* No init needed */},
                         bindEventListeners() {
                             App.elements.searchHistoryBtn.addEventListener('click', e => { e.stopPropagation(); this.toggleDropdown(); });
                         },
@@ -1713,15 +1705,9 @@
                         }
                     },
                     dataModal: {
-                        init(){
-                            this.bindEventListeners();
-                        },
                         bindEventListeners() {
                             const el = App.elements;
-                            el.addNewBtn.addEventListener('click', () => this.openForNew());
-                            el.mobileAddNewBtn.addEventListener('click', (e) => { e.preventDefault(); this.openForNew(); App.utils.hide(el.mobileMenu); });
-                           
-                            el.modalCloseBtn.addEventListener('click', () => App.utils.hideModal(el.dataModal));
+                            el.modalCloseBtn.addEventListener('click', () => this.close());
                             el.addDiseaseBtn.addEventListener('click', () => this.addDiseaseForm());
                             el.dataForm.addEventListener('submit', e => { e.preventDefault(); this.submit(); });
                             el.deleteBtn.addEventListener('click', () => this.delete());
@@ -1739,8 +1725,7 @@
                         openForEdit(id) {
                             const entry = App.state.dataStore.find(e => e.id === id);
                             if (!entry) return;
-
-                             const { dataModal, modalTitle, dataForm, chiefComplaintInput, chiefComplaintDescInput, chiefComplaintMemoInput, diseasesContainer, deleteBtn, entryIdInput } = App.elements;
+                             const { dataModal, modalTitle, chiefComplaintInput, chiefComplaintDescInput, chiefComplaintMemoInput, diseasesContainer, deleteBtn, entryIdInput } = App.elements;
                              modalTitle.textContent = '主訴の編集';
                              entryIdInput.value = id;
                              chiefComplaintInput.value = entry.chiefComplaint;
@@ -1751,21 +1736,19 @@
                              App.utils.show(deleteBtn);
                              App.utils.showModal(dataModal);
                         },
+                        close() { App.utils.hideModal(App.elements.dataModal); },
                         addDiseaseForm(disease = {}) {
                             const container = App.elements.diseasesContainer;
                             const diseaseDiv = document.createElement('div');
                             diseaseDiv.className = 'disease-form-group bg-gray-700/50 p-4 rounded-lg space-y-2 relative';
-                            
                             const diseaseId = `disease_${Date.now()}_${Math.random()}`;
-
                             diseaseDiv.innerHTML = `
                                 <button type="button" class="remove-disease-btn absolute top-2 right-2 text-gray-500 hover:text-red-500"><i class="fas fa-times-circle"></i></button>
                                 <div><label class="text-sm">疾患名</label><input type="text" name="${diseaseId}_name" class="w-full bg-gray-600 p-2 rounded-md mt-1" value="${disease.name || ''}" required></div>
                                 <div><label class="text-sm">説明</label><textarea name="${diseaseId}_description" rows="2" class="w-full bg-gray-600 p-2 rounded-md mt-1">${disease.description || ''}</textarea></div>
                                 <div><label class="text-sm">キーワード (カンマ区切り)</label><input type="text" name="${diseaseId}_keywords" class="w-full bg-gray-600 p-2 rounded-md mt-1" value="${(disease.keywords || []).join(', ')}"></div>
                                 <div><label class="text-sm">落とし穴 (カンマ区切り)</label><input type="text" name="${diseaseId}_pitfalls" class="w-full bg-gray-600 p-2 rounded-md mt-1" value="${(disease.pitfalls || []).join(', ')}"></div>
-                                <div><label class="text-sm">疾患メモ</label><textarea name="${diseaseId}_memo" rows="2" class="w-full bg-gray-600 p-2 rounded-md mt-1">${disease.memo || ''}</textarea></div>
-                            `;
+                                <div><label class="text-sm">疾患メモ</label><textarea name="${diseaseId}_memo" rows="2" class="w-full bg-gray-600 p-2 rounded-md mt-1">${disease.memo || ''}</textarea></div>`;
                             diseaseDiv.querySelector('.remove-disease-btn').onclick = () => diseaseDiv.remove();
                             container.appendChild(diseaseDiv);
                         },
@@ -1776,44 +1759,40 @@
                             form.querySelectorAll('.disease-form-group').forEach(group => {
                                 const nameInput = group.querySelector('input[name$="_name"]');
                                 if(!nameInput || !nameInput.value) return;
-
                                 const disease = {
                                     name: nameInput.value.trim(),
                                     description: group.querySelector('textarea[name$="_description"]').value.trim(),
                                     keywords: group.querySelector('input[name$="_keywords"]').value.split(',').map(k => k.trim()).filter(Boolean),
                                     pitfalls: group.querySelector('input[name$="_pitfalls"]').value.split(',').map(p => p.trim()).filter(Boolean),
                                     memo: group.querySelector('textarea[name$="_memo"]').value.trim(),
-                                    isFavorite: false, // Default value
+                                    isFavorite: false,
                                 };
                                 diseases.push(disease);
                             });
-
                             const data = {
                                 chiefComplaint: form.querySelector('#chief-complaint').value,
                                 description: form.querySelector('#chief-complaint-description').value,
                                 memo: form.querySelector('#chief-complaint-memo').value,
                                 diseases: diseases,
-                                isFavorite: false, // Default value
+                                updatedAt: new Date().toISOString()
                             };
-                            
                             try {
                                 const collectionRef = App.services.db.getCollectionRef();
                                 if (entryId) {
                                     const existingData = App.state.dataStore.find(d => d.id === entryId);
-                                    if(existingData) {
-                                        data.isFavorite = existingData.isFavorite;
-                                        data.diseases.forEach(d => {
-                                            const existingDisease = (existingData.diseases || []).find(ed => ed.name === d.name);
-                                            if (existingDisease) d.isFavorite = existingDisease.isFavorite;
-                                        });
-                                    }
+                                    data.isFavorite = existingData?.isFavorite || false;
+                                    data.diseases.forEach(d => {
+                                        const existingDisease = (existingData.diseases || []).find(ed => ed.name === d.name);
+                                        if (existingDisease) d.isFavorite = existingDisease.isFavorite;
+                                    });
                                     await setDoc(doc(collectionRef, entryId), data);
                                     App.utils.customAlert('データが更新されました。');
                                 } else {
+                                    data.isFavorite = false;
                                     await addDoc(collectionRef, data);
                                     App.utils.customAlert('データが追加されました。');
                                 }
-                                App.utils.hideModal(App.elements.dataModal);
+                                this.close();
                             } catch(error) {
                                 console.error("Error saving data:", error);
                                 App.utils.customAlert('データの保存に失敗しました。');
@@ -1822,13 +1801,12 @@
                         async delete() {
                             const entryId = App.elements.entryIdInput.value;
                             if (!entryId) return;
-
                             const confirmed = await App.utils.customConfirm('この主訴を本当に削除しますか？', '削除の確認');
                             if (confirmed) {
                                 try {
                                     await deleteDoc(doc(App.services.db.getCollectionRef(), entryId));
                                     App.utils.customAlert('データが削除されました。');
-                                    App.utils.hideModal(App.elements.dataModal);
+                                    this.close();
                                 } catch (error) {
                                     console.error("Error deleting data:", error);
                                     App.utils.customAlert('データの削除に失敗しました。');
@@ -1842,7 +1820,6 @@
                             const { compareModal, compareModalBody } = App.elements;
                             compareModalBody.innerHTML = '';
                             const selectedDiseases = [];
-
                             App.state.ui.selectedItems.forEach(itemId => {
                                 if (!itemId.startsWith('d_')) return;
                                 const parts = itemId.split('_');
@@ -1851,47 +1828,34 @@
                                 const entry = App.state.dataStore.find(e => e.id === entryId);
                                 if (entry) {
                                     const disease = (entry.diseases || []).find(d => d.name === diseaseName);
-                                    if (disease) {
-                                        selectedDiseases.push({ ...disease, complaint: entry.chiefComplaint });
-                                    }
+                                    if (disease) selectedDiseases.push({ ...disease, complaint: entry.chiefComplaint });
                                 }
                             });
-                            
                             if (selectedDiseases.length < 2) {
                                 App.utils.customAlert('比較するには、疾患を2つ以上選択してください。');
                                 return;
                             }
-                            
                             const allKeywords = [...new Set(selectedDiseases.flatMap(d => d.keywords || []))];
                             const allPitfalls = [...new Set(selectedDiseases.flatMap(d => d.pitfalls || []))];
-
                             let tableHTML = `<div class="overflow-x-auto"><table class="w-full text-left border-collapse">`;
-                            // Header
-                            tableHTML += '<thead><tr class="bg-gray-700">';
-                            tableHTML += '<th class="p-2 border border-gray-600">特徴</th>';
+                            tableHTML += '<thead><tr class="bg-gray-700"><th class="p-2 border border-gray-600">特徴</th>';
                             selectedDiseases.forEach(d => {
                                 tableHTML += `<th class="p-2 border border-gray-600 text-teal-400">${d.name} <span class="text-xs text-gray-400">(${d.complaint})</span></th>`;
                             });
                             tableHTML += '</tr></thead>';
-
-                            // Body
                             tableHTML += '<tbody>';
-                            // Keywords
                             tableHTML += `<tr><td class="p-2 border border-gray-600 font-bold bg-gray-700/50" colspan="${selectedDiseases.length + 1}">キーワード</td></tr>`;
                             allKeywords.forEach(keyword => {
-                                tableHTML += '<tr>';
-                                tableHTML += `<td class="p-2 border border-gray-600">${keyword}</td>`;
+                                tableHTML += `<tr><td class="p-2 border border-gray-600">${keyword}</td>`;
                                 selectedDiseases.forEach(d => {
                                     const hasKeyword = (d.keywords || []).includes(keyword);
                                     tableHTML += `<td class="p-2 border border-gray-600 text-center">${hasKeyword ? '<i class="fas fa-check text-green-400"></i>' : '<i class="fas fa-times text-red-400"></i>'}</td>`;
                                 });
                                 tableHTML += '</tr>';
                             });
-                             // Pitfalls
                             tableHTML += `<tr><td class="p-2 border border-gray-600 font-bold bg-gray-700/50" colspan="${selectedDiseases.length + 1}">落とし穴</td></tr>`;
                             allPitfalls.forEach(pitfall => {
-                                tableHTML += '<tr>';
-                                tableHTML += `<td class="p-2 border border-gray-600">${pitfall}</td>`;
+                                tableHTML += `<tr><td class="p-2 border border-gray-600">${pitfall}</td>`;
                                 selectedDiseases.forEach(d => {
                                     const hasPitfall = (d.pitfalls || []).includes(pitfall);
                                     tableHTML += `<td class="p-2 border border-gray-600 text-center">${hasPitfall ? '<i class="fas fa-check text-green-400"></i>' : ''}</td>`;
@@ -1900,7 +1864,6 @@
                             });
                             tableHTML += '</tbody></table></div>';
                             compareModalBody.innerHTML = tableHTML;
-
                             App.utils.showModal(compareModal);
                         },
                         bindEventListeners() {
@@ -1931,12 +1894,10 @@
                             const year = parseInt(App.elements.eraYearInput.value);
                             const month = parseInt(App.elements.eraMonthInput.value);
                             const day = parseInt(App.elements.eraDayInput.value);
-
                             if (isNaN(year) || isNaN(month) || isNaN(day)) {
                                 App.utils.customAlert('年月日を正しく入力してください。');
                                 return;
                             }
-                            
                             let birthYear;
                             switch (era) {
                                 case 'M': birthYear = 1867 + year; break;
@@ -1946,40 +1907,21 @@
                                 case 'R': birthYear = 2018 + year; break;
                                 default: return;
                             }
-
                             const today = new Date();
                             const birthDate = new Date(birthYear, month - 1, day);
                             let age = today.getFullYear() - birthDate.getFullYear();
                             const m = today.getMonth() - birthDate.getMonth();
-                            if (m < 0 || (m === 0 && today.getDate() < birthDate.getDate())) {
-                                age--;
-                            }
-                            
+                            if (m < 0 || (m === 0 && today.getDate() < birthDate.getDate())) age--;
                             App.elements.ageInput.value = age;
                             App.handlers.handlePatientInfoChange();
                             App.utils.hideModal(App.elements.dobEraModal);
-                        }
-                    },
-                    mobileMenu: {
-                        init() { this.bindEventListeners() },
-                        bindEventListeners() {
-                            const { mobileClearSelectionsBtn, mobileMenu } = App.elements;
-                            mobileClearSelectionsBtn.addEventListener('click', (e) => {
-                                e.preventDefault();
-                                App.handlers.handleClearAllSelections();
-                                App.utils.hide(mobileMenu);
-                            });
                         }
                     }
                 },
                 utils: {
                     initFirebaseConfig() {
                         if (typeof __firebase_config !== 'undefined' && __firebase_config) {
-                            try {
-                                App.config.firebaseConfig = JSON.parse(__firebase_config);
-                            } catch(e) {
-                                console.error("Failed to parse firebase config:", e);
-                            }
+                            try { App.config.firebaseConfig = JSON.parse(__firebase_config); } catch(e) { console.error("Failed to parse firebase config:", e); }
                         } 
                         if (!App.config.firebaseConfig) {
                             console.warn("Firebase config not found globally. Using fallback local config.");
@@ -2037,18 +1979,10 @@
                     loadFromStorage(key, defaultValue = null) {
                         const item = localStorage.getItem(key);
                         if (item === null) return defaultValue;
-                        try {
-                            return JSON.parse(item);
-                        } catch (e) {
-                            return item;
-                        }
+                        try { return JSON.parse(item); } catch (e) { return item; }
                     },
                     saveToStorage(key, value) {
-                        if (typeof value === 'object') {
-                            localStorage.setItem(key, JSON.stringify(value));
-                        } else {
-                            localStorage.setItem(key, value);
-                        }
+                        localStorage.setItem(key, typeof value === 'object' ? JSON.stringify(value) : value);
                     },
                     escapeRegExp(string) {
                         return string.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'); 
