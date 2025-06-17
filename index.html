@@ -34,12 +34,14 @@
         
         button:disabled { opacity: 0.5; cursor: not-allowed; }
         
-        .item-checkbox, .nav-item-checkbox { transform: scale(1.2); margin-right: 12px; accent-color: #3b82f6; }
+        /* Changed: Make checkboxes more compact */
+        .item-checkbox, .nav-item-checkbox { transform: scale(1.0); margin-right: 8px; accent-color: #3b82f6; }
         
         .keyword-tag, .content-keyword-tag { cursor: pointer; transition: background-color 0.2s ease, color 0.2s ease; }
         .keyword-tag.active, .content-keyword-tag.active { background-color: yellow; color: #1f2937; font-weight: bold; }
         
-        .nav-item { padding-left: 0.75rem; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; transition: background-color 0.2s ease, color 0.2s ease; }
+        /* Changed: Adjust padding for compactness */
+        .nav-item { padding-left: 0.75rem; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; transition: background-color 0.2s ease, color 0.2s ease; padding-top: 0.5rem; padding-bottom: 0.5rem; }
         .nav-item.active-nav { background-color: #2563eb; color: white; }
         
         #logic-switch-container { position: relative; display: inline-flex; background-color: #374151; border-radius: 9999px; padding: 2px; cursor: pointer; }
@@ -51,7 +53,7 @@
 
         
         #filter-favorites-btn.active, #mobile-filter-favorites-btn.active, #keywords-panel-toggle-btn.active { color: #fBBF24; }
-        .gender-btn.active, .vitals-tag.active, .pupil-btn.active, .pupil-reflex-btn.active, .jcs-btn.active, .era-btn.active, .ecg-tag.active { background-color: #3b82f6; color: white; }
+        .gender-btn.active, .vitals-tag.active, .jcs-btn.active, .era-btn.active, .ecg-tag.active { background-color: #3b82f6; color: white; }
         .font-size-btn.active { background-color: #2563eb; }
 
         #stopwatch.running { background-color: #166534; }
@@ -69,13 +71,17 @@
           color: #f87171; /* red-400 */
           font-weight: bold;
         }
+
+        /* Custom styles for range slider */
+        input[type="range"]::-webkit-slider-thumb { -webkit-appearance: none; appearance: none; width: 20px; height: 20px; background: #3b82f6; cursor: pointer; border-radius: 50%; border: 2px solid #fff; margin-top: -7px; }
+        input[type="range"]::-moz-range-thumb { width: 16px; height: 16px; background: #3b82f6; cursor: pointer; border-radius: 50%; border: 2px solid #fff;}
     </style>
 </head>
 <body class="bg-gray-900 text-gray-100 antialiased text-sm">
 
     <div id="app" class="flex h-screen overflow-hidden">
         <!-- サイドナビゲーション -->
-        <nav id="jump-nav" class="w-48 bg-gray-800 p-2 overflow-y-auto fixed top-0 left-0 h-full z-40 transform -translate-x-full transition-transform md:relative md:w-28 md:translate-x-0 shadow-lg"></nav>
+        <nav id="jump-nav" class="w-48 bg-gray-800 p-2 overflow-y-auto fixed top-0 left-0 h-full z-40 transform -translate-x-full transition-transform md:relative md:w-40 md:translate-x-0 shadow-lg"></nav>
         <div id="sidebar-backdrop" class="hidden fixed inset-0 bg-black bg-opacity-50 z-30 md:hidden"></div>
 
         <main class="flex-1 flex flex-col">
@@ -110,7 +116,13 @@
                     <button id="search-exec-btn" class="bg-blue-600 hover:bg-blue-700 text-white p-2 rounded-lg flex-shrink-0 w-10 h-10 flex items-center justify-center" title="検索実行" aria-label="検索実行"><i class="fas fa-search"></i></button>
 
                     <div id="stopwatch" class="bg-gray-700 text-white font-mono text-lg p-2 rounded-lg cursor-pointer flex-shrink-0" title="クリック: スタート/ストップ | 長押し: リセット">00:00</div>
+                    
+                    <!-- Changed: Button Location -->
                     <button id="vitals-btn" class="bg-cyan-600 hover:bg-cyan-700 text-white font-bold py-2 px-3 rounded-lg flex-shrink-0" title="バイタル入力" aria-label="バイタル入力モーダルを開く"><i class="fas fa-wave-square"></i></button>
+                    <button id="keywords-panel-toggle-btn" class="bg-gray-600 hover:bg-gray-500 text-white font-bold py-2 px-3 rounded-lg flex-shrink-0" aria-label="キーワードパネルを開く"><i class="fas fa-tags fa-lg"></i></button>
+                    
+                    <!-- Spacer to push next elements to the right -->
+                    <div class="flex-grow"></div>
                     
                     <div class="relative md:hidden">
                          <button id="menu-btn" class="bg-gray-600 hover:bg-gray-500 text-white font-bold p-2 rounded-lg w-10 h-10 flex items-center justify-center" aria-label="メニューを開く"><i class="fas fa-ellipsis-v"></i></button>
@@ -130,8 +142,6 @@
                         <button id="add-new-btn" class="bg-green-600 hover:bg-green-700 text-white font-bold py-2 px-3 rounded-lg flex-shrink-0"><i class="fas fa-plus"></i> <span class="hidden lg:inline">新規</span></button>
                         <button id="settings-btn" class="bg-gray-600 hover:bg-gray-500 text-white font-bold py-2 px-3 rounded-lg flex-shrink-0" title="データ管理" aria-label="データ管理"><i class="fas fa-cog"></i></button>
                     </div>
-                    <!-- キーワードパネルを開くボタンを右端に配置 -->
-                    <button id="keywords-panel-toggle-btn" class="ml-auto bg-gray-600 hover:bg-gray-500 text-white font-bold py-2 px-3 rounded-lg flex-shrink-0" aria-label="キーワードパネルを開く"><i class="fas fa-tags fa-lg"></i></button>
                 </div>
                 
                 <div id="vitals-summary-container" class="w-full mt-2 hidden">
@@ -234,23 +244,39 @@
                              </div>
                         </div>
 
-                        <div class="space-y-4 bg-gray-900 p-4 rounded-lg md:col-span-2 lg:col-span-1">
-                            <h3 class="font-bold text-lg border-b border-gray-700 pb-2">瞳孔</h3>
-                             <div>
-                                <label class="block text-sm font-medium mb-2">瞳孔所見</label>
-                                <div class="grid grid-cols-2 gap-4">
-                                    <input type="text" id="pupil-r" class="w-full bg-gray-700 p-2 rounded-md" placeholder="右瞳孔" readonly>
-                                    <input type="text" id="pupil-l" class="w-full bg-gray-700 p-2 rounded-md" placeholder="左瞳孔" readonly>
+                        <!-- Changed: Pupil input with sliders -->
+                        <div class="space-y-4 bg-gray-900 p-4 rounded-lg md:col-span-2">
+                            <h3 class="font-bold text-lg border-b border-gray-700 pb-2 mb-4">瞳孔</h3>
+                            <div class="grid grid-cols-1 sm:grid-cols-2 gap-6">
+                                <!-- Right Pupil -->
+                                <div class="space-y-3">
+                                    <div class="flex justify-between items-center">
+                                        <label for="pupil-size-r" class="text-sm font-medium">瞳孔サイズ (R)</label>
+                                        <span id="pupil-size-value-r" class="text-sm font-bold bg-gray-700 px-2 py-1 rounded-md w-20 text-center">3.5 mm</span>
+                                    </div>
+                                    <input type="range" id="pupil-size-r" name="pupil_size_r" min="1.5" max="6" step="0.5" value="3.5" class="w-full h-2 bg-gray-600 rounded-lg appearance-none cursor-pointer">
+
+                                    <div class="flex justify-between items-center pt-2">
+                                        <label for="pupil-reflex-r" class="text-sm font-medium">対光反射 (R)</label>
+                                        <span id="pupil-reflex-value-r" class="text-sm font-bold bg-gray-700 px-2 py-1 rounded-md w-20 text-center">迅速(+)</span>
+                                    </div>
+                                    <!-- 0: なし(-), 1: 鈍, 2: 迅速(+) -->
+                                    <input type="range" id="pupil-reflex-r" name="pupil_reflex_r" min="0" max="2" step="1" value="2" class="w-full h-2 bg-gray-600 rounded-lg appearance-none cursor-pointer">
                                 </div>
-                                <div class="grid grid-cols-2 gap-4 mt-2">
-                                    <div>
-                                        <label class="text-xs">サイズ(R)</label><div id="pupil-size-group-r" class="flex flex-wrap gap-1 mt-1"></div>
-                                        <label class="text-xs mt-2">対光反射(R)</label><div id="pupil-reflex-group-r" class="flex flex-wrap gap-1 mt-1"></div>
+
+                                <!-- Left Pupil -->
+                                <div class="space-y-3">
+                                    <div class="flex justify-between items-center">
+                                        <label for="pupil-size-l" class="text-sm font-medium">瞳孔サイズ (L)</label>
+                                        <span id="pupil-size-value-l" class="text-sm font-bold bg-gray-700 px-2 py-1 rounded-md w-20 text-center">3.5 mm</span>
                                     </div>
-                                    <div>
-                                        <label class="text-xs">サイズ(L)</label><div id="pupil-size-group-l" class="flex flex-wrap gap-1 mt-1"></div>
-                                        <label class="text-xs mt-2">対光反射(L)</label><div id="pupil-reflex-group-l" class="flex flex-wrap gap-1 mt-1"></div>
+                                    <input type="range" id="pupil-size-l" name="pupil_size_l" min="1.5" max="6" step="0.5" value="3.5" class="w-full h-2 bg-gray-600 rounded-lg appearance-none cursor-pointer">
+
+                                    <div class="flex justify-between items-center pt-2">
+                                        <label for="pupil-reflex-l" class="text-sm font-medium">対光反射 (L)</label>
+                                        <span id="pupil-reflex-value-l" class="text-sm font-bold bg-gray-700 px-2 py-1 rounded-md w-20 text-center">迅速(+)</span>
                                     </div>
+                                    <input type="range" id="pupil-reflex-l" name="pupil_reflex_l" min="0" max="2" step="1" value="2" class="w-full h-2 bg-gray-600 rounded-lg appearance-none cursor-pointer">
                                 </div>
                             </div>
                         </div>
@@ -413,8 +439,8 @@
                     },
                     jcsOptions: ["清明", "1", "2", "3", "10", "20", "30", "100", "200", "300"],
                     appearanceOptions: ["起坐呼吸", "喘鳴", "顔面蒼白", "頸静脈怒張", "冷や汗"],
-                    pupilSizeOptions: [1.5, 2, 2.5, 3, 3.5, 4, 4.5, 5, 5.5, 6],
-                    pupilReflexOptions: ["迅速(+)", "鈍", "なし(-)"],
+                    // Changed: Replaced pupil options with a map for the slider
+                    pupilReflexMap: ["なし(-)", "鈍", "迅速(+)"],
                     ecgOptions: ["ショック適応", "ショック非適応", "不安定頻拍", "症候性徐脈", "ST上昇", "T波増高", "ST低下", "QT延長", "異常Q波", "J波", "PSVT", "VPC", "Af", "洞調律"]
 
                 },
@@ -498,18 +524,21 @@
                         gcsESelect: D.getElementById('gcs-e-select'),
                         gcsVSelect: D.getElementById('gcs-v-select'),
                         gcsMSelect: D.getElementById('gcs-m-select'),
-                        pupilR: D.getElementById('pupil-r'),
-                        pupilL: D.getElementById('pupil-l'),
-                        pupilSizeGroupR: D.getElementById('pupil-size-group-r'),
-                        pupilReflexGroupR: D.getElementById('pupil-reflex-group-r'),
-                        pupilSizeGroupL: D.getElementById('pupil-size-group-l'),
-                        pupilReflexGroupL: D.getElementById('pupil-reflex-group-l'),
                         vitalsAppearanceTags: D.getElementById('vitals-appearance-tags'),
                         vitalsJcsGroup: D.getElementById('vitals-jcs-group'),
                         pulsePressureR: D.getElementById('pulse-pressure-r'),
                         pulsePressureL: D.getElementById('pulse-pressure-l'),
                         vitalsEcgTags: D.getElementById('vitals-ecg-tags'),
                         ecgMemo: D.getElementById('ecg-memo'),
+                        // Changed: Cache pupil slider elements
+                        pupilSizeValueR: D.getElementById('pupil-size-value-r'),
+                        pupilSizeSliderR: D.getElementById('pupil-size-r'),
+                        pupilReflexValueR: D.getElementById('pupil-reflex-value-r'),
+                        pupilReflexSliderR: D.getElementById('pupil-reflex-r'),
+                        pupilSizeValueL: D.getElementById('pupil-size-value-l'),
+                        pupilSizeSliderL: D.getElementById('pupil-size-l'),
+                        pupilReflexValueL: D.getElementById('pupil-reflex-value-l'),
+                        pupilReflexSliderL: D.getElementById('pupil-reflex-l'),
                         // Settings Modal
                         settingsModal: D.getElementById('settings-modal'),
                         settingsModalCloseBtn: D.getElementById('settings-modal-close-btn'),
@@ -881,14 +910,14 @@
                             const originalData = App.state.dataStore.find(d => d.id === entry.id);
                             if (!originalData) return;
                             
-                            const originalIndex = App.state.originalDataOrder.indexOf(entry.id);
                             const navItem = document.createElement('a');
                             navItem.href = `#${complaintId}`;
-                            navItem.className = 'nav-item block text-gray-300 hover:bg-blue-600 hover:text-white font-bold py-3 px-2 rounded-lg transition-colors flex items-center';
+                            navItem.className = 'nav-item block text-gray-300 hover:bg-blue-600 hover:text-white font-bold rounded-lg transition-colors flex items-center';
                             const isChecked = App.state.ui.selectedItems.has(`c_${entry.id}`);
                             const starIcon = originalData.isFavorite ? `<i class="fas fa-star text-yellow-400 mr-2"></i>` : '';
                             
-                            navItem.innerHTML = `<input type="checkbox" class="nav-item-checkbox" data-type="complaint" data-id="${entry.id}" ${isChecked ? 'checked' : ''}> ${starIcon}${(originalIndex + 1).toString().padStart(2, '0')}. ${entry.chiefComplaint}`;
+                            // Changed: Removed number prefix
+                            navItem.innerHTML = `<input type="checkbox" class="nav-item-checkbox" data-type="complaint" data-id="${entry.id}" ${isChecked ? 'checked' : ''}> ${starIcon}${entry.chiefComplaint}`;
                             navItem.title = entry.chiefComplaint;
                             navItem.querySelector('.nav-item-checkbox').addEventListener('click', e => e.stopPropagation());
                             navItem.addEventListener('click', (e) => { 
@@ -915,11 +944,11 @@
                         data.forEach(entry => {
                             const originalData = App.state.dataStore.find(d => d.id === entry.id);
                              if (!originalData) return;
-                            const originalIndex = App.state.originalDataOrder.indexOf(entry.id);
                             const complaintId = `complaint-${entry.id}`;
                             const isComplaintChecked = App.state.ui.selectedItems.has(`c_${entry.id}`);
                             const entryDiv = document.createElement('div');
-                            entryDiv.className = 'content-card mb-6 bg-gray-800 rounded-xl shadow-md p-5';
+                            // Changed: adjusted padding for compactness
+                            entryDiv.className = 'content-card mb-6 bg-gray-800 rounded-xl shadow-md p-4';
                             entryDiv.id = complaintId;
                             
                             const memoHTML = originalData.memo ? `<div class="mt-4 pl-6 text-sm text-amber-300 bg-gray-900/50 p-3 rounded-lg border-l-4 border-amber-400"><div class="font-bold mb-1 flex items-center"><i class="fas fa-pencil-alt mr-2"></i>主訴メモ</div><div>${originalData.memo.replace(/\n/g, '<br>')}</div></div>` : '';
@@ -953,7 +982,8 @@
                                 <div class="flex justify-between items-center">
                                     <div class="flex items-center">
                                         <input type="checkbox" class="item-checkbox" data-type="complaint" data-id="${entry.id}" ${isComplaintChecked ? 'checked' : ''}>
-                                        <h2 class="text-xl md:text-2xl font-bold text-blue-400">${(originalIndex + 1).toString().padStart(2, '0')}. ${originalData.chiefComplaint}</h2>
+                                        <!-- Changed: Removed number prefix -->
+                                        <h2 class="text-xl md:text-2xl font-bold text-blue-400">${originalData.chiefComplaint}</h2>
                                     </div>
                                     <div class="flex items-center">
                                         <button class="favorite-btn text-xl mr-4" data-id="${entry.id}" title="お気に入り登録"><i class="${favoriteClass} fa-star"></i></button>
@@ -1372,18 +1402,23 @@
                             el.vitalsSaveBtn.addEventListener('click', () => this.saveAndClose());
                             el.vitalsClearBtn.addEventListener('click', () => this.clear());
                             el.vitalsForm.addEventListener('input', e => {
-                                this.updateStateFromForm();
+                                if (e.target.type === 'range') { // Handle sliders separately
+                                     const side = e.target.id.slice(-1).toUpperCase();
+                                     this.handlePupilSliderChange(side);
+                                } else {
+                                     this.updateStateFromForm();
+                                }
                                 this.checkPulsePressure();
                             });
                              el.vitalsForm.addEventListener('click', e => {
-                                if (e.target.closest('.jcs-btn, .pupil-btn, .pupil-reflex-btn, .vitals-tag, .ecg-tag')) {
+                                if (e.target.closest('.jcs-btn, .vitals-tag, .ecg-tag')) {
                                     if(e.target.closest('.vitals-tag, .ecg-tag')) e.target.classList.toggle('active');
                                     this.updateStateFromForm();
                                 }
                             });
                         },
                          populateSelectors() {
-                            const { gcsOptions, jcsOptions, appearanceOptions, pupilSizeOptions, pupilReflexOptions, ecgOptions } = App.config;
+                            const { gcsOptions, jcsOptions, appearanceOptions, ecgOptions } = App.config;
                             ['E', 'V', 'M'].forEach(type => {
                                 const select = App.elements[`gcs${type.toUpperCase()}Select`];
                                 select.innerHTML = '';
@@ -1397,25 +1432,23 @@
                             
                             App.elements.vitalsEcgTags.innerHTML = '';
                             ecgOptions.forEach(val => App.elements.vitalsEcgTags.appendChild(App.utils.createButton(val, 'ecg-tag bg-gray-600 hover:bg-gray-500 text-sm py-1 px-3 rounded-full whitespace-nowrap')));
-
-                            ['R', 'L'].forEach(side => {
-                                const sizeGroup = App.elements[`pupilSizeGroup${side.toUpperCase()}`];
-                                const reflexGroup = App.elements[`pupilReflexGroup${side.toUpperCase()}`];
-                                sizeGroup.innerHTML = '';
-                                reflexGroup.innerHTML = '';
-                                pupilSizeOptions.forEach(val => sizeGroup.appendChild(App.utils.createButton(String(val), 'pupil-btn bg-gray-700 hover:bg-gray-600 w-8 h-8 rounded-full flex items-center justify-center', e => this.handlePupilClick(e, 'size', side.toLowerCase()))));
-                                pupilReflexOptions.forEach(val => reflexGroup.appendChild(App.utils.createButton(val, 'pupil-reflex-btn bg-gray-700 hover:bg-gray-600 h-8 px-2 rounded-md flex items-center justify-center', e => this.handlePupilClick(e, 'reflex', side.toLowerCase()))));
-                            });
+                        },
+                        handlePupilSliderChange(side) {
+                            const { elements, config } = App;
+                            const sizeSlider = elements[`pupilSizeSlider${side}`];
+                            const sizeValueEl = elements[`pupilSizeValue${side}`];
+                            const reflexSlider = elements[`pupilReflexSlider${side}`];
+                            const reflexValueEl = elements[`pupilReflexValue${side}`];
+                        
+                            if(sizeValueEl) sizeValueEl.textContent = `${parseFloat(sizeSlider.value).toFixed(1)} mm`;
+                            if(reflexValueEl) reflexValueEl.textContent = config.pupilReflexMap[reflexSlider.value];
+                            
+                            // Immediately update state as slider moves
+                            this.updateStateFromForm();
                         },
                          handleJcsClick(e) {
                             App.elements.vitalsJcsGroup.querySelectorAll('.active').forEach(b => b.classList.remove('active'));
                             e.target.classList.add('active');
-                        },
-                         handlePupilClick(e, type, side) {
-                            const groupEl = type === 'size' ? App.elements[`pupilSizeGroup${side.toUpperCase()}`] : App.elements[`pupilReflexGroup${side.toUpperCase()}`];
-                            const alreadyActive = e.target.classList.contains('active');
-                            groupEl.querySelectorAll('.active').forEach(b => b.classList.remove('active'));
-                            if (!alreadyActive) e.target.classList.add('active');
                         },
                          updateGcsTotal() {
                             const { gcsESelect, gcsVSelect, gcsMSelect, gcsTotalEl } = App.elements;
@@ -1426,6 +1459,7 @@
                          updateStateFromForm() {
                              const form = App.elements.vitalsForm;
                              const vitals = {};
+                             const { config } = App;
                              
                              const formData = new FormData(form);
                              for(const [key, value] of formData.entries()){
@@ -1435,17 +1469,23 @@
                              vitals.jcs = form.querySelector('#vitals-jcs-group .active')?.textContent.trim() || null;
                              vitals.gcs = this.updateGcsTotal();
                             
+                             // Changed: Read from sliders and construct pupil string
                              ['r', 'l'].forEach(side => {
-                                const size = form.querySelector(`#pupil-size-group-${side.toUpperCase()} .active`)?.textContent.trim() || null;
-                                const reflex = form.querySelector(`#pupil-reflex-group-${side.toUpperCase()} .active`)?.textContent.trim() || null;
-                                vitals[`pupil_${side}`] = [size, reflex].filter(Boolean).join(' / ') || null;
+                                const size = form.elements[`pupil_size_${side}`]?.value;
+                                const reflexIndex = form.elements[`pupil_reflex_${side}`]?.value;
+                                
+                                vitals[`pupil_size_${side}`] = size; // Save raw size value
+                                vitals[`pupil_reflex_${side}`] = reflexIndex; // Save raw reflex index
+                            
+                                const reflexText = (reflexIndex !== null && reflexIndex !== undefined) ? config.pupilReflexMap[reflexIndex] : null;
+                                // Save combined string for summary display
+                                vitals[`pupil_${side}`] = [size ? `${parseFloat(size).toFixed(1)}mm` : null, reflexText].filter(Boolean).join(' / ') || null;
                              });
                              
                              vitals.appearance = Array.from(form.querySelectorAll('#vitals-appearance-tags .active')).map(t => t.textContent.trim());
                              vitals.ecg_findings = Array.from(form.querySelectorAll('#vitals-ecg-tags .active')).map(t => t.textContent.trim());
 
                              App.state.vitals = vitals;
-                             this.updatePupilDisplay();
                         },
                         checkPulsePressure() {
                             ['r', 'l'].forEach(side => {
@@ -1488,7 +1528,8 @@
                             
                             for (const key in vitals) {
                                 const el = form.elements[key];
-                                if (el && el.type !== 'hidden') {
+                                // Don't set pupil sliders here, handled below
+                                if (el && el.type !== 'hidden' && !key.startsWith('pupil')) {
                                     el.value = vitals[key];
                                 }
                             }
@@ -1496,24 +1537,25 @@
                             App.elements.vitalsJcsGroup.querySelectorAll('.jcs-btn').forEach(b => b.classList.toggle('active', b.textContent === vitals.jcs));
                             
                             this.updateGcsTotal();
-                            this.updatePupilSelectors('r');
-                            this.updatePupilSelectors('l');
-                            this.updatePupilDisplay();
                             this.checkPulsePressure();
+
+                            // Changed: Update pupil sliders from state
+                            ['R', 'L'].forEach(side => {
+                                const s = side.toLowerCase();
+                                const size = vitals[`pupil_size_${s}`] || '3.5'; // Default value
+                                const reflexIndex = vitals[`pupil_reflex_${s}`] || '2'; // Default to '迅速(+)'
+
+                                const sizeSlider = App.elements[`pupilSizeSlider${side}`];
+                                const reflexSlider = App.elements[`pupilReflexSlider${side}`];
+
+                                if(sizeSlider) sizeSlider.value = size;
+                                if(reflexSlider) reflexSlider.value = reflexIndex;
+                                
+                                this.handlePupilSliderChange(side);
+                            });
 
                              App.elements.vitalsAppearanceTags.querySelectorAll('.vitals-tag').forEach(b => b.classList.toggle('active', (vitals.appearance || []).includes(b.textContent)));
                              App.elements.vitalsEcgTags.querySelectorAll('.ecg-tag').forEach(b => b.classList.toggle('active', (vitals.ecg_findings || []).includes(b.textContent)));
-                        },
-                         updatePupilDisplay() {
-                            App.elements.pupilR.value = App.state.vitals.pupil_r || '';
-                            App.elements.pupilL.value = App.state.vitals.pupil_l || '';
-                        },
-                         updatePupilSelectors(side) {
-                             const [size, reflex] = (App.state.vitals[`pupil_${side}`] || '/').split(' / ');
-                             const sizeGroup = App.elements[`pupilSizeGroup${side.toUpperCase()}`];
-                             const reflexGroup = App.elements[`pupilReflexGroup${side.toUpperCase()}`];
-                             if (sizeGroup) sizeGroup.querySelectorAll('button').forEach(b => b.classList.toggle('active', b.textContent === size));
-                             if (reflexGroup) reflexGroup.querySelectorAll('button').forEach(b => b.classList.toggle('active', b.textContent === reflex));
                         },
                         saveAndClose() {
                             this.updateStateFromForm();
