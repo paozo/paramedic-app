@@ -125,19 +125,21 @@
                         <div class="relative">
                             <button id="more-actions-btn" class="bg-gray-600 hover:bg-gray-500 text-white font-bold py-2 px-3 rounded-lg flex-shrink-0" title="その他の操作"><i class="fas fa-ellipsis-v"></i></button>
                             <div id="more-actions-dropdown" class="hidden absolute right-0 mt-2 w-48 bg-gray-800 rounded-lg shadow-xl z-30 py-1">
-                                 <a href="#" id="add-new-btn" class="block px-4 py-2 text-sm text-white hover:bg-gray-700"><i class="fas fa-plus fa-fw mr-2"></i>新規追加</a>
-                                 <a href="#" id="filter-favorites-btn" class="block px-4 py-2 text-sm text-white hover:bg-gray-700"><i class="fas fa-star fa-fw mr-2"></i>お気に入り</a>
-                                 <a href="#" id="clear-selections-btn" class="block px-4 py-2 text-sm text-white hover:bg-gray-700"><i class="fas fa-check-double fa-fw mr-2"></i>選択を解除</a>
-                                 <a href="#" id="random-btn" class="block px-4 py-2 text-sm text-white hover:bg-gray-700"><i class="fas fa-dice fa-fw mr-2"></i>ランダム表示</a>
+                                 <a href="#" data-action="add-new" class="block px-4 py-2 text-sm text-white hover:bg-gray-700"><i class="fas fa-plus fa-fw mr-2"></i>新規追加</a>
+                                 <a href="#" data-action="filter-favorites" id="filter-favorites-btn" class="block px-4 py-2 text-sm text-white hover:bg-gray-700"><i class="fas fa-star fa-fw mr-2"></i>お気に入り</a>
+                                 <a href="#" data-action="clear-selections" class="block px-4 py-2 text-sm text-white hover:bg-gray-700"><i class="fas fa-check-double fa-fw mr-2"></i>選択を解除</a>
+                                 <a href="#" data-action="random" id="random-btn" class="block px-4 py-2 text-sm text-white hover:bg-gray-700"><i class="fas fa-dice fa-fw mr-2"></i>ランダム表示</a>
                                  <div class="border-t border-gray-700 my-1"></div>
-                                 <a href="#" id="sort-menu-trigger" class="relative block px-4 py-2 text-sm text-white hover:bg-gray-700"><i class="fas fa-sort-amount-down fa-fw mr-2"></i>並び替え<i class="fas fa-chevron-right absolute right-4 top-1/2 -translate-y-1/2"></i></a>
-                                 <a href="#" id="settings-btn" class="block px-4 py-2 text-sm text-white hover:bg-gray-700"><i class="fas fa-cog fa-fw mr-2"></i>設定</a>
+                                 <div id="sort-menu-container" class="relative">
+                                     <a href="#" id="sort-menu-trigger" class="relative block px-4 py-2 text-sm text-white hover:bg-gray-700"><i class="fas fa-sort-amount-down fa-fw mr-2"></i>並び替え<i class="fas fa-chevron-right absolute right-4 top-1/2 -translate-y-1/2"></i></a>
+                                     <div id="sort-menu-dropdown" class="hidden absolute right-full -top-1 mr-2 w-40 bg-gray-800 rounded-lg shadow-xl z-30 py-1">
+                                         <a href="#" class="sort-item block px-4 py-2 text-white hover:bg-gray-700" data-sort="default">登録順</a>
+                                         <a href="#" class="sort-item block px-4 py-2 text-white hover:bg-gray-700" data-sort="name">名前順</a>
+                                         <a href="#" class="sort-item block px-4 py-2 text-white hover:bg-gray-700" data-sort="updated">更新順</a>
+                                     </div>
+                                 </div>
+                                 <a href="#" data-action="settings" class="block px-4 py-2 text-sm text-white hover:bg-gray-700"><i class="fas fa-cog fa-fw mr-2"></i>設定</a>
                             </div>
-                             <div id="sort-menu-dropdown" class="hidden absolute right-full -top-1 mr-2 w-40 bg-gray-800 rounded-lg shadow-xl z-30 py-1">
-                                 <a href="#" class="sort-item block px-4 py-2 text-white hover:bg-gray-700" data-sort="default">登録順</a>
-                                 <a href="#" class="sort-item block px-4 py-2 text-white hover:bg-gray-700" data-sort="name">名前順</a>
-                                 <a href="#" class="sort-item block px-4 py-2 text-white hover:bg-gray-700" data-sort="updated">更新順</a>
-                             </div>
                         </div>
 
                     </div>
@@ -466,16 +468,10 @@
                         sidebarToggleBtn: D.getElementById('sidebar-toggle-btn'),
                         sidebarBackdrop: D.getElementById('sidebar-backdrop'),
                         // Header Buttons
-                        addNewBtn: D.getElementById('add-new-btn'),
-                        filterFavoritesBtn: D.getElementById('filter-favorites-btn'),
-                        clearSelectionsBtn: D.getElementById('clear-selections-btn'),
-                        settingsBtn: D.getElementById('settings-btn'),
-                        sortMenuBtn: D.getElementById('sort-menu-btn'),
-                        sortMenuDropdown: D.getElementById('sort-menu-dropdown'),
-                        sortMenuLabel: D.getElementById('sort-menu-label'),
                         moreActionsBtn: D.getElementById('more-actions-btn'),
                         moreActionsDropdown: D.getElementById('more-actions-dropdown'),
                         sortMenuTrigger: D.getElementById('sort-menu-trigger'),
+                        sortMenuDropdown: D.getElementById('sort-menu-dropdown'),
 
                         // Keywords Panel (Right)
                         keywordsPanelRight: D.getElementById('keywords-panel-right'),
@@ -490,7 +486,6 @@
                         genderBtns: D.querySelectorAll('.gender-btn'),
                         vitalsBtn: D.getElementById('vitals-btn'),
                         tempMemo: D.getElementById('temp-memo'),
-                        randomBtn: D.getElementById('random-btn'),
                         // Time Buttons
                         arrivalBtn: D.getElementById('arrival-btn'),
                         contactBtn: D.getElementById('contact-btn'),
@@ -592,12 +587,14 @@
                     });
                     
                     el.sortMenuTrigger.addEventListener('mouseenter', () => el.sortMenuDropdown.classList.remove('hidden'));
-                    el.moreActionsDropdown.addEventListener('mouseleave', () => el.sortMenuDropdown.classList.add('hidden'));
+                    
+                    const moreActionsContainer = el.moreActionsBtn.parentElement;
+                    // Corrected: Removed mouseleave event that caused the issue
+                    // moreActionsContainer.addEventListener('mouseleave', ...);
 
                     el.moreActionsDropdown.addEventListener('click', e => h.handleMoreActionsClick(e));
                     el.sortMenuDropdown.addEventListener('click', e => h.handleSortChange(e));
-
-                    el.randomBtn.addEventListener('click', () => h.handleRandomSelect());
+                    
                     el.arrivalBtn.addEventListener('click', () => h.handleTimestampClick('arrival'));
                     el.contactBtn.addEventListener('click', () => h.handleTimestampClick('contact'));
                     el.departureBtn.addEventListener('click', () => h.handleTimestampClick('departure'));
@@ -606,7 +603,7 @@
                     
                     document.addEventListener('click', e => {
                         if (el.searchHistoryBtn && !el.searchHistoryBtn.parentElement.contains(e.target)) this.utils.hide(el.searchHistoryDropdown);
-                        if (el.moreActionsBtn && !el.moreActionsBtn.contains(e.target)) {
+                        if (el.moreActionsBtn && !el.moreActionsBtn.parentElement.contains(e.target)) {
                            this.utils.hide(el.moreActionsDropdown);
                            this.utils.hide(el.sortMenuDropdown);
                         }
@@ -647,25 +644,28 @@
                     },
                     handleMoreActionsClick(e) {
                         const target = e.target.closest('a');
-                        if (!target || !target.id) return;
+                        if (!target || target.id === 'sort-menu-trigger') return;
                         e.preventDefault();
+                        
+                        const action = target.dataset.action;
+                        if (!action) return;
                         
                         App.utils.hide(App.elements.moreActionsDropdown);
 
-                        switch(target.id) {
-                            case 'add-new-btn':
+                        switch(action) {
+                            case 'add-new':
                                 App.components.dataModal.openForNew();
                                 break;
-                            case 'filter-favorites-btn':
+                            case 'filter-favorites':
                                 this.handleToggleFavoritesFilter();
                                 break;
-                            case 'clear-selections-btn':
+                            case 'clear-selections':
                                 this.handleClearAllSelections();
                                 break;
-                             case 'random-btn':
+                             case 'random':
                                 this.handleRandomSelect();
                                 break;
-                            case 'settings-btn':
+                            case 'settings':
                                 App.components.settings.open();
                                 break;
                         }
@@ -677,10 +677,7 @@
 
                         const sortBy = sortItem.dataset.sort;
                         App.state.filters.sortBy = sortBy;
-                        
-                        const sortMenuLabel = document.getElementById('sort-menu-label'); // Re-fetch for safety
-                        if(sortMenuLabel) sortMenuLabel.textContent = sortItem.textContent;
-                        
+                                                
                         App.elements.sortMenuDropdown.querySelectorAll('.sort-item').forEach(item => item.classList.remove('active'));
                         sortItem.classList.add('active');
                         
@@ -690,7 +687,7 @@
                     },
                     handleToggleFavoritesFilter() {
                         App.state.filters.isFavoritesOnly = !App.state.filters.isFavoritesOnly;
-                        App.elements.filterFavoritesBtn.classList.toggle('active', App.state.filters.isFavoritesOnly);
+                        document.getElementById('filter-favorites-btn').classList.toggle('active', App.state.filters.isFavoritesOnly);
                         App.renderer.renderAll();
                     },
                     handleToggleVisibility(area, button, isCollapsed = false) {
@@ -1601,7 +1598,7 @@
                         close() { App.utils.hideModal(App.elements.settingsModal); },
                         toggleRandomButtonVisibility(isVisible) {
                              App.utils.saveToStorage(App.config.storageKeys.showRandomBtn, isVisible);
-                             App.elements.randomBtn.classList.toggle('hidden', !isVisible)
+                             document.getElementById('random-btn').classList.toggle('hidden', !isVisible);
                         },
                         handleFontSizeChange(e) {
                             const btn = e.target.closest('.font-size-btn');
