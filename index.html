@@ -50,8 +50,8 @@
         #logic-switch-container[data-mode="AND"] #switch-bg { width: calc(50% - 2px); left: 2px; transform: translateX(100%); }
 
         
-        #keywords-panel-toggle-btn.active, #nav-menu-filter-favorites-btn.active { color: #fBBF24; }
-        .gender-btn.active, .vitals-tag.active, .jcs-btn.active, .era-btn.active, .ecg-tag.active, .nav-sort-item.active { background-color: #3b82f6; color: white; }
+        #keywords-panel-toggle-btn.active, #filter-favorites-btn.active { color: #fBBF24; }
+        .gender-btn.active, .vitals-tag.active, .jcs-btn.active, .era-btn.active, .ecg-tag.active, .sort-item.active { background-color: #3b82f6; color: white; }
         .font-size-btn.active { background-color: #2563eb; }
         .time-btn.active { background-color: #16a34a; color: white; }
 
@@ -80,23 +80,6 @@
     <div id="app" class="flex h-screen overflow-hidden">
         <!-- サイドナビゲーション -->
         <nav id="jump-nav" class="w-48 bg-gray-800 p-2 overflow-y-auto flex flex-col fixed top-0 left-0 h-full z-40 transform -translate-x-full transition-transform md:relative md:w-40 md:translate-x-0 shadow-lg">
-            <div class="relative mb-2">
-                <button id="nav-menu-btn" class="w-full text-left p-2 rounded-lg hover:bg-gray-700 flex justify-between items-center">
-                    <span class="font-bold">メニュー</span>
-                    <i class="fas fa-ellipsis-v"></i>
-                </button>
-                <div id="nav-menu-dropdown" class="hidden absolute top-full left-0 mt-1 w-full bg-gray-600 rounded-lg shadow-xl z-10 py-1">
-                    <a href="#" data-action="add-new" class="nav-menu-item block px-3 py-2 text-sm text-white hover:bg-gray-500"><i class="fas fa-plus w-6"></i> 新規追加</a>
-                    <a href="#" data-action="filter-favorites" id="nav-menu-filter-favorites-btn" class="nav-menu-item block px-3 py-2 text-sm text-white hover:bg-gray-500"><i class="fas fa-star w-6"></i> お気に入り</a>
-                    <a href="#" data-action="clear-selections" class="nav-menu-item block px-3 py-2 text-sm text-white hover:bg-gray-500"><i class="fas fa-check-double w-6"></i> 選択を解除</a>
-                    <a href="#" data-action="settings" class="nav-menu-item block px-3 py-2 text-sm text-white hover:bg-gray-500"><i class="fas fa-cog w-6"></i> 設定</a>
-                    <div class="border-t border-gray-500 my-1"></div>
-                    <div class="px-3 pt-2 pb-1 text-xs text-gray-300 font-bold">並び替え</div>
-                    <a href="#" class="nav-sort-item nav-menu-item block px-3 py-2 text-sm text-white hover:bg-gray-500" data-sort="default">登録順</a>
-                    <a href="#" class="nav-sort-item nav-menu-item block px-3 py-2 text-sm text-white hover:bg-gray-500" data-sort="name">名前順</a>
-                    <a href="#" class="nav-sort-item nav-menu-item block px-3 py-2 text-sm text-white hover:bg-gray-500" data-sort="updated">更新順</a>
-                </div>
-            </div>
             <div id="nav-scroll-area" class="flex-1 overflow-y-auto">
                 <!-- Nav items will be injected here -->
             </div>
@@ -136,7 +119,27 @@
                     
                     <div class="flex-grow"></div>
                     
+                    <!-- Right-aligned action buttons -->
                     <div id="action-buttons-group" class="flex items-center gap-2">
+                        <button id="add-new-btn" class="bg-green-600 hover:bg-green-700 text-white font-bold py-2 px-3 rounded-lg flex-shrink-0" title="新規追加"><i class="fas fa-plus"></i></button>
+                        <button id="filter-favorites-btn" class="bg-gray-600 hover:bg-gray-500 text-white font-bold py-2 px-3 rounded-lg flex-shrink-0" title="お気に入りフィルター" aria-label="お気に入りフィルター"><i class="fas fa-star"></i></button>
+                         <button id="clear-selections-btn" class="bg-gray-600 hover:bg-gray-500 text-white font-bold py-2 px-3 rounded-lg flex-shrink-0" title="選択をすべて解除"><i class="fas fa-check-double"></i></button>
+                        <button id="settings-btn" class="bg-gray-600 hover:bg-gray-500 text-white font-bold py-2 px-3 rounded-lg flex-shrink-0" title="設定"><i class="fas fa-cog"></i></button>
+
+                        <div class="relative">
+                            <button id="sort-menu-btn" class="bg-gray-600 hover:bg-gray-500 text-white font-bold py-2 px-3 rounded-lg flex-shrink-0 flex items-center gap-2" title="並び替え">
+                               <i class="fas fa-sort-amount-down"></i>
+                               <span id="sort-menu-label" class="hidden md:inline">登録順</span>
+                            </button>
+                             <div id="sort-menu-dropdown" class="hidden absolute right-0 mt-2 w-40 bg-gray-800 rounded-lg shadow-xl z-30 py-1">
+                                 <a href="#" class="sort-item block px-4 py-2 text-white hover:bg-gray-700" data-sort="default">登録順</a>
+                                 <a href="#" class="sort-item block px-4 py-2 text-white hover:bg-gray-700" data-sort="name">名前順</a>
+                                 <a href="#" class="sort-item block px-4 py-2 text-white hover:bg-gray-700" data-sort="updated">更新順</a>
+                             </div>
+                        </div>
+
+                        <div class="h-6 border-l border-gray-600 mx-1"></div>
+
                         <button id="random-btn" class="bg-purple-600 hover:bg-purple-700 text-white font-bold py-2 px-3 rounded-lg flex-shrink-0 hidden" title="ランダム表示" aria-label="ランダム表示"><i class="fas fa-dice"></i></button>
                         <div id="stopwatch" class="bg-gray-700 text-white font-mono text-lg p-2 rounded-lg cursor-pointer flex-shrink-0" title="クリック: スタート/ストップ | 長押し: リセット">00:00</div>
                         <button id="vitals-btn" class="bg-cyan-600 hover:bg-cyan-700 text-white font-bold py-2 px-3 rounded-lg flex-shrink-0" title="バイタル入力" aria-label="バイタル入力モーダルを開く"><i class="fas fa-wave-square"></i></button>
@@ -244,7 +247,7 @@
                                         <label for="bp-sys-l" class="text-xs">収縮期 (左)</label>
                                         <input name="bp_sys_l" type="number" id="bp-sys-l" class="w-full bg-gray-700 p-2 rounded-md" placeholder="Sys">
                                         <label for="bp-dia-l" class="text-xs">拡張期 (左)</label>
-                                        <input name="bp_dia_l" type="number" id="bp-dia-l" class="w-full bg-gray-700 p-2 rounded-md" placeholder="Dia">
+                                        <input name="bp_dia_l" type="number" id="bp-dia_l" class="w-full bg-gray-700 p-2 rounded-md" placeholder="Dia">
                                     </div>
                                 </div>
                              </div>
@@ -472,9 +475,15 @@
                         navScrollArea: D.getElementById('nav-scroll-area'),
                         sidebarToggleBtn: D.getElementById('sidebar-toggle-btn'),
                         sidebarBackdrop: D.getElementById('sidebar-backdrop'),
-                        // Nav Menu
-                        navMenuBtn: D.getElementById('nav-menu-btn'),
-                        navMenuDropdown: D.getElementById('nav-menu-dropdown'),
+                        // Header Buttons
+                        addNewBtn: D.getElementById('add-new-btn'),
+                        filterFavoritesBtn: D.getElementById('filter-favorites-btn'),
+                        clearSelectionsBtn: D.getElementById('clear-selections-btn'),
+                        settingsBtn: D.getElementById('settings-btn'),
+                        sortMenuBtn: D.getElementById('sort-menu-btn'),
+                        sortMenuDropdown: D.getElementById('sort-menu-dropdown'),
+                        sortMenuLabel: D.getElementById('sort-menu-label'),
+
                         // Keywords Panel (Right)
                         keywordsPanelRight: D.getElementById('keywords-panel-right'),
                         keywordsPanelToggleBtn: D.getElementById('keywords-panel-toggle-btn'),
@@ -583,18 +592,16 @@
                     el.contentArea.addEventListener('change', e => h.handleCheckboxChange(e));
                     el.navScrollArea.addEventListener('change', e => h.handleCheckboxChange(e));
 
-                    el.navMenuBtn.addEventListener('click', (e) => {
+                    el.addNewBtn.addEventListener('click', () => this.components.dataModal.openForNew());
+                    el.filterFavoritesBtn.addEventListener('click', () => h.handleToggleFavoritesFilter());
+                    el.clearSelectionsBtn.addEventListener('click', () => h.handleClearAllSelections());
+                    el.settingsBtn.addEventListener('click', () => this.components.settings.open());
+
+                    el.sortMenuBtn.addEventListener('click', e => {
                         e.stopPropagation();
-                        el.navMenuDropdown.classList.toggle('hidden');
+                        el.sortMenuDropdown.classList.toggle('hidden');
                     });
-                    
-                    // Corrected: Event listener for nav menu items
-                    el.navMenuDropdown.addEventListener('click', e => {
-                        const target = e.target.closest('.nav-menu-item');
-                        if (target) {
-                            h.handleNavMenuClick(e);
-                        }
-                    });
+                    el.sortMenuDropdown.addEventListener('click', e => h.handleSortChange(e));
 
                     el.randomBtn.addEventListener('click', () => h.handleRandomSelect());
                     el.arrivalBtn.addEventListener('click', () => h.handleTimestampClick('arrival'));
@@ -605,7 +612,7 @@
                     
                     document.addEventListener('click', e => {
                         if (el.searchHistoryBtn && !el.searchHistoryBtn.parentElement.contains(e.target)) this.utils.hide(el.searchHistoryDropdown);
-                        if (el.navMenuBtn && !el.navMenuBtn.parentElement.contains(e.target)) this.utils.hide(el.navMenuDropdown);
+                        if (el.sortMenuBtn && !el.sortMenuBtn.parentElement.contains(e.target)) this.utils.hide(el.sortMenuDropdown);
                     });
                     
                     Object.values(this.components).forEach(component => component.bindEventListeners?.());
@@ -641,49 +648,24 @@
                             allComplaintCards[randomIndex].scrollIntoView({ behavior: 'smooth', block: 'center' });
                         }
                     },
-                    handleNavMenuClick(e) {
-                        const target = e.target.closest('a');
-                        if (!target) return;
+                    handleSortChange(e) {
+                        const sortItem = e.target.closest('.sort-item');
+                        if (!sortItem) return;
                         e.preventDefault();
 
-                        if (target.classList.contains('nav-sort-item')) {
-                            this.handleSortChange(target);
-                        } else if (target.dataset.action) {
-                            this.handleNavMenuAction(target.dataset.action);
-                        }
-                    },
-                    handleSortChange(sortItem) {
-                         if (!sortItem) return;
                         const sortBy = sortItem.dataset.sort;
                         App.state.filters.sortBy = sortBy;
                         
-                        App.elements.navMenuDropdown.querySelectorAll('.nav-sort-item').forEach(item => item.classList.remove('active'));
+                        App.elements.sortMenuLabel.textContent = sortItem.textContent;
+                        App.elements.sortMenuDropdown.querySelectorAll('.sort-item').forEach(item => item.classList.remove('active'));
                         sortItem.classList.add('active');
                         
-                        this.utils.hide(App.elements.navMenuDropdown);
+                        this.utils.hide(App.elements.sortMenuDropdown);
                         App.renderer.renderAll();
-                    },
-                    handleNavMenuAction(action) {
-                        const { elements, handlers } = App;
-                        this.utils.hide(elements.navMenuDropdown);
-                        switch(action) {
-                            case 'add-new':
-                                App.components.dataModal.openForNew();
-                                break;
-                            case 'filter-favorites':
-                                handlers.handleToggleFavoritesFilter();
-                                break;
-                            case 'clear-selections':
-                                handlers.handleClearAllSelections();
-                                break;
-                            case 'settings':
-                                App.components.settings.open();
-                                break;
-                        }
                     },
                     handleToggleFavoritesFilter() {
                         App.state.filters.isFavoritesOnly = !App.state.filters.isFavoritesOnly;
-                        document.getElementById('nav-menu-filter-favorites-btn').classList.toggle('active', App.state.filters.isFavoritesOnly);
+                        App.elements.filterFavoritesBtn.classList.toggle('active', App.state.filters.isFavoritesOnly);
                         App.renderer.renderAll();
                     },
                     handleToggleVisibility(area, button, isCollapsed = false) {
@@ -1999,4 +1981,4 @@
         });
     </script>
 </body>
-</html>
+</html
