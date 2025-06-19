@@ -315,10 +315,10 @@
             <main class="p-6 space-y-6">
                 <div>
                     <h3 class="font-semibold mb-2">データ管理</h3>
-                    <div class="flex gap-4">
-                        <button id="export-data-btn" class="flex-1 bg-green-600 hover:bg-green-700 text-white font-bold py-2 px-4 rounded-lg"><i class="fas fa-file-export mr-2"></i>エクスポート</button>
-                        <button id="import-data-btn" class="flex-1 bg-blue-600 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded-lg"><i class="fas fa-file-import mr-2"></i>インポート</button>
-                        <input type="file" id="import-file-input" class="hidden" accept=".json">
+                    <div class="space-y-2">
+                        <button id="export-csv-btn" class="w-full bg-green-600 hover:bg-green-700 text-white font-bold py-2 px-4 rounded-lg"><i class="fas fa-file-csv mr-2"></i>CSVエクスポート</button>
+                        <button id="import-csv-btn" class="w-full bg-blue-600 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded-lg"><i class="fas fa-file-import mr-2"></i>CSVインポート</button>
+                        <input type="file" id="import-csv-input" class="hidden" accept=".csv">
                     </div>
                 </div>
                 <div>
@@ -555,9 +555,9 @@
                         // Settings Modal
                         settingsModal: D.getElementById('settings-modal'),
                         settingsModalCloseBtn: D.getElementById('settings-modal-close-btn'),
-                        exportDataBtn: D.getElementById('export-data-btn'),
-                        importDataBtn: D.getElementById('import-data-btn'),
-                        importFileInput: D.getElementById('import-file-input'),
+                        exportCsvBtn: D.getElementById('export-csv-btn'),
+                        importCsvBtn: D.getElementById('import-csv-btn'),
+                        importCsvInput: D.getElementById('import-csv-input'),
                         showRandomBtnToggle: D.getElementById('show-random-btn-toggle'),
                         fontSizeControls: D.getElementById('font-size-controls'),
                         // Data Modal
@@ -1565,9 +1565,9 @@
                         },
                         bindEventListeners() {
                            App.elements.settingsModalCloseBtn.addEventListener('click', () => this.close());
-                           App.elements.exportDataBtn.addEventListener('click', () => this.exportData());
-                           App.elements.importDataBtn.addEventListener('click', () => App.elements.importFileInput.click());
-                           App.elements.importFileInput.addEventListener('change', e => this.handleFileSelect(e));
+                           App.elements.exportCsvBtn.addEventListener('click', () => this.exportCSV());
+                           App.elements.importCsvBtn.addEventListener('click', () => App.elements.importCsvInput.click());
+                           App.elements.importCsvInput.addEventListener('change', e => this.handleCSVFileSelect(e));
                            App.elements.showRandomBtnToggle.addEventListener('change', e => this.toggleRandomButtonVisibility(e.target.checked));
                            App.elements.fontSizeControls.addEventListener('click', e => this.handleFontSizeChange(e));
                         },
@@ -1588,51 +1588,142 @@
                             });
                             App.utils.saveToStorage(App.config.storageKeys.fontSize, size);
                         },
-                        exportData() {
-                            const dataStr = JSON.stringify(App.state.dataStore, null, 2);
-                            const blob = new Blob([dataStr], {type: "application/json"});
+                        exportCSV() {
+                            const data = App.state.dataStore;
+                            if (data.length === 0) {
+                                App.utils.customAlert('エクスポートするデータがありません。');
+                                return;
+                            }
+
+                            // Flatten data for CSV
+                            const flattenedData = [];
+                            data.forEach(entry => {
+                                if (entry.diseases && entry.diseases.length > 0) {
+                                    entry.diseases.forEach(disease => {
+                                        flattenedData.push({
+                                            chiefComplaint: entry.chiefComplaint || '',
+                                            description: entry.description || '',
+                                            memo: entry.memo || '',
+                                            diseaseName: disease.name || '',
+                                            diseaseDescription: disease.description || '',
+                                            diseaseKeywords: (disease.keywords || []).join(';'), // Use semicolon to avoid comma issues
+                                            diseasePitfalls: (disease.pitfalls || []).join(';'),
+                                            diseaseMemo: disease.memo || ''
+                                        });
+                                    });
+                                } else {
+                                     flattenedData.push({
+                                        chiefComplaint: entry.chiefComplaint || '',
+                                        description: entry.description || '',
+                                        memo: entry.memo || '',
+                                        diseaseName: '', diseaseDescription: '', diseaseKeywords: '', diseasePitfalls: '', diseaseMemo: ''
+                                     });
+                                }
+                            });
+                            
+                            // Convert to CSV string
+                            const header = Object.keys(flattenedData[0]).join(',');
+                            const csv = flattenedData.map(row => 
+                                Object.values(row).map(value => `"${String(value).replace(/"/g, '""')}"`).join(',')
+                            ).join('\n');
+                            
+                            const csvContent = `${header}\n${csv}`;
+                            const blob = new Blob([`\uFEFF${csvContent}`], { type: 'text/csv;charset=utf-8;' }); // Add BOM for Excel
                             const url = URL.createObjectURL(blob);
                             const a = document.createElement('a');
                             a.href = url;
-                            a.download = `paramedic_data_${new Date().toISOString().slice(0,10)}.json`;
+                            a.download = `paramedic_data_${new Date().toISOString().slice(0,10)}.csv`;
                             a.click();
                             URL.revokeObjectURL(url);
                         },
-                        handleFileSelect(event) {
+                        handleCSVFileSelect(event) {
                             const file = event.target.files[0];
                             if (!file) return;
                             const reader = new FileReader();
                             reader.onload = async (e) => {
                                 try {
-                                    const importedData = JSON.parse(e.target.result);
-                                    if (Array.isArray(importedData)) {
-                                        const confirmed = await App.utils.customConfirm('現在のデータをすべて削除し、インポートしますか？', 'インポートの確認');
-                                        if (confirmed) this.importData(importedData);
-                                    } else {
-                                        throw new Error("Invalid data format");
+                                    const csvString = e.target.result;
+                                    const confirmed = await App.utils.customConfirm('現在のデータをすべて上書きして、CSVからインポートしますか？この操作は元に戻せません。', 'インポートの確認');
+                                    if (confirmed) {
+                                        this.importCSV(csvString);
                                     }
                                 } catch (error) {
-                                    App.utils.customAlert('ファイルの読み込みに失敗しました。JSON形式が正しくありません。');
+                                    App.utils.customAlert('ファイルの読み込みに失敗しました。');
                                     console.error("Import error:", error);
                                 }
                             };
+                             reader.onerror = () => {
+                                App.utils.customAlert('ファイルの読み込み中にエラーが発生しました。');
+                            };
                             reader.readAsText(file);
                         },
-                        async importData(data) {
-                            const collectionRef = App.services.db.getCollectionRef();
-                            if (!collectionRef) return;
-                            const snapshot = await getDocs(collectionRef);
-                            const batchDelete = writeBatch(App.state.db);
-                            snapshot.docs.forEach(d => batchDelete.delete(d.ref));
-                            await batchDelete.commit();
-                            const batchAdd = writeBatch(App.state.db);
-                            data.forEach(item => {
-                                const { id, ...itemData } = item;
-                                if (!itemData.updatedAt) itemData.updatedAt = new Date().toISOString();
-                                batchAdd.set(doc(collectionRef), itemData);
-                            });
-                            await batchAdd.commit();
-                            App.utils.customAlert('データのインポートが完了しました。');
+                        async importCSV(csvString) {
+                            try {
+                                const lines = csvString.trim().split('\n');
+                                const header = lines[0].split(',').map(h => h.trim().replace(/"/g, ''));
+                                const rows = lines.slice(1).map(line => {
+                                    const data = line.split(/,(?=(?:(?:[^"]*"){2})*[^"]*$)/); // Handle commas inside quotes
+                                    const rowData = {};
+                                    header.forEach((key, i) => {
+                                        rowData[key] = (data[i] || '').trim().replace(/(^"|"$)/g, '').replace(/""/g, '"');
+                                    });
+                                    return rowData;
+                                });
+
+                                // Group by chiefComplaint to reconstruct nested structure
+                                const groupedByComplaint = rows.reduce((acc, row) => {
+                                    const complaint = row.chiefComplaint;
+                                    if (!acc[complaint]) {
+                                        acc[complaint] = {
+                                            chiefComplaint: complaint,
+                                            description: row.description || '',
+                                            memo: row.memo || '',
+                                            createdAt: new Date().toISOString(),
+                                            updatedAt: new Date().toISOString(),
+                                            isFavorite: false,
+                                            diseases: []
+                                        };
+                                    }
+                                    if (row.diseaseName) {
+                                        acc[complaint].diseases.push({
+                                            name: row.diseaseName,
+                                            description: row.diseaseDescription || '',
+                                            keywords: (row.diseaseKeywords || '').split(';').map(k => k.trim()).filter(Boolean),
+                                            pitfalls: (row.diseasePitfalls || '').split(';').map(p => p.trim()).filter(Boolean),
+                                            memo: row.diseaseMemo || '',
+                                            isFavorite: false
+                                        });
+                                    }
+                                    return acc;
+                                }, {});
+
+                                const finalData = Object.values(groupedByComplaint);
+
+                                // Batch write to Firestore
+                                const collectionRef = App.services.db.getCollectionRef();
+                                if (!collectionRef) return;
+
+                                // Delete existing documents
+                                const snapshot = await getDocs(collectionRef);
+                                const deleteBatch = writeBatch(App.state.db);
+                                snapshot.docs.forEach(d => deleteBatch.delete(d.ref));
+                                await deleteBatch.commit();
+
+                                // Add new documents
+                                const addBatch = writeBatch(App.state.db);
+                                finalData.forEach(item => {
+                                    const docRef = doc(collectionRef);
+                                    addBatch.set(docRef, item);
+                                });
+                                await addBatch.commit();
+                                
+                                App.utils.customAlert('データのインポートが完了しました。');
+                                this.close();
+
+                            } catch (error) {
+                                App.utils.customAlert('CSVデータの解析またはインポート中にエラーが発生しました。ファイルの形式を確認してください。');
+                                console.error("CSV Import failed:", error);
+                            }
                         }
                     },
                     searchHistory: {
