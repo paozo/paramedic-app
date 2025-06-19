@@ -1642,7 +1642,26 @@
                             const reader = new FileReader();
                             reader.onload = async (e) => {
                                 try {
-                                    const csvString = e.target.result;
+                                    // Detect encoding from BOM
+                                    const buffer = e.target.result;
+                                    const view = new Uint8Array(buffer);
+                                    let encoding = 'utf-8'; // Default
+                                    if (view[0] === 0xFF && view[1] === 0xFE) { // UTF-16 LE
+                                        encoding = 'utf-16le';
+                                    } else if (view[0] === 0xFE && view[1] === 0xFF) { // UTF-16 BE
+                                        encoding = 'utf-16be';
+                                    } else if (view[0] === 0xEF && view[1] === 0xBB && view[2] === 0xBF) { // UTF-8
+                                        encoding = 'utf-8';
+                                    } else {
+                                        // Simple check for Shift_JIS, not 100% reliable
+                                        // This is a placeholder, proper detection is complex.
+                                        // For now, we rely on user saving as UTF-8
+                                        console.log("No BOM detected, assuming UTF-8. If garbled, re-save CSV as UTF-8 with BOM.");
+                                    }
+
+                                    const textDecoder = new TextDecoder(encoding);
+                                    const csvString = textDecoder.decode(buffer);
+                                    
                                     const confirmed = await App.utils.customConfirm('現在のデータをすべて上書きして、CSVからインポートしますか？この操作は元に戻せません。', 'インポートの確認');
                                     if (confirmed) {
                                         this.importCSV(csvString);
@@ -1655,11 +1674,11 @@
                              reader.onerror = () => {
                                 App.utils.customAlert('ファイルの読み込み中にエラーが発生しました。');
                             };
-                            reader.readAsText(file);
+                            reader.readAsArrayBuffer(file);
                         },
                         async importCSV(csvString) {
                             try {
-                                const lines = csvString.trim().split('\n');
+                                const lines = csvString.trim().split(/\r\n|\n/);
                                 const header = lines[0].split(',').map(h => h.trim().replace(/"/g, ''));
                                 const rows = lines.slice(1).map(line => {
                                     const data = line.split(/,(?=(?:(?:[^"]*"){2})*[^"]*$)/); // Handle commas inside quotes
@@ -1673,6 +1692,8 @@
                                 // Group by chiefComplaint to reconstruct nested structure
                                 const groupedByComplaint = rows.reduce((acc, row) => {
                                     const complaint = row.chiefComplaint;
+                                    if (!complaint) return acc; // Skip empty rows
+                                    
                                     if (!acc[complaint]) {
                                         acc[complaint] = {
                                             chiefComplaint: complaint,
