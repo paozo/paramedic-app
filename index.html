@@ -6,7 +6,7 @@
     <title>救急隊員向け臨床推論サポートアプリ</title>
     
     <!-- PWA Manifest & Theme Color -->
-    <link rel="manifest" href="manifest.json">
+    <link rel="manifest" href="/paramedic-app/manifest.json">
     <meta name="theme-color" content="#111827">
 
     <!-- スタイルシートとフォント -->
@@ -141,11 +141,11 @@
                         <div class="relative">
                             <button id="sort-menu-btn" class="bg-gray-600 hover:bg-gray-500 text-white font-bold py-2 px-3 rounded-lg flex-shrink-0 flex items-center gap-2" title="並び替え">
                                <i class="fas fa-sort-amount-down"></i>
-                               <span id="sort-menu-label" class="hidden md:inline">登録順</span>
+                               <span id="sort-menu-label" class="hidden md:inline">名前順</span>
                             </button>
                              <div id="sort-menu-dropdown" class="hidden absolute right-0 mt-2 w-40 bg-gray-800 rounded-lg shadow-xl z-30 py-1">
-                                 <a href="#" class="sort-item block px-4 py-2 text-white hover:bg-gray-700 active" data-sort="default">登録順</a>
-                                 <a href="#" class="sort-item block px-4 py-2 text-white hover:bg-gray-700" data-sort="name">名前順</a>
+                                 <a href="#" class="sort-item block px-4 py-2 text-white hover:bg-gray-700 active" data-sort="name">名前順</a>
+                                 <a href="#" class="sort-item block px-4 py-2 text-white hover:bg-gray-700" data-sort="default">登録順</a>
                                  <a href="#" class="sort-item block px-4 py-2 text-white hover:bg-gray-700" data-sort="updated">更新順</a>
                              </div>
                         </div>
@@ -461,7 +461,7 @@
                 state: {
                     db: null, auth: null, userId: null, dataStore: [], isLoading: true,
                     intersectionObserver: null,
-                    filters: { searchTerm: '', activeKeywords: new Set(), keywordMode: 'OR', isFavoritesOnly: false, sortBy: 'default' },
+                    filters: { searchTerm: '', activeKeywords: new Set(), keywordMode: 'OR', isFavoritesOnly: false, sortBy: 'name' },
                     ui: { selectedItems: new Set(), highlightedElements: [], currentHighlightIndex: -1 },
                     stopwatch: { interval: null, isRunning: false, elapsedSeconds: 0, pressTimer: null },
                     vitals: {},
@@ -757,7 +757,7 @@
                     init() {
                         if ('serviceWorker' in navigator) {
                             window.addEventListener('load', () => {
-                                navigator.serviceWorker.register('./sw.js').then(registration => {
+                                navigator.serviceWorker.register('/paramedic-app/sw.js').then(registration => {
                                     console.log('ServiceWorker registration successful with scope: ', registration.scope);
                                 }, err => {
                                     console.log('ServiceWorker registration failed: ', err);
@@ -941,16 +941,15 @@
                         }
 
                         switch (filters.sortBy) {
-                            case 'name':
-                                processedData.sort((a, b) => a.chiefComplaint.localeCompare(b.chiefComplaint, 'ja'));
+                            case 'default':
+                                processedData.sort((a, b) => (a.createdAt || '').localeCompare(b.createdAt || ''));
                                 break;
                             case 'updated':
                                 processedData.sort((a, b) => (b.updatedAt || '').localeCompare(a.updatedAt || ''));
                                 break;
-                            case 'default':
+                            case 'name':
                             default:
-                                // Sort by creation date (oldest first)
-                                processedData.sort((a, b) => (a.createdAt || '').localeCompare(b.createdAt || ''));
+                                processedData.sort((a, b) => a.chiefComplaint.localeCompare(b.chiefComplaint, 'ja'));
                                 break;
                         }
                         
@@ -2058,32 +2057,90 @@
 </html>
 ```
 
-### 2. マニフェストファイル
+### 3. サービスワーカー
 
-次に、アプリの情報を定義するファイルです。ファイル名は必ず `manifest.json` としてください。
+最後に、オフライン動作を可能にするためのファイルです。ファイル名は必ず `sw.js` としてください。
 
 
-```json
-{
-  "name": "救急隊員向け臨床推論サポートアプリ",
-  "short_name": "救急推論",
-  "description": "救急隊員向けの臨床推論をサポートするためのアプリケーションです。",
-  "start_url": "./index.html",
-  "display": "standalone",
-  "background_color": "#111827",
-  "theme_color": "#111827",
-  "icons": [
-    {
-      "src": "https://placehold.co/192x192/3b82f6/ffffff?text=EMS",
-      "sizes": "192x192",
-      "type": "image/png",
-      "purpose": "any maskable"
-    },
-    {
-      "src": "https://placehold.co/512x512/3b82f6/ffffff?text=EMS",
-      "sizes": "512x512",
-      "type": "image/png",
-      "purpose": "any maskable"
-    }
-  ]
-}
+```javascript
+// キャッシュするアセットのバージョン
+const CACHE_NAME = 'paramedic-app-cache-v2'; // Cache version updated
+// キャッシュするファイルのリスト
+const urlsToCache = [
+  '/paramedic-app/',
+  '/paramedic-app/index.html',
+  '/paramedic-app/manifest.json',
+  '/paramedic-app/icon-192.png',
+  '/paramedic-app/icon-512.png',
+  'https://cdn.tailwindcss.com',
+  'https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Noto+Sans+JP:wght@400;500;700&display=swap',
+  'https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css',
+  "https://www.gstatic.com/firebasejs/11.9.1/firebase-app.js",
+  "https://www.gstatic.com/firebasejs/11.9.1/firebase-firestore.js",
+  "https://www.gstatic.com/firebasejs/11.9.1/firebase-auth.js"
+];
+
+// Service Worker のインストールイベント
+self.addEventListener('install', event => {
+  event.waitUntil(
+    caches.open(CACHE_NAME)
+      .then(cache => {
+        console.log('Cache opened');
+        // 指定されたURLをすべてキャッシュに追加
+        return cache.addAll(urlsToCache);
+      })
+  );
+});
+
+// Service Worker のフェッチイベント
+self.addEventListener('fetch', event => {
+    event.respondWith(
+        caches.match(event.request)
+            .then(response => {
+                // キャッシュにヒットした場合、キャッシュからレスポンスを返す
+                if (response) {
+                    return response;
+                }
+
+                // キャッシュにない場合、ネットワークからフェッチする
+                return fetch(event.request).then(
+                    networkResponse => {
+                        // Firebaseなど外部のリソースはキャッシュしない
+                        if (!networkResponse || networkResponse.status !== 200 || !networkResponse.url.startsWith('http')) {
+                            return networkResponse;
+                        }
+
+                        const responseToCache = networkResponse.clone();
+                        caches.open(CACHE_NAME)
+                            .then(cache => {
+                                cache.put(event.request, responseToCache);
+                            });
+
+                        return networkResponse;
+                    }
+                ).catch(error => {
+                    console.error('Fetching failed:', error);
+                    // オフライン時のフォールバック
+                });
+            })
+    );
+});
+
+
+// Service Worker の有効化イベント
+self.addEventListener('activate', event => {
+  const cacheWhitelist = [CACHE_NAME];
+  event.waitUntil(
+    caches.keys().then(cacheNames => {
+      return Promise.all(
+        cacheNames.map(cacheName => {
+          // 古いキャッシュを削除する
+          if (cacheWhitelist.indexOf(cacheName) === -1) {
+            console.log('Deleting old cache:', cacheName);
+            return caches.delete(cacheName);
+          }
+        })
+      );
+    })
+  );
+});
