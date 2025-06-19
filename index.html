@@ -75,12 +75,12 @@
           font-weight: bold;
         }
 
-        input[type="range"] { -webkit-appearance: none; appearance: none; width: 100%; height: 8px; background: #4b5563; border-radius: 4px; outline: none; transition: opacity .2s; }
-        input[type="range"]::-webkit-slider-thumb { -webkit-appearance: none; appearance: none; width: 20px; height: 20px; background: #3b82f6; cursor: pointer; border-radius: 50%; border: 2px solid #fff; margin-top: -6px; }
-        input[type="range"]::-moz-range-thumb { width: 16px; height: 16px; background: #3b82f6; cursor: pointer; border-radius: 50%; border: 2px solid #fff;}
-        .slider-markers { display: flex; justify-content: space-between; padding: 0 8px; margin-top: 4px; }
-        .slider-marker { width: 1px; height: 5px; background-color: #6b7280; }
+        .slider-container { position: relative; padding: 10px 0; }
+        .slider-ticks { display: flex; justify-content: space-between; position: absolute; top: 18px; left: 8px; right: 8px; pointer-events: none; }
+        .tick { width: 8px; height: 8px; background-color: #4b5563; border-radius: 50%; }
 
+        input[type="range"]::-webkit-slider-thumb { -webkit-appearance: none; appearance: none; width: 20px; height: 20px; background: #3b82f6; cursor: pointer; border-radius: 50%; border: 2px solid #fff; margin-top: -8px; position: relative; z-index: 10; }
+        input[type="range"]::-moz-range-thumb { width: 16px; height: 16px; background: #3b82f6; cursor: pointer; border-radius: 50%; border: 2px solid #fff;}
         
         .disease-form-group.dragging {
             opacity: 0.4;
@@ -88,7 +88,6 @@
         .disease-form-group .drag-handle {
             cursor: grab;
         }
-
     </style>
 </head>
 <body class="bg-gray-900 text-gray-100 antialiased text-sm">
@@ -141,7 +140,7 @@
                         <button id="filter-favorites-btn" class="bg-gray-600 hover:bg-gray-500 text-white font-bold py-2 px-3 rounded-lg flex-shrink-0" title="お気に入りフィルター" aria-label="お気に入りフィルター"><i class="fas fa-star"></i></button>
                          <button id="clear-selections-btn" class="bg-gray-600 hover:bg-gray-500 text-white font-bold py-2 px-3 rounded-lg flex-shrink-0" title="選択をすべて解除"><i class="fas fa-check-double"></i></button>
                         <button id="settings-btn" class="bg-gray-600 hover:bg-gray-500 text-white font-bold py-2 px-3 rounded-lg flex-shrink-0" title="設定"><i class="fas fa-cog"></i></button>
-
+                       
                         <div class="h-6 border-l border-gray-600 mx-1"></div>
 
                         <button id="random-btn" class="bg-purple-600 hover:bg-purple-700 text-white font-bold py-2 px-3 rounded-lg flex-shrink-0 hidden" title="ランダム表示" aria-label="ランダム表示"><i class="fas fa-dice"></i></button>
@@ -199,21 +198,19 @@
                 <form id="vitals-form" class="space-y-6">
                     <div class="bg-gray-900 p-4 rounded-lg">
                         <div class="flex justify-between items-center border-b border-gray-700 pb-2 mb-4">
-                            <h3 class="font-bold text-lg">外観・様子</h3>
-                            <button type="button" id="edit-appearance-tags-btn" class="text-xs text-blue-400 hover:text-blue-500">[編集]</button>
+                           <h3 class="font-bold text-lg">外観・様子</h3>
+                           <button type="button" id="edit-appearance-tags-btn" class="text-gray-400 hover:text-white"><i class="fas fa-edit"></i></button>
                         </div>
                         <div id="vitals-appearance-tags" class="flex flex-wrap gap-2"></div>
                     </div>
                     <div class="bg-gray-900 p-4 rounded-lg">
                         <div class="flex justify-between items-center border-b border-gray-700 pb-2 mb-4">
                             <h3 class="font-bold text-lg">心電図所見</h3>
-                             <button type="button" id="edit-ecg-tags-btn" class="text-xs text-blue-400 hover:text-blue-500">[編集]</button>
+                            <button type="button" id="edit-ecg-tags-btn" class="text-gray-400 hover:text-white"><i class="fas fa-edit"></i></button>
                         </div>
-                        <div class="flex overflow-x-auto space-x-2 p-1">
-                            <div id="vitals-ecg-tags" class="flex space-x-2"></div>
-                        </div>
+                        <div id="vitals-ecg-tags" class="flex flex-wrap gap-2"></div>
                         <div>
-                            <label for="ecg-memo" class="text-sm">心電図自由記載</label>
+                            <label for="ecg-memo" class="text-sm mt-4 block">心電図自由記載</label>
                             <textarea name="ecg_memo" id="ecg-memo" rows="2" class="w-full bg-gray-700 p-2 rounded-md mt-1"></textarea>
                         </div>
                     </div>
@@ -267,34 +264,41 @@
                             <h3 class="font-bold text-lg border-b border-gray-700 pb-2 mb-4">瞳孔</h3>
                             <div class="grid grid-cols-1 sm:grid-cols-2 gap-6">
                                 <div class="space-y-3">
-                                    <div class="flex justify-between items-center">
+                                     <div class="flex justify-between items-center">
                                         <label for="pupil-size-r" class="text-sm font-medium">瞳孔サイズ (R)</label>
                                         <span id="pupil-size-value-r" class="text-sm font-bold bg-gray-700 px-2 py-1 rounded-md w-20 text-center">3.5 mm</span>
                                     </div>
-                                    <input type="range" id="pupil-size-r" name="pupil_size_r" min="1.5" max="6" step="0.5" value="3.5" class="w-full">
-                                    <div id="pupil-size-markers-r" class="slider-markers"></div>
-
+                                    <div class="slider-container">
+                                        <input type="range" id="pupil-size-r" name="pupil_size_r" min="1.5" max="6" step="0.5" value="3.5" class="w-full h-2 bg-gray-600 rounded-lg appearance-none cursor-pointer">
+                                        <div class="slider-ticks"></div>
+                                    </div>
                                     <div class="flex justify-between items-center pt-2">
                                         <label for="pupil-reflex-r" class="text-sm font-medium">対光反射 (R)</label>
                                         <span id="pupil-reflex-value-r" class="text-sm font-bold bg-gray-700 px-2 py-1 rounded-md w-20 text-center">迅速(+)</span>
                                     </div>
-                                    <input type="range" id="pupil-reflex-r" name="pupil_reflex_r" min="0" max="2" step="1" value="2" class="w-full">
-                                     <div id="pupil-reflex-markers-r" class="slider-markers"></div>
+                                    <div class="slider-container">
+                                       <input type="range" id="pupil-reflex-r" name="pupil_reflex_r" min="0" max="2" step="1" value="2" class="w-full h-2 bg-gray-600 rounded-lg appearance-none cursor-pointer">
+                                        <div class="slider-ticks"></div>
+                                    </div>
                                 </div>
                                 <div class="space-y-3">
                                     <div class="flex justify-between items-center">
                                         <label for="pupil-size-l" class="text-sm font-medium">瞳孔サイズ (L)</label>
                                         <span id="pupil-size-value-l" class="text-sm font-bold bg-gray-700 px-2 py-1 rounded-md w-20 text-center">3.5 mm</span>
                                     </div>
-                                    <input type="range" id="pupil-size-l" name="pupil_size_l" min="1.5" max="6" step="0.5" value="3.5" class="w-full">
-                                    <div id="pupil-size-markers-l" class="slider-markers"></div>
+                                    <div class="slider-container">
+                                        <input type="range" id="pupil-size-l" name="pupil_size_l" min="1.5" max="6" step="0.5" value="3.5" class="w-full h-2 bg-gray-600 rounded-lg appearance-none cursor-pointer">
+                                        <div class="slider-ticks"></div>
+                                    </div>
 
                                     <div class="flex justify-between items-center pt-2">
                                         <label for="pupil-reflex-l" class="text-sm font-medium">対光反射 (L)</label>
                                         <span id="pupil-reflex-value-l" class="text-sm font-bold bg-gray-700 px-2 py-1 rounded-md w-20 text-center">迅速(+)</span>
                                     </div>
-                                    <input type="range" id="pupil-reflex-l" name="pupil_reflex_l" min="0" max="2" step="1" value="2" class="w-full">
-                                    <div id="pupil-reflex-markers-l" class="slider-markers"></div>
+                                    <div class="slider-container">
+                                       <input type="range" id="pupil-reflex-l" name="pupil_reflex_l" min="0" max="2" step="1" value="2" class="w-full h-2 bg-gray-600 rounded-lg appearance-none cursor-pointer">
+                                        <div class="slider-ticks"></div>
+                                    </div>
                                 </div>
                             </div>
                         </div>
@@ -345,22 +349,6 @@
                 </div>
             </main>
          </div>
-    </div>
-
-    <div id="tag-editor-modal" class="modal hidden fixed inset-0 bg-black bg-opacity-70 flex items-center justify-center z-50 p-4">
-         <div class="bg-gray-800 rounded-lg shadow-xl w-full max-w-md text-gray-200">
-            <header class="p-4 border-b border-gray-700 flex justify-between items-center">
-                <h2 id="tag-editor-title" class="text-xl font-bold"></h2>
-                <button id="tag-editor-modal-close-btn" class="text-gray-400 hover:text-white"><i class="fas fa-times fa-lg"></i></button>
-            </header>
-            <main class="p-6 space-y-4">
-                <p class="text-sm text-gray-400">項目を1行に1つずつ入力してください。</p>
-                <textarea id="tag-editor-textarea" rows="10" class="w-full bg-gray-700 p-2 rounded-md"></textarea>
-            </main>
-             <footer class="p-4 bg-gray-700/50 flex justify-end gap-3 rounded-b-lg">
-                <button type="button" id="tag-editor-save-btn" class="bg-blue-600 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded-lg">保存</button>
-            </footer>
-        </div>
     </div>
     
     <div id="data-modal" class="modal hidden fixed inset-0 bg-black bg-opacity-70 flex items-center justify-center z-50 p-4">
@@ -443,6 +431,22 @@
         </div>
     </div>
 
+    <div id="tag-editor-modal" class="modal hidden fixed inset-0 bg-black bg-opacity-80 flex items-center justify-center z-50 p-4">
+         <div class="bg-gray-800 rounded-lg shadow-xl w-full max-w-md">
+            <header class="p-4 border-b border-gray-700 flex justify-between items-center">
+                <h2 id="tag-editor-title" class="text-xl font-bold">タグの編集</h2>
+                <button id="tag-editor-close-btn" class="text-gray-400 hover:text-white"><i class="fas fa-times fa-lg"></i></button>
+            </header>
+            <main class="p-6 space-y-4">
+                <div id="tag-editor-list" class="space-y-2 max-h-60 overflow-y-auto"></div>
+                <div class="flex gap-2 pt-4 border-t border-gray-600">
+                    <input type="text" id="new-tag-input" class="w-full bg-gray-700 p-2 rounded-md" placeholder="新しいタグを追加...">
+                    <button id="add-tag-btn" class="bg-green-600 hover:bg-green-700 text-white font-bold py-2 px-4 rounded-lg">追加</button>
+                </div>
+            </main>
+         </div>
+    </div>
+
 
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/11.9.1/firebase-app.js";
@@ -460,8 +464,8 @@
                         vitals: `paramedic_app_vitals`,
                         tempMemo: `paramedic_app_temp_memo`,
                         ageAndGender: `paramedic_app_age_gender`,
-                        appearanceOptions: `paramedic_app_appearance_options`,
-                        ecgOptions: `paramedic_app_ecg_options`,
+                        customAppearanceTags: `paramedic_app_custom_appearance_tags`,
+                        customEcgTags: `paramedic_app_custom_ecg_tags`,
                     },
                     stopwatchResetDelay: 700,
                     swipeThreshold: 50,
@@ -474,8 +478,8 @@
                     },
                     jcsOptions: ["清明", "1", "2", "3", "10", "20", "30", "100", "200", "300"],
                     defaultAppearanceOptions: ["起坐呼吸", "喘鳴", "顔面蒼白", "頸静脈怒張", "冷や汗"],
-                    defaultEcgOptions: ["ショック適応", "ショック非適応", "不安定頻拍", "症候性徐脈", "ST上昇", "T波増高", "ST低下", "QT延長", "異常Q波", "J波", "PSVT", "VPC", "Af", "洞調律"],
                     pupilReflexMap: ["なし(-)", "鈍", "迅速(+)"],
+                    defaultEcgOptions: ["ショック適応", "ショック非適応", "不安定頻拍", "症候性徐脈", "ST上昇", "T波増高", "ST低下", "QT延長", "異常Q波", "J波", "PSVT", "VPC", "Af", "洞調律"]
 
                 },
                 state: {
@@ -486,7 +490,8 @@
                     stopwatch: { interval: null, isRunning: false, elapsedSeconds: 0, pressTimer: null },
                     vitals: {},
                     sidebar: { touchStartX: 0, touchCurrentX: 0, isDragging: false },
-                    tagEditor: { currentType: null }
+                    customAppearanceTags: [],
+                    customEcgTags: [],
                 },
                 init() {
                     this.cacheDomElements();
@@ -514,6 +519,7 @@
                         filterFavoritesBtn: D.getElementById('filter-favorites-btn'),
                         clearSelectionsBtn: D.getElementById('clear-selections-btn'),
                         settingsBtn: D.getElementById('settings-btn'),
+                       
                         // Keywords Panel (Right)
                         keywordsPanelRight: D.getElementById('keywords-panel-right'),
                         keywordsPanelToggleBtn: D.getElementById('keywords-panel-toggle-btn'),
@@ -556,25 +562,17 @@
                         gcsVSelect: D.getElementById('gcs-v-select'),
                         gcsMSelect: D.getElementById('gcs-m-select'),
                         vitalsAppearanceTags: D.getElementById('vitals-appearance-tags'),
-                        editAppearanceTagsBtn: D.getElementById('edit-appearance-tags-btn'),
                         vitalsJcsGroup: D.getElementById('vitals-jcs-group'),
                         pulsePressureR: D.getElementById('pulse-pressure-r'),
                         pulsePressureL: D.getElementById('pulse-pressure-l'),
                         vitalsEcgTags: D.getElementById('vitals-ecg-tags'),
-                        editEcgTagsBtn: D.getElementById('edit-ecg-tags-btn'),
                         ecgMemo: D.getElementById('ecg-memo'),
                         pupilSizeValueR: D.getElementById('pupil-size-value-r'),
-                        pupilSizeSliderR: D.getElementById('pupil-size-r'),
                         pupilReflexValueR: D.getElementById('pupil-reflex-value-r'),
-                        pupilReflexSliderR: D.getElementById('pupil-reflex-r'),
                         pupilSizeValueL: D.getElementById('pupil-size-value-l'),
-                        pupilSizeSliderL: D.getElementById('pupil-size-l'),
                         pupilReflexValueL: D.getElementById('pupil-reflex-value-l'),
-                        pupilReflexSliderL: D.getElementById('pupil-reflex-l'),
-                        pupilSizeMarkersR: D.getElementById('pupil-size-markers-r'),
-                        pupilReflexMarkersR: D.getElementById('pupil-reflex-markers-r'),
-                        pupilSizeMarkersL: D.getElementById('pupil-size-markers-l'),
-                        pupilReflexMarkersL: D.getElementById('pupil-reflex-markers-l'),
+                        editAppearanceTagsBtn: D.getElementById('edit-appearance-tags-btn'),
+                        editEcgTagsBtn: D.getElementById('edit-ecg-tags-btn'),
                         // Settings Modal
                         settingsModal: D.getElementById('settings-modal'),
                         settingsModalCloseBtn: D.getElementById('settings-modal-close-btn'),
@@ -583,12 +581,6 @@
                         importCsvInput: D.getElementById('import-csv-input'),
                         showRandomBtnToggle: D.getElementById('show-random-btn-toggle'),
                         fontSizeControls: D.getElementById('font-size-controls'),
-                        // Tag Editor Modal
-                        tagEditorModal: D.getElementById('tag-editor-modal'),
-                        tagEditorModalCloseBtn: D.getElementById('tag-editor-modal-close-btn'),
-                        tagEditorTitle: D.getElementById('tag-editor-title'),
-                        tagEditorTextarea: D.getElementById('tag-editor-textarea'),
-                        tagEditorSaveBtn: D.getElementById('tag-editor-save-btn'),
                         // Data Modal
                         dataModal: D.getElementById('data-modal'),
                         modalTitle: D.getElementById('modal-title'),
@@ -619,6 +611,13 @@
                         eraMonthInput: D.getElementById('era-month'),
                         eraDayInput: D.getElementById('era-day'),
                         dobCalcBtn: D.getElementById('dob-calc-btn'),
+                        // Tag Editor Modal
+                        tagEditorModal: D.getElementById('tag-editor-modal'),
+                        tagEditorTitle: D.getElementById('tag-editor-title'),
+                        tagEditorCloseBtn: D.getElementById('tag-editor-close-btn'),
+                        tagEditorList: D.getElementById('tag-editor-list'),
+                        newTagInput: D.getElementById('new-tag-input'),
+                        addTagBtn: D.getElementById('add-tag-btn'),
                     };
                 },
                 bindEventListeners() {
@@ -648,7 +647,6 @@
                     
                     document.addEventListener('click', e => {
                         if (el.searchHistoryBtn && !el.searchHistoryBtn.parentElement.contains(e.target)) this.utils.hide(el.searchHistoryDropdown);
-                        if (el.sortMenuBtn && !el.sortMenuBtn.parentElement.contains(e.target)) this.utils.hide(el.sortMenuDropdown);
                     });
                     
                     Object.values(this.components).forEach(component => component.bindEventListeners?.());
@@ -683,6 +681,21 @@
                             const randomIndex = Math.floor(Math.random() * allComplaintCards.length);
                             allComplaintCards[randomIndex].scrollIntoView({ behavior: 'smooth', block: 'center' });
                         }
+                    },
+                    handleSortChange(e) {
+                        const sortItem = e.target.closest('.sort-item');
+                        if (!sortItem) return;
+                        e.preventDefault();
+
+                        const sortBy = sortItem.dataset.sort;
+                        App.state.filters.sortBy = sortBy;
+                        
+                        App.elements.sortMenuLabel.textContent = sortItem.textContent;
+                        App.elements.sortMenuDropdown.querySelectorAll('.sort-item').forEach(item => item.classList.remove('active'));
+                        sortItem.classList.add('active');
+                        
+                        App.utils.hide(App.elements.sortMenuDropdown);
+                        App.renderer.renderAll();
                     },
                     handleToggleFavoritesFilter() {
                         App.state.filters.isFavoritesOnly = !App.state.filters.isFavoritesOnly;
@@ -925,19 +938,8 @@
                                 return null;
                             }).filter(Boolean);
                         }
-
-                        switch (filters.sortBy) {
-                            case 'default':
-                                processedData.sort((a, b) => (a.createdAt || '').localeCompare(b.createdAt || ''));
-                                break;
-                            case 'updated':
-                                processedData.sort((a, b) => (b.updatedAt || '').localeCompare(a.updatedAt || ''));
-                                break;
-                            case 'name':
-                            default:
-                                processedData.sort((a, b) => a.chiefComplaint.localeCompare(b.chiefComplaint, 'ja'));
-                                break;
-                        }
+                        
+                        processedData.sort((a, b) => a.chiefComplaint.localeCompare(b.chiefComplaint, 'ja'));
                         
                         return processedData;
                     },
@@ -1411,11 +1413,12 @@
                     },
                     vitalsModal: {
                          init() {
+                            this.loadCustomTags();
                             this.populateSelectors();
                             const savedVitals = App.utils.loadFromStorage(App.config.storageKeys.vitals, {});
                             App.state.vitals = savedVitals;
                             this.updateFormFromState();
-                            this.createAllSliderMarkers();
+                            this.renderPupilTicks();
                         },
                         bindEventListeners() {
                             const el = App.elements;
@@ -1425,10 +1428,10 @@
                             el.vitalsClearBtn.addEventListener('click', () => this.clear());
                             el.editAppearanceTagsBtn.addEventListener('click', () => App.components.tagEditor.open('appearance'));
                             el.editEcgTagsBtn.addEventListener('click', () => App.components.tagEditor.open('ecg'));
+                            
                             el.vitalsForm.addEventListener('input', e => {
-                                if (e.target.type === 'range') {
-                                     const side = e.target.id.slice(-1).toUpperCase();
-                                     this.handlePupilSliderChange(side);
+                                if (e.target.type === 'range' && e.target.id.startsWith('pupil-')) {
+                                     this.handlePupilSliderChange(e.target.id.includes('-r-') ? 'R' : 'L', e.target.id.includes('-size-')? 'size' : 'reflex');
                                 } else {
                                      this.updateStateFromForm();
                                 }
@@ -1441,14 +1444,13 @@
                                 }
                             });
                         },
-                        createAllSliderMarkers(){
-                            App.utils.createSliderMarkers(App.elements.pupilSizeSliderR, App.elements.pupilSizeMarkersR);
-                            App.utils.createSliderMarkers(App.elements.pupilReflexSliderR, App.elements.pupilReflexMarkersR);
-                            App.utils.createSliderMarkers(App.elements.pupilSizeSliderL, App.elements.pupilSizeMarkersL);
-                            App.utils.createSliderMarkers(App.elements.pupilReflexSliderL, App.elements.pupilReflexMarkersL);
+                        loadCustomTags() {
+                            const { storageKeys, defaultAppearanceOptions, defaultEcgOptions } = App.config;
+                            App.state.customAppearanceTags = App.utils.loadFromStorage(storageKeys.customAppearanceTags, defaultAppearanceOptions);
+                            App.state.customEcgTags = App.utils.loadFromStorage(storageKeys.customEcgTags, defaultEcgOptions);
                         },
                          populateSelectors() {
-                            const { gcsOptions, jcsOptions, storageKeys, defaultAppearanceOptions, defaultEcgOptions } = App.config;
+                            const { gcsOptions, jcsOptions } = App.config;
                             ['E', 'V', 'M'].forEach(type => {
                                 const select = App.elements[`gcs${type.toUpperCase()}Select`];
                                 select.innerHTML = '';
@@ -1456,24 +1458,44 @@
                             });
                             App.elements.vitalsJcsGroup.innerHTML = '';
                             jcsOptions.forEach(val => App.elements.vitalsJcsGroup.appendChild(App.utils.createButton(val, 'jcs-btn bg-gray-700 hover:bg-gray-600 p-2 rounded-md flex-grow text-center', e => this.handleJcsClick(e))));
-
-                            const appearanceOptions = App.utils.loadFromStorage(storageKeys.appearanceOptions, defaultAppearanceOptions);
-                            App.elements.vitalsAppearanceTags.innerHTML = '';
-                            appearanceOptions.forEach(val => App.elements.vitalsAppearanceTags.appendChild(App.utils.createButton(val, 'vitals-tag bg-gray-600 hover:bg-gray-500 text-sm py-1 px-3 rounded-full')));
                             
-                            const ecgOptions = App.utils.loadFromStorage(storageKeys.ecgOptions, defaultEcgOptions);
-                            App.elements.vitalsEcgTags.innerHTML = '';
-                            ecgOptions.forEach(val => App.elements.vitalsEcgTags.appendChild(App.utils.createButton(val, 'ecg-tag bg-gray-600 hover:bg-gray-500 text-sm py-1 px-3 rounded-full whitespace-nowrap')));
+                            this.renderTagButtons('appearance');
+                            this.renderTagButtons('ecg');
                         },
-                        handlePupilSliderChange(side) {
-                            const { elements, config } = App;
-                            const sizeSlider = elements[`pupilSizeSlider${side}`];
-                            const sizeValueEl = elements[`pupilSizeValue${side}`];
-                            const reflexSlider = elements[`pupilReflexSlider${side}`];
-                            const reflexValueEl = elements[`pupilReflexValue${side}`];
-                        
-                            if(sizeValueEl) sizeValueEl.textContent = `${parseFloat(sizeSlider.value).toFixed(1)} mm`;
-                            if(reflexValueEl) reflexValueEl.textContent = config.pupilReflexMap[reflexSlider.value];
+                        renderTagButtons(type) {
+                            const { vitalsAppearanceTags, vitalsEcgTags } = App.elements;
+                            const container = type === 'appearance' ? vitalsAppearanceTags : vitalsEcgTags;
+                            const tags = type === 'appearance' ? App.state.customAppearanceTags : App.state.customEcgTags;
+                            const className = type === 'appearance' ? 'vitals-tag' : 'ecg-tag';
+                            
+                            container.innerHTML = '';
+                            tags.forEach(val => container.appendChild(App.utils.createButton(val, `${className} bg-gray-600 hover:bg-gray-500 text-sm py-1 px-3 rounded-full whitespace-nowrap`)));
+                        },
+                        renderPupilTicks() {
+                            const sliders = App.elements.vitalsModal.querySelectorAll('input[type="range"]');
+                            sliders.forEach(slider => {
+                                const container = slider.parentElement.querySelector('.slider-ticks');
+                                if (!container) return;
+                                container.innerHTML = '';
+                                const min = parseFloat(slider.min);
+                                const max = parseFloat(slider.max);
+                                const step = parseFloat(slider.step);
+                                for (let i = min; i <= max; i += step) {
+                                    const tick = document.createElement('span');
+                                    tick.className = 'tick';
+                                    container.appendChild(tick);
+                                }
+                            });
+                        },
+                        handlePupilSliderChange(side, type) {
+                             const sizeSlider = document.getElementById(`pupil-size-${side.toLowerCase()}`);
+                            const sizeValueEl = document.getElementById(`pupil-size-value-${side}`);
+                            const reflexSlider = document.getElementById(`pupil-reflex-${side.toLowerCase()}`);
+                            const reflexValueEl = document.getElementById(`pupil-reflex-value-${side}`);
+
+                            if (sizeValueEl && sizeSlider) sizeValueEl.textContent = `${parseFloat(sizeSlider.value).toFixed(1)} mm`;
+                            if (reflexValueEl && reflexSlider) reflexValueEl.textContent = App.config.pupilReflexMap[reflexSlider.value];
+                            
                             this.updateStateFromForm();
                         },
                          handleJcsClick(e) {
@@ -1548,11 +1570,11 @@
                                 const s = side.toLowerCase();
                                 const size = vitals[`pupil_size_${s}`] || '3.5';
                                 const reflexIndex = vitals[`pupil_reflex_${s}`] || '2';
-                                const sizeSlider = App.elements[`pupilSizeSlider${side}`];
-                                const reflexSlider = App.elements[`pupilReflexSlider${side}`];
+                                const sizeSlider = App.elements.vitalsForm.querySelector(`#pupil-size-${s}`);
+                                const reflexSlider = App.elements.vitalsForm.querySelector(`#pupil-reflex-${s}`);
                                 if(sizeSlider) sizeSlider.value = size;
                                 if(reflexSlider) reflexSlider.value = reflexIndex;
-                                this.handlePupilSliderChange(side);
+                                this.handlePupilSliderChange(side.toUpperCase());
                             });
                              App.elements.vitalsAppearanceTags.querySelectorAll('.vitals-tag').forEach(b => b.classList.toggle('active', (vitals.appearance || []).includes(b.textContent)));
                              App.elements.vitalsEcgTags.querySelectorAll('.ecg-tag').forEach(b => b.classList.toggle('active', (vitals.ecg_findings || []).includes(b.textContent)));
@@ -1745,49 +1767,6 @@
                                 App.utils.customAlert('CSVデータの解析またはインポート中にエラーが発生しました。ファイルの形式を確認してください。');
                                 console.error("CSV Import failed:", error);
                             }
-                        }
-                    },
-                    tagEditor: {
-                        init() { this.bindEventListeners(); },
-                        bindEventListeners() {
-                            App.elements.tagEditorModalCloseBtn.addEventListener('click', () => this.close());
-                            App.elements.tagEditorSaveBtn.addEventListener('click', () => this.save());
-                        },
-                        open(type) {
-                            this.currentType = type;
-                            const { storageKeys, defaultAppearanceOptions, defaultEcgOptions } = App.config;
-                            let title, key, defaultOptions;
-                            
-                            if (type === 'appearance') {
-                                title = '「外観・様子」タグの編集';
-                                key = storageKeys.appearanceOptions;
-                                defaultOptions = defaultAppearanceOptions;
-                            } else {
-                                title = '「心電図所見」タグの編集';
-                                key = storageKeys.ecgOptions;
-                                defaultOptions = defaultEcgOptions;
-                            }
-                            
-                            App.elements.tagEditorTitle.textContent = title;
-                            const currentTags = App.utils.loadFromStorage(key, defaultOptions);
-                            App.elements.tagEditorTextarea.value = currentTags.join('\n');
-                            App.utils.showModal(App.elements.tagEditorModal);
-                        },
-                        save() {
-                            const { storageKeys } = App.config;
-                            const key = this.currentType === 'appearance' ? storageKeys.appearanceOptions : storageKeys.ecgOptions;
-                            
-                            const newTags = App.elements.tagEditorTextarea.value
-                                .split('\n')
-                                .map(tag => tag.trim())
-                                .filter(tag => tag.length > 0);
-                            
-                            App.utils.saveToStorage(key, newTags);
-                            App.components.vitalsModal.populateSelectors();
-                            this.close();
-                        },
-                        close() {
-                            App.utils.hideModal(App.elements.tagEditorModal);
                         }
                     },
                     searchHistory: {
@@ -2121,6 +2100,68 @@
                             App.handlers.handlePatientInfoChange();
                             App.utils.hideModal(App.elements.dobEraModal);
                         }
+                    },
+                    tagEditor: {
+                        currentType: null,
+                        init() { this.bindEventListeners(); },
+                        bindEventListeners() {
+                            const el = App.elements;
+                            el.tagEditorCloseBtn.addEventListener('click', () => this.close());
+                            el.addTagBtn.addEventListener('click', () => this.addTag());
+                            el.newTagInput.addEventListener('keypress', e => { if (e.key === 'Enter') this.addTag(); });
+                        },
+                        open(type) {
+                            this.currentType = type;
+                            const title = type === 'appearance' ? '外観・様子のタグを編集' : '心電図所見のタグを編集';
+                            App.elements.tagEditorTitle.textContent = title;
+                            this.renderList();
+                            App.utils.showModal(App.elements.tagEditorModal);
+                        },
+                        close() {
+                            App.utils.hideModal(App.elements.tagEditorModal);
+                        },
+                        renderList() {
+                            const listEl = App.elements.tagEditorList;
+                            const tags = this.currentType === 'appearance' ? App.state.customAppearanceTags : App.state.customEcgTags;
+                            listEl.innerHTML = '';
+                            tags.forEach(tag => {
+                                const item = document.createElement('div');
+                                item.className = 'flex items-center justify-between bg-gray-700 p-2 rounded';
+                                item.innerHTML = `<span>${tag}</span><button class="delete-tag-btn text-red-500 hover:text-red-400"><i class="fas fa-trash-alt"></i></button>`;
+                                item.querySelector('.delete-tag-btn').onclick = () => this.deleteTag(tag);
+                                listEl.appendChild(item);
+                            });
+                        },
+                        addTag() {
+                            const input = App.elements.newTagInput;
+                            const newTag = input.value.trim();
+                            if (!newTag) return;
+                            
+                            const tags = this.currentType === 'appearance' ? App.state.customAppearanceTags : App.state.customEcgTags;
+                            if (tags.includes(newTag)) {
+                                App.utils.customAlert('このタグは既に追加されています。');
+                                return;
+                            }
+                            tags.push(newTag);
+                            this.saveTags(tags);
+                            this.renderList();
+                            input.value = '';
+                        },
+                        deleteTag(tagToDelete) {
+                            let tags = this.currentType === 'appearance' ? App.state.customAppearanceTags : App.state.customEcgTags;
+                            tags = tags.filter(tag => tag !== tagToDelete);
+                            
+                            if (this.currentType === 'appearance') App.state.customAppearanceTags = tags;
+                            else App.state.customEcgTags = tags;
+
+                            this.saveTags(tags);
+                            this.renderList();
+                        },
+                        saveTags(tags) {
+                             const key = this.currentType === 'appearance' ? App.config.storageKeys.customAppearanceTags : App.config.storageKeys.customEcgTags;
+                             App.utils.saveToStorage(key, tags);
+                             App.components.vitalsModal.renderTagButtons(this.currentType);
+                        }
                     }
                 },
                 utils: {
@@ -2153,18 +2194,6 @@
                         btn.className = classes;
                         if(onClick) btn.onclick = onClick;
                         return btn;
-                    },
-                    createSliderMarkers(slider, container) {
-                        if (!slider || !container) return;
-                        container.innerHTML = '';
-                        const min = parseFloat(slider.min);
-                        const max = parseFloat(slider.max);
-                        const step = parseFloat(slider.step);
-                        for (let i = min; i <= max; i += step) {
-                            const marker = document.createElement('span');
-                            marker.className = 'slider-marker';
-                            container.appendChild(marker);
-                        }
                     },
                     customAlert(message, title = '情報') {
                         return new Promise((resolve) => {
