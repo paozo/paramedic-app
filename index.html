@@ -55,7 +55,7 @@
 
         
         #keywords-panel-toggle-btn.active, #filter-favorites-btn.active { color: #fBBF24; }
-        .gender-btn.active, .vitals-tag.active, .jcs-btn.active, .era-btn.active, .ecg-tag.active, .sort-item.active { background-color: #3b82f6; color: white; }
+        .gender-btn.active, .vitals-tag.active, .jcs-btn.active, .era-btn.active, .ecg-tag.active { background-color: #3b82f6; color: white; }
         .font-size-btn.active { background-color: #2563eb; }
         .time-btn.active { background-color: #16a34a; color: white; }
 
@@ -75,8 +75,12 @@
           font-weight: bold;
         }
 
-        input[type="range"]::-webkit-slider-thumb { -webkit-appearance: none; appearance: none; width: 20px; height: 20px; background: #3b82f6; cursor: pointer; border-radius: 50%; border: 2px solid #fff; margin-top: -7px; }
+        input[type="range"] { -webkit-appearance: none; appearance: none; width: 100%; height: 8px; background: #4b5563; border-radius: 4px; outline: none; transition: opacity .2s; }
+        input[type="range"]::-webkit-slider-thumb { -webkit-appearance: none; appearance: none; width: 20px; height: 20px; background: #3b82f6; cursor: pointer; border-radius: 50%; border: 2px solid #fff; margin-top: -6px; }
         input[type="range"]::-moz-range-thumb { width: 16px; height: 16px; background: #3b82f6; cursor: pointer; border-radius: 50%; border: 2px solid #fff;}
+        .slider-markers { display: flex; justify-content: space-between; padding: 0 8px; margin-top: 4px; }
+        .slider-marker { width: 1px; height: 5px; background-color: #6b7280; }
+
         
         .disease-form-group.dragging {
             opacity: 0.4;
@@ -138,18 +142,6 @@
                          <button id="clear-selections-btn" class="bg-gray-600 hover:bg-gray-500 text-white font-bold py-2 px-3 rounded-lg flex-shrink-0" title="選択をすべて解除"><i class="fas fa-check-double"></i></button>
                         <button id="settings-btn" class="bg-gray-600 hover:bg-gray-500 text-white font-bold py-2 px-3 rounded-lg flex-shrink-0" title="設定"><i class="fas fa-cog"></i></button>
 
-                        <div class="relative">
-                            <button id="sort-menu-btn" class="bg-gray-600 hover:bg-gray-500 text-white font-bold py-2 px-3 rounded-lg flex-shrink-0 flex items-center gap-2" title="並び替え">
-                               <i class="fas fa-sort-amount-down"></i>
-                               <span id="sort-menu-label" class="hidden md:inline">名前順</span>
-                            </button>
-                             <div id="sort-menu-dropdown" class="hidden absolute right-0 mt-2 w-40 bg-gray-800 rounded-lg shadow-xl z-30 py-1">
-                                 <a href="#" class="sort-item block px-4 py-2 text-white hover:bg-gray-700 active" data-sort="name">名前順</a>
-                                 <a href="#" class="sort-item block px-4 py-2 text-white hover:bg-gray-700" data-sort="default">登録順</a>
-                                 <a href="#" class="sort-item block px-4 py-2 text-white hover:bg-gray-700" data-sort="updated">更新順</a>
-                             </div>
-                        </div>
-
                         <div class="h-6 border-l border-gray-600 mx-1"></div>
 
                         <button id="random-btn" class="bg-purple-600 hover:bg-purple-700 text-white font-bold py-2 px-3 rounded-lg flex-shrink-0 hidden" title="ランダム表示" aria-label="ランダム表示"><i class="fas fa-dice"></i></button>
@@ -206,11 +198,17 @@
             <main class="p-4 flex-1 overflow-y-auto">
                 <form id="vitals-form" class="space-y-6">
                     <div class="bg-gray-900 p-4 rounded-lg">
-                        <h3 class="font-bold text-lg border-b border-gray-700 pb-2 mb-4">外観・様子</h3>
+                        <div class="flex justify-between items-center border-b border-gray-700 pb-2 mb-4">
+                            <h3 class="font-bold text-lg">外観・様子</h3>
+                            <button type="button" id="edit-appearance-tags-btn" class="text-xs text-blue-400 hover:text-blue-500">[編集]</button>
+                        </div>
                         <div id="vitals-appearance-tags" class="flex flex-wrap gap-2"></div>
                     </div>
                     <div class="bg-gray-900 p-4 rounded-lg">
-                        <h3 class="font-bold text-lg border-b border-gray-700 pb-2 mb-4">心電図所見</h3>
+                        <div class="flex justify-between items-center border-b border-gray-700 pb-2 mb-4">
+                            <h3 class="font-bold text-lg">心電図所見</h3>
+                             <button type="button" id="edit-ecg-tags-btn" class="text-xs text-blue-400 hover:text-blue-500">[編集]</button>
+                        </div>
                         <div class="flex overflow-x-auto space-x-2 p-1">
                             <div id="vitals-ecg-tags" class="flex space-x-2"></div>
                         </div>
@@ -273,26 +271,30 @@
                                         <label for="pupil-size-r" class="text-sm font-medium">瞳孔サイズ (R)</label>
                                         <span id="pupil-size-value-r" class="text-sm font-bold bg-gray-700 px-2 py-1 rounded-md w-20 text-center">3.5 mm</span>
                                     </div>
-                                    <input type="range" id="pupil-size-r" name="pupil_size_r" min="1.5" max="6" step="0.5" value="3.5" class="w-full h-2 bg-gray-600 rounded-lg appearance-none cursor-pointer">
+                                    <input type="range" id="pupil-size-r" name="pupil_size_r" min="1.5" max="6" step="0.5" value="3.5" class="w-full">
+                                    <div id="pupil-size-markers-r" class="slider-markers"></div>
 
                                     <div class="flex justify-between items-center pt-2">
                                         <label for="pupil-reflex-r" class="text-sm font-medium">対光反射 (R)</label>
                                         <span id="pupil-reflex-value-r" class="text-sm font-bold bg-gray-700 px-2 py-1 rounded-md w-20 text-center">迅速(+)</span>
                                     </div>
-                                    <input type="range" id="pupil-reflex-r" name="pupil_reflex_r" min="0" max="2" step="1" value="2" class="w-full h-2 bg-gray-600 rounded-lg appearance-none cursor-pointer">
+                                    <input type="range" id="pupil-reflex-r" name="pupil_reflex_r" min="0" max="2" step="1" value="2" class="w-full">
+                                     <div id="pupil-reflex-markers-r" class="slider-markers"></div>
                                 </div>
                                 <div class="space-y-3">
                                     <div class="flex justify-between items-center">
                                         <label for="pupil-size-l" class="text-sm font-medium">瞳孔サイズ (L)</label>
                                         <span id="pupil-size-value-l" class="text-sm font-bold bg-gray-700 px-2 py-1 rounded-md w-20 text-center">3.5 mm</span>
                                     </div>
-                                    <input type="range" id="pupil-size-l" name="pupil_size_l" min="1.5" max="6" step="0.5" value="3.5" class="w-full h-2 bg-gray-600 rounded-lg appearance-none cursor-pointer">
+                                    <input type="range" id="pupil-size-l" name="pupil_size_l" min="1.5" max="6" step="0.5" value="3.5" class="w-full">
+                                    <div id="pupil-size-markers-l" class="slider-markers"></div>
 
                                     <div class="flex justify-between items-center pt-2">
                                         <label for="pupil-reflex-l" class="text-sm font-medium">対光反射 (L)</label>
                                         <span id="pupil-reflex-value-l" class="text-sm font-bold bg-gray-700 px-2 py-1 rounded-md w-20 text-center">迅速(+)</span>
                                     </div>
-                                    <input type="range" id="pupil-reflex-l" name="pupil_reflex_l" min="0" max="2" step="1" value="2" class="w-full h-2 bg-gray-600 rounded-lg appearance-none cursor-pointer">
+                                    <input type="range" id="pupil-reflex-l" name="pupil_reflex_l" min="0" max="2" step="1" value="2" class="w-full">
+                                    <div id="pupil-reflex-markers-l" class="slider-markers"></div>
                                 </div>
                             </div>
                         </div>
@@ -343,6 +345,22 @@
                 </div>
             </main>
          </div>
+    </div>
+
+    <div id="tag-editor-modal" class="modal hidden fixed inset-0 bg-black bg-opacity-70 flex items-center justify-center z-50 p-4">
+         <div class="bg-gray-800 rounded-lg shadow-xl w-full max-w-md text-gray-200">
+            <header class="p-4 border-b border-gray-700 flex justify-between items-center">
+                <h2 id="tag-editor-title" class="text-xl font-bold"></h2>
+                <button id="tag-editor-modal-close-btn" class="text-gray-400 hover:text-white"><i class="fas fa-times fa-lg"></i></button>
+            </header>
+            <main class="p-6 space-y-4">
+                <p class="text-sm text-gray-400">項目を1行に1つずつ入力してください。</p>
+                <textarea id="tag-editor-textarea" rows="10" class="w-full bg-gray-700 p-2 rounded-md"></textarea>
+            </main>
+             <footer class="p-4 bg-gray-700/50 flex justify-end gap-3 rounded-b-lg">
+                <button type="button" id="tag-editor-save-btn" class="bg-blue-600 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded-lg">保存</button>
+            </footer>
+        </div>
     </div>
     
     <div id="data-modal" class="modal hidden fixed inset-0 bg-black bg-opacity-70 flex items-center justify-center z-50 p-4">
@@ -441,7 +459,9 @@
                         fontSize: `paramedic_app_font_size`,
                         vitals: `paramedic_app_vitals`,
                         tempMemo: `paramedic_app_temp_memo`,
-                        ageAndGender: `paramedic_app_age_gender`
+                        ageAndGender: `paramedic_app_age_gender`,
+                        appearanceOptions: `paramedic_app_appearance_options`,
+                        ecgOptions: `paramedic_app_ecg_options`,
                     },
                     stopwatchResetDelay: 700,
                     swipeThreshold: 50,
@@ -453,9 +473,9 @@
                         M: [ {v:6,t:"6:命令に従う"}, {v:5,t:"5:痛み刺激に手で払う"}, {v:4,t:"4:痛み刺激で逃避"}, {v:3,t:"3:異常屈曲"}, {v:2,t:"2:異常伸展"}, {v:1,t:"1:全く動かず"} ],
                     },
                     jcsOptions: ["清明", "1", "2", "3", "10", "20", "30", "100", "200", "300"],
-                    appearanceOptions: ["起坐呼吸", "喘鳴", "顔面蒼白", "頸静脈怒張", "冷や汗"],
+                    defaultAppearanceOptions: ["起坐呼吸", "喘鳴", "顔面蒼白", "頸静脈怒張", "冷や汗"],
+                    defaultEcgOptions: ["ショック適応", "ショック非適応", "不安定頻拍", "症候性徐脈", "ST上昇", "T波増高", "ST低下", "QT延長", "異常Q波", "J波", "PSVT", "VPC", "Af", "洞調律"],
                     pupilReflexMap: ["なし(-)", "鈍", "迅速(+)"],
-                    ecgOptions: ["ショック適応", "ショック非適応", "不安定頻拍", "症候性徐脈", "ST上昇", "T波増高", "ST低下", "QT延長", "異常Q波", "J波", "PSVT", "VPC", "Af", "洞調律"]
 
                 },
                 state: {
@@ -466,6 +486,7 @@
                     stopwatch: { interval: null, isRunning: false, elapsedSeconds: 0, pressTimer: null },
                     vitals: {},
                     sidebar: { touchStartX: 0, touchCurrentX: 0, isDragging: false },
+                    tagEditor: { currentType: null }
                 },
                 init() {
                     this.cacheDomElements();
@@ -493,10 +514,6 @@
                         filterFavoritesBtn: D.getElementById('filter-favorites-btn'),
                         clearSelectionsBtn: D.getElementById('clear-selections-btn'),
                         settingsBtn: D.getElementById('settings-btn'),
-                        sortMenuBtn: D.getElementById('sort-menu-btn'),
-                        sortMenuDropdown: D.getElementById('sort-menu-dropdown'),
-                        sortMenuLabel: D.getElementById('sort-menu-label'),
-
                         // Keywords Panel (Right)
                         keywordsPanelRight: D.getElementById('keywords-panel-right'),
                         keywordsPanelToggleBtn: D.getElementById('keywords-panel-toggle-btn'),
@@ -539,10 +556,12 @@
                         gcsVSelect: D.getElementById('gcs-v-select'),
                         gcsMSelect: D.getElementById('gcs-m-select'),
                         vitalsAppearanceTags: D.getElementById('vitals-appearance-tags'),
+                        editAppearanceTagsBtn: D.getElementById('edit-appearance-tags-btn'),
                         vitalsJcsGroup: D.getElementById('vitals-jcs-group'),
                         pulsePressureR: D.getElementById('pulse-pressure-r'),
                         pulsePressureL: D.getElementById('pulse-pressure-l'),
                         vitalsEcgTags: D.getElementById('vitals-ecg-tags'),
+                        editEcgTagsBtn: D.getElementById('edit-ecg-tags-btn'),
                         ecgMemo: D.getElementById('ecg-memo'),
                         pupilSizeValueR: D.getElementById('pupil-size-value-r'),
                         pupilSizeSliderR: D.getElementById('pupil-size-r'),
@@ -552,6 +571,10 @@
                         pupilSizeSliderL: D.getElementById('pupil-size-l'),
                         pupilReflexValueL: D.getElementById('pupil-reflex-value-l'),
                         pupilReflexSliderL: D.getElementById('pupil-reflex-l'),
+                        pupilSizeMarkersR: D.getElementById('pupil-size-markers-r'),
+                        pupilReflexMarkersR: D.getElementById('pupil-reflex-markers-r'),
+                        pupilSizeMarkersL: D.getElementById('pupil-size-markers-l'),
+                        pupilReflexMarkersL: D.getElementById('pupil-reflex-markers-l'),
                         // Settings Modal
                         settingsModal: D.getElementById('settings-modal'),
                         settingsModalCloseBtn: D.getElementById('settings-modal-close-btn'),
@@ -560,6 +583,12 @@
                         importCsvInput: D.getElementById('import-csv-input'),
                         showRandomBtnToggle: D.getElementById('show-random-btn-toggle'),
                         fontSizeControls: D.getElementById('font-size-controls'),
+                        // Tag Editor Modal
+                        tagEditorModal: D.getElementById('tag-editor-modal'),
+                        tagEditorModalCloseBtn: D.getElementById('tag-editor-modal-close-btn'),
+                        tagEditorTitle: D.getElementById('tag-editor-title'),
+                        tagEditorTextarea: D.getElementById('tag-editor-textarea'),
+                        tagEditorSaveBtn: D.getElementById('tag-editor-save-btn'),
                         // Data Modal
                         dataModal: D.getElementById('data-modal'),
                         modalTitle: D.getElementById('modal-title'),
@@ -610,12 +639,6 @@
                     el.clearSelectionsBtn.addEventListener('click', () => h.handleClearAllSelections());
                     el.settingsBtn.addEventListener('click', () => this.components.settings.open());
 
-                    el.sortMenuBtn.addEventListener('click', e => {
-                        e.stopPropagation();
-                        el.sortMenuDropdown.classList.toggle('hidden');
-                    });
-                    el.sortMenuDropdown.addEventListener('click', e => h.handleSortChange(e));
-
                     el.randomBtn.addEventListener('click', () => h.handleRandomSelect());
                     el.arrivalBtn.addEventListener('click', () => h.handleTimestampClick('arrival'));
                     el.contactBtn.addEventListener('click', () => h.handleTimestampClick('contact'));
@@ -660,21 +683,6 @@
                             const randomIndex = Math.floor(Math.random() * allComplaintCards.length);
                             allComplaintCards[randomIndex].scrollIntoView({ behavior: 'smooth', block: 'center' });
                         }
-                    },
-                    handleSortChange(e) {
-                        const sortItem = e.target.closest('.sort-item');
-                        if (!sortItem) return;
-                        e.preventDefault();
-
-                        const sortBy = sortItem.dataset.sort;
-                        App.state.filters.sortBy = sortBy;
-                        
-                        App.elements.sortMenuLabel.textContent = sortItem.textContent;
-                        App.elements.sortMenuDropdown.querySelectorAll('.sort-item').forEach(item => item.classList.remove('active'));
-                        sortItem.classList.add('active');
-                        
-                        App.utils.hide(App.elements.sortMenuDropdown);
-                        App.renderer.renderAll();
                     },
                     handleToggleFavoritesFilter() {
                         App.state.filters.isFavoritesOnly = !App.state.filters.isFavoritesOnly;
@@ -1407,6 +1415,7 @@
                             const savedVitals = App.utils.loadFromStorage(App.config.storageKeys.vitals, {});
                             App.state.vitals = savedVitals;
                             this.updateFormFromState();
+                            this.createAllSliderMarkers();
                         },
                         bindEventListeners() {
                             const el = App.elements;
@@ -1414,6 +1423,8 @@
                             el.vitalsModalCloseBtn.addEventListener('click', () => App.utils.hideModal(el.vitalsModal));
                             el.vitalsSaveBtn.addEventListener('click', () => this.saveAndClose());
                             el.vitalsClearBtn.addEventListener('click', () => this.clear());
+                            el.editAppearanceTagsBtn.addEventListener('click', () => App.components.tagEditor.open('appearance'));
+                            el.editEcgTagsBtn.addEventListener('click', () => App.components.tagEditor.open('ecg'));
                             el.vitalsForm.addEventListener('input', e => {
                                 if (e.target.type === 'range') {
                                      const side = e.target.id.slice(-1).toUpperCase();
@@ -1430,8 +1441,14 @@
                                 }
                             });
                         },
+                        createAllSliderMarkers(){
+                            App.utils.createSliderMarkers(App.elements.pupilSizeSliderR, App.elements.pupilSizeMarkersR);
+                            App.utils.createSliderMarkers(App.elements.pupilReflexSliderR, App.elements.pupilReflexMarkersR);
+                            App.utils.createSliderMarkers(App.elements.pupilSizeSliderL, App.elements.pupilSizeMarkersL);
+                            App.utils.createSliderMarkers(App.elements.pupilReflexSliderL, App.elements.pupilReflexMarkersL);
+                        },
                          populateSelectors() {
-                            const { gcsOptions, jcsOptions, appearanceOptions, ecgOptions } = App.config;
+                            const { gcsOptions, jcsOptions, storageKeys, defaultAppearanceOptions, defaultEcgOptions } = App.config;
                             ['E', 'V', 'M'].forEach(type => {
                                 const select = App.elements[`gcs${type.toUpperCase()}Select`];
                                 select.innerHTML = '';
@@ -1439,8 +1456,12 @@
                             });
                             App.elements.vitalsJcsGroup.innerHTML = '';
                             jcsOptions.forEach(val => App.elements.vitalsJcsGroup.appendChild(App.utils.createButton(val, 'jcs-btn bg-gray-700 hover:bg-gray-600 p-2 rounded-md flex-grow text-center', e => this.handleJcsClick(e))));
+
+                            const appearanceOptions = App.utils.loadFromStorage(storageKeys.appearanceOptions, defaultAppearanceOptions);
                             App.elements.vitalsAppearanceTags.innerHTML = '';
                             appearanceOptions.forEach(val => App.elements.vitalsAppearanceTags.appendChild(App.utils.createButton(val, 'vitals-tag bg-gray-600 hover:bg-gray-500 text-sm py-1 px-3 rounded-full')));
+                            
+                            const ecgOptions = App.utils.loadFromStorage(storageKeys.ecgOptions, defaultEcgOptions);
                             App.elements.vitalsEcgTags.innerHTML = '';
                             ecgOptions.forEach(val => App.elements.vitalsEcgTags.appendChild(App.utils.createButton(val, 'ecg-tag bg-gray-600 hover:bg-gray-500 text-sm py-1 px-3 rounded-full whitespace-nowrap')));
                         },
@@ -1724,6 +1745,49 @@
                                 App.utils.customAlert('CSVデータの解析またはインポート中にエラーが発生しました。ファイルの形式を確認してください。');
                                 console.error("CSV Import failed:", error);
                             }
+                        }
+                    },
+                    tagEditor: {
+                        init() { this.bindEventListeners(); },
+                        bindEventListeners() {
+                            App.elements.tagEditorModalCloseBtn.addEventListener('click', () => this.close());
+                            App.elements.tagEditorSaveBtn.addEventListener('click', () => this.save());
+                        },
+                        open(type) {
+                            this.currentType = type;
+                            const { storageKeys, defaultAppearanceOptions, defaultEcgOptions } = App.config;
+                            let title, key, defaultOptions;
+                            
+                            if (type === 'appearance') {
+                                title = '「外観・様子」タグの編集';
+                                key = storageKeys.appearanceOptions;
+                                defaultOptions = defaultAppearanceOptions;
+                            } else {
+                                title = '「心電図所見」タグの編集';
+                                key = storageKeys.ecgOptions;
+                                defaultOptions = defaultEcgOptions;
+                            }
+                            
+                            App.elements.tagEditorTitle.textContent = title;
+                            const currentTags = App.utils.loadFromStorage(key, defaultOptions);
+                            App.elements.tagEditorTextarea.value = currentTags.join('\n');
+                            App.utils.showModal(App.elements.tagEditorModal);
+                        },
+                        save() {
+                            const { storageKeys } = App.config;
+                            const key = this.currentType === 'appearance' ? storageKeys.appearanceOptions : storageKeys.ecgOptions;
+                            
+                            const newTags = App.elements.tagEditorTextarea.value
+                                .split('\n')
+                                .map(tag => tag.trim())
+                                .filter(tag => tag.length > 0);
+                            
+                            App.utils.saveToStorage(key, newTags);
+                            App.components.vitalsModal.populateSelectors();
+                            this.close();
+                        },
+                        close() {
+                            App.utils.hideModal(App.elements.tagEditorModal);
                         }
                     },
                     searchHistory: {
@@ -2089,6 +2153,18 @@
                         btn.className = classes;
                         if(onClick) btn.onclick = onClick;
                         return btn;
+                    },
+                    createSliderMarkers(slider, container) {
+                        if (!slider || !container) return;
+                        container.innerHTML = '';
+                        const min = parseFloat(slider.min);
+                        const max = parseFloat(slider.max);
+                        const step = parseFloat(slider.step);
+                        for (let i = min; i <= max; i += step) {
+                            const marker = document.createElement('span');
+                            marker.className = 'slider-marker';
+                            container.appendChild(marker);
+                        }
                     },
                     customAlert(message, title = '情報') {
                         return new Promise((resolve) => {
