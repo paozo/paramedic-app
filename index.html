@@ -320,6 +320,19 @@
             </header>
             <main class="p-6 space-y-6">
                 <div>
+                    <h3 class="font-semibold mb-2">症例リセット</h3>
+                    <button id="next-case-btn" class="w-full bg-red-600 hover:bg-red-700 text-white font-bold py-2 px-4 rounded-lg flex items-center justify-center">
+                        <i class="fas fa-arrow-right-to-bracket mr-2"></i>次の症例へ
+                    </button>
+                </div>
+                 <div>
+                    <h3 class="font-semibold mb-2">バイタル履歴</h3>
+                    <div class="flex gap-2">
+                        <button id="view-vitals-history-btn" class="flex-1 bg-gray-600 hover:bg-gray-500 text-white font-bold py-2 px-4 rounded-lg"><i class="fas fa-history mr-2"></i>履歴を表示</button>
+                        <button id="clear-vitals-history-btn" class="flex-1 bg-red-800 hover:bg-red-700 text-white font-bold py-2 px-4 rounded-lg"><i class="fas fa-trash-alt mr-2"></i>履歴を全消去</button>
+                    </div>
+                </div>
+                <div>
                     <h3 class="font-semibold mb-2">データ管理</h3>
                     <div class="space-y-2">
                         <button id="export-csv-btn" class="w-full bg-green-600 hover:bg-green-700 text-white font-bold py-2 px-4 rounded-lg"><i class="fas fa-file-csv mr-2"></i>CSVエクスポート</button>
@@ -447,6 +460,18 @@
          </div>
     </div>
 
+    <div id="vitals-history-modal" class="modal hidden fixed inset-0 bg-black bg-opacity-80 flex items-center justify-center z-50 p-4">
+         <div class="bg-gray-800 rounded-lg shadow-xl w-full max-w-2xl max-h-[90vh] flex flex-col">
+            <header class="p-4 border-b border-gray-700 flex justify-between items-center">
+                <h2 class="text-xl font-bold">バイタル履歴</h2>
+                <button id="vitals-history-close-btn" class="text-gray-400 hover:text-white"><i class="fas fa-times fa-lg"></i></button>
+            </header>
+            <main id="vitals-history-list" class="p-4 flex-1 overflow-y-auto space-y-4">
+                <!-- History items will be injected here -->
+            </main>
+         </div>
+    </div>
+
 
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/11.9.1/firebase-app.js";
@@ -466,6 +491,7 @@
                         ageAndGender: `paramedic_app_age_gender`,
                         customAppearanceTags: `paramedic_app_custom_appearance_tags`,
                         customEcgTags: `paramedic_app_custom_ecg_tags`,
+                        vitalsHistory: `paramedic_app_vitals_history`,
                     },
                     stopwatchResetDelay: 700,
                     swipeThreshold: 50,
@@ -492,6 +518,7 @@
                     sidebar: { touchStartX: 0, touchCurrentX: 0, isDragging: false },
                     customAppearanceTags: [],
                     customEcgTags: [],
+                    vitalsHistory: [],
                 },
                 init() {
                     this.cacheDomElements();
@@ -581,6 +608,9 @@
                         importCsvInput: D.getElementById('import-csv-input'),
                         showRandomBtnToggle: D.getElementById('show-random-btn-toggle'),
                         fontSizeControls: D.getElementById('font-size-controls'),
+                        nextCaseBtn: D.getElementById('next-case-btn'),
+                        viewVitalsHistoryBtn: D.getElementById('view-vitals-history-btn'),
+                        clearVitalsHistoryBtn: D.getElementById('clear-vitals-history-btn'),
                         // Data Modal
                         dataModal: D.getElementById('data-modal'),
                         modalTitle: D.getElementById('modal-title'),
@@ -618,6 +648,10 @@
                         tagEditorList: D.getElementById('tag-editor-list'),
                         newTagInput: D.getElementById('new-tag-input'),
                         addTagBtn: D.getElementById('add-tag-btn'),
+                        // Vitals History Modal
+                        vitalsHistoryModal: D.getElementById('vitals-history-modal'),
+                        vitalsHistoryCloseBtn: D.getElementById('vitals-history-close-btn'),
+                        vitalsHistoryList: D.getElementById('vitals-history-list'),
                     };
                 },
                 bindEventListeners() {
@@ -681,21 +715,6 @@
                             const randomIndex = Math.floor(Math.random() * allComplaintCards.length);
                             allComplaintCards[randomIndex].scrollIntoView({ behavior: 'smooth', block: 'center' });
                         }
-                    },
-                    handleSortChange(e) {
-                        const sortItem = e.target.closest('.sort-item');
-                        if (!sortItem) return;
-                        e.preventDefault();
-
-                        const sortBy = sortItem.dataset.sort;
-                        App.state.filters.sortBy = sortBy;
-                        
-                        App.elements.sortMenuLabel.textContent = sortItem.textContent;
-                        App.elements.sortMenuDropdown.querySelectorAll('.sort-item').forEach(item => item.classList.remove('active'));
-                        sortItem.classList.add('active');
-                        
-                        App.utils.hide(App.elements.sortMenuDropdown);
-                        App.renderer.renderAll();
                     },
                     handleToggleFavoritesFilter() {
                         App.state.filters.isFavoritesOnly = !App.state.filters.isFavoritesOnly;
@@ -1372,7 +1391,7 @@
                         handlePress(e) {
                             e.preventDefault();
                             App.state.stopwatch.pressTimer = setTimeout(() => {
-                                this.reset();
+                                this.reset(true);
                                 App.state.stopwatch.pressTimer = null; 
                             }, App.config.stopwatchResetDelay);
                         },
@@ -1401,14 +1420,14 @@
                             const secs = (time % 60).toString().padStart(2, '0');
                             App.elements.stopwatch.textContent = `${mins}:${secs}`;
                         },
-                        reset() {
+                        reset(showAlert = false) {
                             const s = App.state.stopwatch;
                             clearInterval(s.interval);
                             s.isRunning = false;
                             s.elapsedSeconds = 0;
                             App.elements.stopwatch.textContent = "00:00";
                             App.elements.stopwatch.classList.remove('running');
-                            App.utils.customAlert("ストップウォッチをリセットしました。");
+                            if(showAlert) App.utils.customAlert("ストップウォッチをリセットしました。");
                         },
                     },
                     vitalsModal: {
@@ -1425,13 +1444,13 @@
                             el.vitalsBtn.addEventListener('click', () => { this.updateFormFromState(); App.utils.showModal(el.vitalsModal); });
                             el.vitalsModalCloseBtn.addEventListener('click', () => App.utils.hideModal(el.vitalsModal));
                             el.vitalsSaveBtn.addEventListener('click', () => this.saveAndClose());
-                            el.vitalsClearBtn.addEventListener('click', () => this.clear());
+                            el.vitalsClearBtn.addEventListener('click', () => this.clear(true));
                             el.editAppearanceTagsBtn.addEventListener('click', () => App.components.tagEditor.open('appearance'));
                             el.editEcgTagsBtn.addEventListener('click', () => App.components.tagEditor.open('ecg'));
                             
                             el.vitalsForm.addEventListener('input', e => {
                                 if (e.target.type === 'range' && e.target.id.startsWith('pupil-')) {
-                                     this.handlePupilSliderChange(e.target.id.includes('-r-') ? 'R' : 'L', e.target.id.includes('-size-')? 'size' : 'reflex');
+                                     this.handlePupilSliderChange(e.target.id.includes('-r') ? 'R' : 'L');
                                 } else {
                                      this.updateStateFromForm();
                                 }
@@ -1487,11 +1506,11 @@
                                 }
                             });
                         },
-                        handlePupilSliderChange(side, type) {
-                             const sizeSlider = document.getElementById(`pupil-size-${side.toLowerCase()}`);
-                            const sizeValueEl = document.getElementById(`pupil-size-value-${side}`);
+                        handlePupilSliderChange(side) {
+                            const sizeSlider = document.getElementById(`pupil-size-${side.toLowerCase()}`);
+                            const sizeValueEl = document.getElementById(`pupil-size-value-${side.toUpperCase()}`);
                             const reflexSlider = document.getElementById(`pupil-reflex-${side.toLowerCase()}`);
-                            const reflexValueEl = document.getElementById(`pupil-reflex-value-${side}`);
+                            const reflexValueEl = document.getElementById(`pupil-reflex-value-${side.toUpperCase()}`);
 
                             if (sizeValueEl && sizeSlider) sizeValueEl.textContent = `${parseFloat(sizeSlider.value).toFixed(1)} mm`;
                             if (reflexValueEl && reflexSlider) reflexValueEl.textContent = App.config.pupilReflexMap[reflexSlider.value];
@@ -1579,23 +1598,50 @@
                              App.elements.vitalsAppearanceTags.querySelectorAll('.vitals-tag').forEach(b => b.classList.toggle('active', (vitals.appearance || []).includes(b.textContent)));
                              App.elements.vitalsEcgTags.querySelectorAll('.ecg-tag').forEach(b => b.classList.toggle('active', (vitals.ecg_findings || []).includes(b.textContent)));
                         },
-                        saveState() {
+                        saveState(shouldSaveHistory = false) {
                             App.utils.saveToStorage(App.config.storageKeys.vitals, App.state.vitals);
+
+                            if(shouldSaveHistory) {
+                                const hasData = Object.entries(App.state.vitals).some(([key, value]) => {
+                                    if(['arrival','contact','departure'].includes(key)) return false;
+                                    return value !== null && value !== '' && (!Array.isArray(value) || value.length > 0)
+                                });
+
+                                if(hasData) {
+                                    const history = App.utils.loadFromStorage(App.config.storageKeys.vitalsHistory, []);
+                                    const newEntry = {
+                                        timestamp: new Date().toLocaleString('ja-JP'),
+                                        vitals: { ...App.state.vitals },
+                                        patient: App.utils.loadFromStorage(App.config.storageKeys.ageAndGender, {})
+                                    };
+                                    history.unshift(newEntry);
+                                    App.utils.saveToStorage(App.config.storageKeys.vitalsHistory, history);
+                                }
+                            }
                         },
                         saveAndClose() {
                             this.updateStateFromForm();
-                            this.saveState();
+                            this.saveState(true); // Save to history
                             App.renderer.renderVitalsSummary();
                             App.utils.hideModal(App.elements.vitalsModal);
                         },
-                        async clear() {
-                             const confirmed = await App.utils.customConfirm("バイタル入力と記録時刻をすべてクリアしますか？", "確認");
-                             if(confirmed) {
+                        async clear(withConfirmation = true) {
+                             const performClear = async () => {
                                 App.state.vitals = {}; // Clears everything including timestamps
-                                this.saveState();
+                                this.saveState(false); // Do not save empty vitals to history
                                 this.updateFormFromState();
                                 App.renderer.renderVitalsSummary();
-                             }
+                                App.elements.vitalsForm.querySelectorAll('.vitals-tag.active, .ecg-tag.active').forEach(tag => tag.classList.remove('active'));
+                             };
+
+                            if (withConfirmation) {
+                                const confirmed = await App.utils.customConfirm("バイタル入力と記録時刻をすべてクリアしますか？", "確認");
+                                if(confirmed) {
+                                   await performClear();
+                                }
+                            } else {
+                                await performClear();
+                            }
                         },
                     },
                     settings: {
@@ -1613,6 +1659,40 @@
                            App.elements.importCsvInput.addEventListener('change', e => this.handleCSVFileSelect(e));
                            App.elements.showRandomBtnToggle.addEventListener('change', e => this.toggleRandomButtonVisibility(e.target.checked));
                            App.elements.fontSizeControls.addEventListener('click', e => this.handleFontSizeChange(e));
+                           App.elements.nextCaseBtn.addEventListener('click', () => this.handleNextCase());
+                           App.elements.viewVitalsHistoryBtn.addEventListener('click', () => App.components.vitalsHistory.open());
+                           App.elements.clearVitalsHistoryBtn.addEventListener('click', () => App.components.vitalsHistory.clear());
+                        },
+                        async handleNextCase() {
+                            const confirmed = await App.utils.customConfirm(
+                                '現在の入力内容をすべてリセットし、次の症例に移行しますか？\n（バイタル履歴は保持されます）',
+                                '次の症例へ'
+                            );
+                            if (confirmed) {
+                                // 1. Reset patient info
+                                App.elements.ageInput.value = '';
+                                App.elements.genderBtns.forEach(btn => btn.classList.remove('active'));
+                                App.utils.saveToStorage(App.config.storageKeys.ageAndGender, {});
+
+                                // 2. Reset temp memo
+                                App.elements.tempMemo.value = '';
+                                App.utils.saveToStorage(App.config.storageKeys.tempMemo, '');
+
+                                // 3. Reset filters and selections
+                                App.state.filters.isFavoritesOnly = false;
+                                App.elements.filterFavoritesBtn.classList.remove('active');
+                                App.handlers.handleClearAllSelections();
+
+                                // 4. Reset stopwatch
+                                App.components.stopwatch.reset();
+                                
+                                // 5. Reset vitals
+                                await App.components.vitalsModal.clear(false); // Clear without confirmation
+
+                                // 6. Close the settings modal
+                                this.close();
+                                App.utils.customAlert('次の症例の準備ができました。');
+                            }
                         },
                         open() { App.utils.showModal(App.elements.settingsModal); },
                         close() { App.utils.hideModal(App.elements.settingsModal); },
@@ -2161,6 +2241,80 @@
                              const key = this.currentType === 'appearance' ? App.config.storageKeys.customAppearanceTags : App.config.storageKeys.customEcgTags;
                              App.utils.saveToStorage(key, tags);
                              App.components.vitalsModal.renderTagButtons(this.currentType);
+                        }
+                    },
+                     vitalsHistory: {
+                        init() {
+                            this.bindEventListeners();
+                        },
+                        bindEventListeners() {
+                            App.elements.vitalsHistoryCloseBtn.addEventListener('click', () => this.close());
+                        },
+                        open() {
+                            const history = App.utils.loadFromStorage(App.config.storageKeys.vitalsHistory, []);
+                            const listEl = App.elements.vitalsHistoryList;
+                            listEl.innerHTML = '';
+
+                            if(history.length === 0) {
+                                listEl.innerHTML = '<p class="text-gray-400 text-center">バイタル履歴はありません。</p>';
+                            } else {
+                                history.forEach(entry => {
+                                    const itemEl = document.createElement('div');
+                                    itemEl.className = 'bg-gray-700/50 p-3 rounded-lg';
+                                    
+                                    let content = `<div class="font-bold text-lg text-cyan-300 border-b border-gray-600 pb-2 mb-2">${entry.timestamp}</div>`;
+                                    
+                                    const patientInfo = entry.patient;
+                                    const genderText = patientInfo.gender === 'male' ? '男性' : patientInfo.gender === 'female' ? '女性' : '';
+                                    content += this.formatEntry('fa-user', '患者', `${patientInfo.age || ''}歳 ${genderText}`.trim());
+
+                                    const vitals = entry.vitals;
+                                    content += this.formatEntry('fa-brain', 'JCS', vitals.jcs);
+                                    if(vitals.gcs && parseInt(vitals.gcs) > 0) content += this.formatEntry('fa-arrows-to-dot', 'GCS', vitals.gcs, ` (E${vitals.gcs_e || '?'}V${vitals.gcs_v || '?'}M${vitals.gcs_m || '?'})`);
+                                    content += this.formatEntry('fa-lungs', '呼吸', vitals.resp, '回');
+                                    content += this.formatEntry('fa-heart-pulse', '脈拍', vitals.pulse, '回');
+                                    content += this.formatEntry('fa-o', 'SpO2', vitals.spo2, '%');
+                                    content += this.formatEntry('fa-temperature-half', '体温', vitals.temp, '℃');
+                                    
+                                    let bpTextR = `${vitals.bp_sys_r || '?'}/${vitals.bp_dia_r || '?'}`;
+                                    if (vitals.bp_sys_r || vitals.bp_dia_r) content += this.formatEntry('fa-droplet', '血圧(R)', bpTextR, '', true);
+
+                                    let bpTextL = `${vitals.bp_sys_l || '?'}/${vitals.bp_dia_l || '?'}`;
+                                    if (vitals.bp_sys_l || vitals.bp_dia_l) content += this.formatEntry('fa-droplet', '血圧(L)', bpTextL, '', true);
+
+                                    if (vitals.pupil_r || vitals.pupil_l) content += this.formatEntry('fa-eye', '瞳孔', `R:${vitals.pupil_r || '?'} L:${vitals.pupil_l || '?'}`);
+                                
+                                    if(vitals.ecg_findings && vitals.ecg_findings.length > 0) {
+                                        content += this.formatEntry('fa-heart-pulse', 'ECG', vitals.ecg_findings.join(', '));
+                                    }
+                                     if(vitals.appearance && vitals.appearance.length > 0) {
+                                        content += this.formatEntry('fa-user-doctor', '外観', vitals.appearance.join(', '));
+                                    }
+
+                                    itemEl.innerHTML = content;
+                                    listEl.appendChild(itemEl);
+                                });
+                            }
+                            App.utils.showModal(App.elements.vitalsHistoryModal);
+                        },
+                        formatEntry(icon, label, value, unit = '', rawHtml = false) {
+                            if(value === null || value === undefined || value === '' || value === '歳 ' || (Array.isArray(value) && value.length === 0)) return '';
+                            const valueContent = rawHtml ? value : `<b>${value}${unit}</b>`;
+                            return `<div class="flex items-start gap-2 text-sm"><i class="fa-solid ${icon} fa-fw text-gray-400 mt-1"></i> <span class="w-16">${label}:</span> <span class="flex-1">${valueContent}</span></div>`;
+                        },
+                        async clear() {
+                            const confirmed = await App.utils.customConfirm('すべてのバイタル履歴を消去しますか？この操作は元に戻せません。', '履歴の消去');
+                            if(confirmed){
+                                App.state.vitalsHistory = [];
+                                App.utils.saveToStorage(App.config.storageKeys.vitalsHistory, []);
+                                App.utils.customAlert('バイタル履歴を消去しました。');
+                                if(!App.elements.vitalsHistoryModal.classList.contains('hidden')) {
+                                    this.open(); // Refresh view if open
+                                }
+                            }
+                        },
+                        close() {
+                            App.utils.hideModal(App.elements.vitalsHistoryModal);
                         }
                     }
                 },
