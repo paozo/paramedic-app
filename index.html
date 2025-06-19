@@ -2056,3 +2056,34 @@
     </script>
 </body>
 </html>
+```
+
+### 2. マニフェストファイル
+
+次に、アプリの情報を定義するファイルです。ファイル名は必ず `manifest.json` としてください。
+
+
+```json
+{
+  "name": "救急隊員向け臨床推論サポートアプリ",
+  "short_name": "救急推論",
+  "description": "救急隊員向けの臨床推論をサポートするためのアプリケーションです。",
+  "start_url": "./index.html",
+  "display": "standalone",
+  "background_color": "#111827",
+  "theme_color": "#111827",
+  "icons": [
+    {
+      "src": "https://placehold.co/192x192/3b82f6/ffffff?text=EMS",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "any maskable"
+    },
+    {
+      "src": "https://placehold.co/512x512/3b82f6/ffffff?text=EMS",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any maskable"
+    }
+  ]
+}
