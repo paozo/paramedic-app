@@ -6,7 +6,7 @@
     <title>救急隊員向け臨床推論サポートアプリ</title>
     
     <!-- PWA Manifest & Theme Color -->
-    <link rel="manifest" href="/paramedic-app/manifest.json">
+    <link rel="manifest" href="./manifest.json">
     <meta name="theme-color" content="#111827">
 
     <!-- スタイルシートとフォント -->
@@ -757,7 +757,7 @@
                     init() {
                         if ('serviceWorker' in navigator) {
                             window.addEventListener('load', () => {
-                                navigator.serviceWorker.register('/paramedic-app/sw.js').then(registration => {
+                                navigator.serviceWorker.register('./sw.js').then(registration => {
                                     console.log('ServiceWorker registration successful with scope: ', registration.scope);
                                 }, err => {
                                     console.log('ServiceWorker registration failed: ', err);
@@ -821,33 +821,11 @@
                                 const docs = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
                                 App.state.dataStore = docs;
                 
-                                if (snapshot.empty && App.state.dataStore.length === 0) { 
-                                    this.seedInitialData(); 
-                                    return; 
-                                }
-                                
                                 App.renderer.renderAll();
                             }, (error) => {
                                 console.error("Error fetching data:", error);
                                 if (App.elements.loading) App.elements.loading.innerHTML = '<p class="text-red-500">データの取得に失敗しました。</p>';
                             });
-                        },
-                        async seedInitialData() {
-                            const now = new Date();
-                            const initialData = [ 
-                                { chiefComplaint: "気分不良", createdAt: new Date(now.getTime() - 1000).toISOString(), updatedAt: new Date(now.getTime() - 1000).toISOString(), isFavorite: false, diseases: [ { name: "脳血管障害", keywords: ["突然の片麻痺", "顔面神経麻痺", "言語障害", "意識障害"], pitfalls: ["TIAの見過ごし"], isFavorite: false }, { name: "急性冠症候群", keywords: ["胸痛", "放散痛", "冷や汗"], pitfalls: ["非典型的な胸痛"], isFavorite: false } ] }, 
-                                { chiefComplaint: "呼吸困難", createdAt: now.toISOString(), updatedAt: now.toISOString(), isFavorite: true, diseases: [ { name: "心不全", keywords: ["起坐呼吸", "下腿浮腫"], pitfalls: ["喘息との鑑別困難"], isFavorite: true } ] }
-                            ];
-                            try {
-                                const collectionRef = this.getCollectionRef();
-                                if (!collectionRef) return;
-                                const batch = writeBatch(App.state.db);
-                                initialData.forEach(item => {
-                                    const docRef = doc(collectionRef);
-                                    batch.set(docRef, item);
-                                });
-                                await batch.commit();
-                            } catch (error) { console.error("Error seeding data:", error); }
                         },
                         async toggleFavorite(type, id, diseaseName = null) {
                             const entryIndex = App.state.dataStore.findIndex(e => e.id === id);
@@ -987,7 +965,7 @@
                         const { contentArea } = App.elements;
                         contentArea.innerHTML = '';
                         if (data.length === 0 && !App.state.isLoading) {
-                            contentArea.innerHTML = `<div class="text-center p-8 text-gray-400"><i class="fas fa-search-minus fa-3x mb-4"></i><p>該当するデータが見つかりませんでした。</p></div>`;
+                            contentArea.innerHTML = `<div class="text-center p-8 text-gray-400"><i class="fas fa-folder-open fa-3x mb-4"></i><p>データがありません。<br>「+」ボタンから新しい主訴を追加してください。</p></div>`;
                             return;
                         }
                         
@@ -1856,14 +1834,31 @@
                         async delete() {
                             const entryId = App.elements.entryIdInput.value;
                             if (!entryId) return;
+
                             const confirmed = await App.utils.customConfirm('この主訴を本当に削除しますか？', '削除の確認');
                             if (confirmed) {
+                                const originalDataStore = [...App.state.dataStore];
                                 try {
-                                    await deleteDoc(doc(App.services.db.getCollectionRef(), entryId));
-                                    App.utils.customAlert('データが削除されました。');
+                                    // 1. Close the modal immediately
                                     this.close();
+
+                                    // 2. Optimistically update the local state
+                                    App.state.dataStore = App.state.dataStore.filter(entry => entry.id !== entryId);
+                                    
+                                    // 3. Re-render the UI based on the new local state
+                                    App.renderer.renderAll();
+                                    
+                                    // 4. Show the alert
+                                    App.utils.customAlert('データが削除されました。');
+
+                                    // 5. Perform the actual deletion from Firestore in the background
+                                    await deleteDoc(doc(App.services.db.getCollectionRef(), entryId));
+
                                 } catch (error) {
                                     console.error("Error deleting data:", error);
+                                    // If the deletion fails, revert the optimistic update and show an error
+                                    App.state.dataStore = originalDataStore; // Revert state
+                                    App.renderer.renderAll(); // Re-render to show the item again
                                     App.utils.customAlert('データの削除に失敗しました。');
                                 }
                             }
