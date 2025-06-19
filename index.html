@@ -5,6 +5,10 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>救急隊員向け臨床推論サポートアプリ</title>
     
+    <!-- PWA Manifest & Theme Color -->
+    <link rel="manifest" href="manifest.json">
+    <meta name="theme-color" content="#111827">
+
     <!-- スタイルシートとフォント -->
     <script src="https://cdn.tailwindcss.com"></script>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Noto+Sans+JP:wght@400;500;700&display=swap" rel="stylesheet">
@@ -468,6 +472,7 @@
                     this.utils.initFirebaseConfig();
                     this.services.auth.init();
                     this.bindEventListeners();
+                    this.pwa.init(); // Initialize PWA features
                     Object.values(this.components).forEach(component => component.init?.());
                 },
                 cacheDomElements() {
@@ -747,6 +752,19 @@
                         App.utils.saveToStorage(App.config.storageKeys.ageAndGender, data);
                         App.renderer.renderVitalsSummary();
                     },
+                },
+                pwa: {
+                    init() {
+                        if ('serviceWorker' in navigator) {
+                            window.addEventListener('load', () => {
+                                navigator.serviceWorker.register('/sw.js').then(registration => {
+                                    console.log('ServiceWorker registration successful with scope: ', registration.scope);
+                                }, err => {
+                                    console.log('ServiceWorker registration failed: ', err);
+                                });
+                            });
+                        }
+                    }
                 },
                 services: {
                     auth: {
