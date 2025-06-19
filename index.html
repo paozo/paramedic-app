@@ -1008,7 +1008,7 @@
                             entryDiv.className = 'content-card mb-6 bg-gray-800 rounded-xl shadow-md p-4';
                             entryDiv.id = complaintId;
                             
-                            const memoHTML = originalData.memo ? `<div class="mt-4 pl-6 text-sm text-amber-300 bg-gray-900/50 p-3 rounded-lg border-l-4 border-amber-400"><div class="font-bold mb-1 flex items-center"><i class="fas fa-pencil-alt mr-2"></i>主訴メモ</div><div>${originalData.memo.replace(/\n/g, '<br>')}</div></div>` : '';
+                            const memoHTML = originalData.memo ? `<div class="mt-4 pl-6 text-sm text-amber-300 bg-gray-900/50 p-3 rounded-lg"><i class="fas fa-pencil-alt fa-fw mr-2 text-amber-400"></i>${originalData.memo.replace(/\n/g, '<br>')}</div>` : '';
                             const favoriteClass = originalData.isFavorite ? 'fas text-yellow-400' : 'far text-gray-500';
             
                             const diseasesHTML = (entry.diseases || []).map(disease => { 
@@ -1016,7 +1016,7 @@
                                 const isDiseaseChecked = App.state.ui.selectedItems.has(uniqueDiseaseId);
                                 const originalDisease = (originalData.diseases || []).find(d => d.name === disease.name) || {};
                                 const diseaseFavoriteClass = originalDisease.isFavorite ? 'fas text-yellow-400' : 'far text-gray-500';
-                                const diseaseMemoHTML = disease.memo ? `<div class="mt-3 text-sm text-amber-300 bg-gray-900/50 p-2 rounded-lg"><div class="font-bold mb-1 flex items-center"><i class="fas fa-pencil-alt mr-2"></i>疾患メモ</div><div>${disease.memo.replace(/\n/g, '<br>')}</div></div>` : '';
+                                const diseaseMemoHTML = disease.memo ? `<div class="mt-3 text-sm text-amber-300 bg-gray-900/50 p-2 rounded-lg"><i class="fas fa-pencil-alt fa-fw mr-2 text-amber-400"></i>${disease.memo.replace(/\n/g, '<br>')}</div>` : '';
                                 return `
                                     <div class="pl-4 border-l-4 border-gray-700">
                                         <div class="flex items-center justify-between">
