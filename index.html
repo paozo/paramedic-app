@@ -5,9 +5,11 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>救急隊員向け臨床推論サポートアプリ</title>
     
+    <!-- PWA Manifest & Theme Color -->
     <link rel="manifest" href="./manifest.json">
     <meta name="theme-color" content="#111827">
 
+    <!-- スタイルシートとフォント -->
     <script src="https://cdn.tailwindcss.com"></script>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Noto+Sans+JP:wght@400;500;700&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css" xintegrity="sha512-SnH5WK+bZxgPHs44uWIX+LLJAJ9/2PkPKZ5QiAj6Ta86w+fsb2TkcmfRyVX3pBnMFcV7oQPJkl9QevSCWr3W6A==" crossorigin="anonymous" referrerpolicy="no-referrer" />
@@ -101,13 +103,16 @@
 <body class="bg-gray-900 text-gray-100 antialiased text-sm">
 
     <div id="app" class="flex h-screen overflow-hidden">
+        <!-- サイドナビゲーション -->
         <nav id="jump-nav" class="w-48 bg-gray-800 p-2 overflow-y-auto flex flex-col fixed top-0 left-0 h-full z-40 transform -translate-x-full transition-transform md:relative md:w-40 md:translate-x-0 shadow-lg">
             <div id="nav-scroll-area" class="flex-1 overflow-y-auto">
-                </div>
+                <!-- Nav items will be injected here -->
+            </div>
         </nav>
         <div id="sidebar-backdrop" class="hidden fixed inset-0 bg-black bg-opacity-50 z-30 md:hidden"></div>
 
         <main class="flex-1 flex flex-col">
+            <!-- ヘッダー -->
             <header class="bg-gray-800/50 backdrop-blur-sm p-2 md:p-3 sticky top-0 z-20 shadow-lg">
                 <div class="flex flex-wrap items-center gap-2">
                     <button id="sidebar-toggle-btn" class="p-2 text-white hover:text-blue-400 flex-shrink-0" aria-label="ナビゲーションを開く"><i class="fas fa-bars fa-lg"></i></button>
@@ -139,6 +144,7 @@
                     
                     <div class="flex-grow"></div>
                     
+                    <!-- Right-aligned action buttons -->
                     <div id="action-buttons-group" class="flex items-center gap-2">
                         <button id="add-new-btn" class="bg-green-600 hover:bg-green-700 text-white font-bold py-2 px-3 rounded-lg flex-shrink-0" title="新規追加"><i class="fas fa-plus"></i></button>
                         <button id="filter-favorites-btn" class="bg-gray-600 hover:bg-gray-500 text-white font-bold py-2 px-3 rounded-lg flex-shrink-0" title="お気に入りフィルター" aria-label="お気に入りフィルター"><i class="fas fa-star"></i></button>
@@ -167,6 +173,7 @@
                     </div>
                  </div>
             </header>
+            <!-- メインコンテンツ -->
             <div id="content-area" class="flex-1 overflow-y-auto p-2 sm:p-4">
                  <div id="loading" class="text-center p-8">
                     <i class="fas fa-spinner fa-spin text-4xl text-blue-500"></i>
@@ -179,6 +186,7 @@
             </footer>
         </main>
 
+        <!-- キーワードパネル -->
         <aside id="keywords-panel-right" class="w-64 bg-gray-800 flex flex-col fixed top-0 right-0 h-full z-40 transform translate-x-full transition-transform shadow-lg">
             <div class="p-4 border-b border-gray-700 flex justify-between items-center">
                 <h3 class="text-lg font-bold text-white">キーワードフィルター</h3>
@@ -189,6 +197,7 @@
         <div id="keywords-panel-backdrop" class="hidden fixed inset-0 bg-black bg-opacity-50 z-30"></div>
     </div>
 
+    <!-- Modals -->
     <div id="vitals-modal" class="modal hidden fixed inset-0 bg-black bg-opacity-80 flex items-center justify-center z-50 p-4">
         <div class="bg-gray-800 rounded-lg shadow-xl w-full max-w-4xl max-h-[90vh] flex flex-col text-gray-200">
             <header class="p-4 border-b border-gray-700 flex justify-between items-center">
@@ -454,7 +463,8 @@
                 <button id="vitals-history-close-btn" class="text-gray-400 hover:text-white"><i class="fas fa-times fa-lg"></i></button>
             </header>
             <main id="vitals-history-list" class="p-4 flex-1 overflow-y-auto space-y-4">
-                </main>
+                <!-- History items will be injected here -->
+            </main>
          </div>
     </div>
     
@@ -1867,8 +1877,9 @@
                                         acc[complaint].diseases.push({
                                             name: row.diseaseName,
                                             description: row.diseaseDescription || '',
-                                            keywords: (row.diseaseKeywords || '').split(',').map(k => k.trim()).filter(Boolean),
-                                            pitfalls: (row.diseasePitfalls || '').split(',').map(p => p.trim()).filter(Boolean),
+                                            // FIX: Split by semicolon instead of comma
+                                            keywords: (row.diseaseKeywords || '').split(';').map(k => k.trim()).filter(Boolean),
+                                            pitfalls: (row.diseasePitfalls || '').split(';').map(p => p.trim()).filter(Boolean),
                                             memo: row.diseaseMemo || '',
                                             isFavorite: false
                                         });
@@ -2584,4 +2595,3 @@
     </script>
 </body>
 </html>
-```
