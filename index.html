@@ -255,7 +255,9 @@
                                         <label for="bp-sys-l" class="text-xs">収縮期 (左)</label>
                                         <input name="bp_sys_l" type="number" id="bp-sys-l" class="w-full bg-gray-700 p-2 rounded-md border border-transparent" placeholder="Sys">
                                         <label for="bp-dia-l" class="text-xs">拡張期 (左)</label>
-                                        <input name="bp_dia_l" type="number" id="bp-dia_l" class="w-full bg-gray-700 p-2 rounded-md border border-transparent" placeholder="Dia">
+                                        <!-- ▼▼▼ BUG FIX: Changed id from bp-dia_l to bp-dia-l ▼▼▼ -->
+                                        <input name="bp_dia_l" type="number" id="bp-dia-l" class="w-full bg-gray-700 p-2 rounded-md border border-transparent" placeholder="Dia">
+                                        <!-- ▲▲▲ BUG FIX: Changed id from bp-dia_l to bp-dia-l ▲▲▲ -->
                                     </div>
                                 </div>
                              </div>
@@ -802,10 +804,13 @@
                             App.state.ui.selectedItems.delete(uniqueId);
                         }
                         
+                        // Sync checkboxes with the same data
                         const allCheckboxes = document.querySelectorAll(`.item-checkbox[data-id='${id}']${name ? `[data-name='${name}']` : ''}, .nav-item-checkbox[data-id='${id}']`);
                         allCheckboxes.forEach(cb => { if (cb.checked !== checkbox.checked) cb.checked = checkbox.checked; });
                         
-                        App.renderer.renderKeywordsPanel();
+                        // ▼▼▼ BUG FIX: Changed from renderKeywordsPanel to renderAll to update content view ▼▼▼
+                        App.renderer.renderAll();
+                        // ▲▲▲ BUG FIX: Changed from renderKeywordsPanel to renderAll to update content view ▲▲▲
                     },
                      handleKeywordLogicToggle() {
                         const { filters } = App.state;
@@ -819,7 +824,9 @@
                     handleClearAllSelections() {
                         App.state.ui.selectedItems.clear();
                         document.querySelectorAll('.item-checkbox, .nav-item-checkbox').forEach(cb => cb.checked = false);
-                        App.renderer.renderKeywordsPanel();
+                         // ▼▼▼ BUG FIX: Added renderAll to reflect the changes ▼▼▼
+                        App.renderer.renderAll();
+                         // ▲▲▲ BUG FIX: Added renderAll to reflect the changes ▲▲▲
                     },
                     handlePatientInfoChange() {
                         const data = {
@@ -958,8 +965,41 @@
                         this.setupIntersectionObserver();
                     },
                     filterAndSortData() {
-                        const { dataStore, filters } = App.state;
+                        const { dataStore, filters, ui } = App.state;
                         let processedData = JSON.parse(JSON.stringify(dataStore));
+
+                        // ▼▼▼ FEATURE ADD: Filter by selected checkboxes ▼▼▼
+                        if (ui.selectedItems.size > 0) {
+                            const selectedComplaints = new Set();
+                            const selectedDiseases = new Map(); // complaintId -> Set of disease names
+
+                            ui.selectedItems.forEach(item => {
+                                const [type, complaintId, ...diseaseNameParts] = item.split('_');
+                                if (type === 'c') {
+                                    selectedComplaints.add(complaintId);
+                                } else if (type === 'd') {
+                                    if (!selectedDiseases.has(complaintId)) {
+                                        selectedDiseases.set(complaintId, new Set());
+                                    }
+                                    selectedDiseases.get(complaintId).add(diseaseNameParts.join(' ').replace(/_/g, ' '));
+                                }
+                            });
+
+                            processedData = processedData.map(entry => {
+                                if (selectedComplaints.has(entry.id)) {
+                                    return entry; // Keep the whole entry if complaint is selected
+                                }
+                                if (selectedDiseases.has(entry.id)) {
+                                    const diseasesToKeep = selectedDiseases.get(entry.id);
+                                    const filteredDiseases = (entry.diseases || []).filter(d => diseasesToKeep.has(d.name));
+                                    if (filteredDiseases.length > 0) {
+                                        return { ...entry, diseases: filteredDiseases };
+                                    }
+                                }
+                                return null;
+                            }).filter(Boolean);
+                        }
+                        // ▲▲▲ FEATURE ADD: Filter by selected checkboxes ▲▲▲
 
                         if (filters.isFavoritesOnly) {
                              processedData = processedData.map(entry => {
@@ -1002,18 +1042,23 @@
                     },
                     renderNav(data) {
                         const { navScrollArea } = App.elements;
+                        const allData = App.state.dataStore.sort((a, b) => a.chiefComplaint.localeCompare(b.chiefComplaint, 'ja'));
                         navScrollArea.innerHTML = '';
                         const fragment = document.createDocumentFragment();
-                        data.forEach(entry => {
+                        allData.forEach(entry => {
                             const complaintId = `complaint-${entry.id}`;
-                            const originalData = App.state.dataStore.find(d => d.id === entry.id);
-                            if (!originalData) return;
-                            
+                            const isVisible = data.some(d => d.id === entry.id);
+
                             const navItem = document.createElement('a');
                             navItem.href = `#${complaintId}`;
                             navItem.className = 'nav-item block text-gray-300 hover:bg-blue-600 hover:text-white font-bold rounded-lg transition-colors flex items-center';
+                            // Make non-visible items opaque
+                            if (!isVisible && App.state.ui.selectedItems.size > 0) {
+                                navItem.style.opacity = '0.5';
+                            }
+
                             const isChecked = App.state.ui.selectedItems.has(`c_${entry.id}`);
-                            const starIcon = originalData.isFavorite ? `<i class="fas fa-star text-yellow-400 mr-2"></i>` : '';
+                            const starIcon = entry.isFavorite ? `<i class="fas fa-star text-yellow-400 mr-2"></i>` : '';
                             
                             navItem.innerHTML = `<input type="checkbox" class="nav-item-checkbox" data-type="complaint" data-id="${entry.id}" ${isChecked ? 'checked' : ''}> ${starIcon}${entry.chiefComplaint}`;
                             navItem.title = entry.chiefComplaint;
@@ -1021,7 +1066,15 @@
                             navItem.addEventListener('click', (e) => { 
                                 e.preventDefault(); 
                                 const targetEl = document.getElementById(complaintId);
-                                if (targetEl) targetEl.scrollIntoView({ behavior: 'smooth' }); 
+                                if (targetEl) {
+                                    targetEl.scrollIntoView({ behavior: 'smooth' }); 
+                                } else {
+                                    // If not visible, clear selection and scroll
+                                    App.handlers.handleClearAllSelections();
+                                    setTimeout(() => {
+                                       document.getElementById(complaintId)?.scrollIntoView({ behavior: 'smooth' });
+                                    }, 100);
+                                }
                                 App.components.sidebar.toggle(false);
                             });
                             fragment.appendChild(navItem);
@@ -1032,7 +1085,11 @@
                         const { contentArea } = App.elements;
                         contentArea.innerHTML = '';
                         if (data.length === 0 && !App.state.isLoading) {
-                            contentArea.innerHTML = `<div class="text-center p-8 text-gray-400"><i class="fas fa-folder-open fa-3x mb-4"></i><p>データがありません。<br>「+」ボタンから新しい主訴を追加してください。</p></div>`;
+                            let message = 'データがありません。<br>「+」ボタンから新しい主訴を追加してください。';
+                            if(App.state.dataStore.length > 0) {
+                                message = '現在のフィルター条件に一致する項目はありません。';
+                            }
+                            contentArea.innerHTML = `<div class="text-center p-8 text-gray-400"><i class="fas fa-folder-open fa-3x mb-4"></i><p>${message}</p></div>`;
                             return;
                         }
                         
@@ -1099,25 +1156,14 @@
                         const fragment = document.createDocumentFragment();
                         
                         const allAvailableKeywords = new Set();
-                        if (App.state.ui.selectedItems.size > 0) {
-                             App.state.ui.selectedItems.forEach(itemId => {
-                                const parts = itemId.split('_'); 
-                                const type = parts[0]; 
-                                const entryId = parts[1];
-                                const entry = App.state.dataStore.find(e => e.id === entryId);
-                                if (!entry) return;
+                        const dataForKeywords = App.state.ui.selectedItems.size > 0 ? this.filterAndSortData() : App.state.dataStore;
 
-                                if (type === 'c') {
-                                    (entry.diseases || []).forEach(d => (d.keywords || []).forEach(k => allAvailableKeywords.add(k)));
-                                } else if (type === 'd') {
-                                    const diseaseName = parts.slice(2).join(' ').replace(/_/g, ' ');
-                                    const disease = (entry.diseases || []).find(d => d.name === diseaseName);
-                                    if (disease) { (disease.keywords || []).forEach(k => allAvailableKeywords.add(k)); }
-                                }
+                        dataForKeywords.forEach(entry => {
+                            (entry.diseases || []).forEach(d => {
+                                (d.keywords || []).forEach(k => allAvailableKeywords.add(k));
                             });
-                        } else {
-                            App.state.dataStore.forEach(entry => (entry.diseases || []).forEach(d => (d.keywords || []).forEach(k => allAvailableKeywords.add(k))));
-                        }
+                        });
+
 
                         if (allAvailableKeywords.size > 0) {
                             const keywordTags = document.createElement('div');
@@ -1495,11 +1541,11 @@
                             el.editEcgTagsBtn.addEventListener('click', () => App.components.tagEditor.open('ecg'));
                             
                             el.vitalsForm.addEventListener('input', e => {
+                                // Use 'input' for sliders for real-time feedback
                                 if (e.target.type === 'range' && e.target.id.startsWith('pupil-')) {
                                      this.handlePupilSliderChange(e.target.id.includes('-r') ? 'R' : 'L');
-                                } else {
-                                     this.updateStateFromForm();
                                 }
+                                this.updateStateFromForm();
                                 this.checkAllVitals();
                             });
                              el.vitalsForm.addEventListener('click', e => {
@@ -1605,7 +1651,7 @@
                             if (sizeValueEl && sizeSlider) sizeValueEl.textContent = `${parseFloat(sizeSlider.value).toFixed(1)} mm`;
                             if (reflexValueEl && reflexSlider) reflexValueEl.textContent = App.config.pupilReflexMap[reflexSlider.value];
                             
-                            this.updateStateFromForm();
+                            // State is updated by the main 'input' listener
                         },
                          handleJcsClick(e) {
                             App.elements.vitalsJcsGroup.querySelectorAll('.active').forEach(b => b.classList.remove('active'));
@@ -1676,7 +1722,7 @@
                             }
                             App.elements.vitalsJcsGroup.querySelectorAll('.jcs-btn').forEach(b => b.classList.toggle('active', b.textContent === vitals.jcs));
                             this.updateGcsTotal();
-                            this.checkAllVitals();
+                           
                             ['R', 'L'].forEach(side => {
                                 const s = side.toLowerCase();
                                 const size = vitals[`pupil_size_${s}`] || '3.5';
@@ -1689,6 +1735,7 @@
                             });
                              App.elements.vitalsAppearanceTags.querySelectorAll('.vitals-tag').forEach(b => b.classList.toggle('active', (vitals.appearance || []).includes(b.textContent)));
                              App.elements.vitalsEcgTags.querySelectorAll('.ecg-tag').forEach(b => b.classList.toggle('active', (vitals.ecg_findings || []).includes(b.textContent)));
+                             this.checkAllVitals();
                         },
                         saveState(shouldSaveHistory = false) {
                             App.utils.saveToStorage(App.config.storageKeys.vitals, App.state.vitals);
