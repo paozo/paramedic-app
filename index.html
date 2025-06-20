@@ -938,13 +938,11 @@
                 },
                 renderer: {
                     renderAll() {
-                        this.search.unhighlight();
                         const dataToRender = this.filterAndSortData();
                         this.renderContent(dataToRender);
                         this.renderNav(dataToRender);
                         this.renderKeywordsPanel();
                         this.renderVitalsSummary();
-                        this.search.updateNav();
                         this.search.applyHighlights();
                         this.setupIntersectionObserver();
                     },
@@ -974,17 +972,25 @@
                                 return null;
                             }).filter(Boolean);
                         } else if (filters.searchTerm) {
-                            const regex = new RegExp(App.utils.escapeRegExp(filters.searchTerm), 'i');
-                            processedData = processedData.map(entry => {
-                                const matchingDiseases = (entry.diseases || []).filter(d => 
-                                    regex.test(d.name) || 
-                                    (d.keywords && d.keywords.some(k => regex.test(k))) || 
-                                    (d.pitfalls && d.pitfalls.some(p => regex.test(p)))
-                                );
-                                if(regex.test(entry.chiefComplaint)) return entry; 
-                                if (matchingDiseases.length > 0) return { ...entry, diseases: matchingDiseases };
-                                return null;
-                            }).filter(Boolean);
+                            const keywords = filters.searchTerm.trim().split(/\s+/).filter(Boolean);
+                            if (keywords.length > 0) {
+                                const regexes = keywords.map(k => new RegExp(App.utils.escapeRegExp(k), 'i'));
+                                processedData = processedData.filter(entry => {
+                                    let searchableText = [
+                                        entry.chiefComplaint,
+                                        entry.description,
+                                        entry.memo,
+                                        ...(entry.diseases || []).flatMap(d => [
+                                            d.name,
+                                            d.description,
+                                            d.memo,
+                                            ...(d.keywords || []),
+                                            ...(d.pitfalls || [])
+                                        ])
+                                    ].join(' ');
+                                    return regexes.every(r => r.test(searchableText));
+                                });
+                            }
                         }
                         
                         processedData.sort((a, b) => a.chiefComplaint.localeCompare(b.chiefComplaint, 'ja'));
@@ -1021,6 +1027,9 @@
                     },
                     renderContent(data) {
                         const { contentArea } = App.elements;
+                        const { searchTerm } = App.state.filters;
+                        const { highlightText } = App.utils;
+
                         contentArea.innerHTML = '';
                         if (data.length === 0 && !App.state.isLoading) {
                             contentArea.innerHTML = `<div class="text-center p-8 text-gray-400"><i class="fas fa-folder-open fa-3x mb-4"></i><p>データがありません。<br>「+」ボタンから新しい主訴を追加してください。</p></div>`;
@@ -1037,28 +1046,26 @@
                             entryDiv.className = 'content-card mb-6 bg-gray-800 rounded-xl shadow-md p-4';
                             entryDiv.id = complaintId;
                             
-                            const memoHTML = originalData.memo ? `<div class="mt-4 pl-6 text-sm text-amber-300 bg-gray-900/50 p-3 rounded-lg"><i class="fas fa-pencil-alt fa-fw mr-2 text-amber-400"></i>${originalData.memo.replace(/\n/g, '<br>')}</div>` : '';
+                            const memoHTML = originalData.memo ? `<div class="mt-4 pl-6 text-sm text-amber-300 bg-gray-900/50 p-3 rounded-lg"><i class="fas fa-pencil-alt fa-fw mr-2 text-amber-400"></i>${highlightText(originalData.memo.replace(/\n/g, '<br>'), searchTerm)}</div>` : '';
                             const favoriteClass = originalData.isFavorite ? 'fas text-yellow-400' : 'far text-gray-500';
             
                             const diseasesHTML = (entry.diseases || []).map(disease => { 
-                                const uniqueDiseaseId = `d_${entry.id}_${disease.name.replace(/\s/g, '_')}`;
-                                const isDiseaseChecked = App.state.ui.selectedItems.has(uniqueDiseaseId);
                                 const originalDisease = (originalData.diseases || []).find(d => d.name === disease.name) || {};
                                 const diseaseFavoriteClass = originalDisease.isFavorite ? 'fas text-yellow-400' : 'far text-gray-500';
-                                const diseaseMemoHTML = disease.memo ? `<div class="mt-3 text-sm text-amber-300 bg-gray-900/50 p-2 rounded-lg"><i class="fas fa-pencil-alt fa-fw mr-2 text-amber-400"></i>${disease.memo.replace(/\n/g, '<br>')}</div>` : '';
+                                const diseaseMemoHTML = disease.memo ? `<div class="mt-3 text-sm text-amber-300 bg-gray-900/50 p-2 rounded-lg"><i class="fas fa-pencil-alt fa-fw mr-2 text-amber-400"></i>${highlightText(disease.memo.replace(/\n/g, '<br>'), searchTerm)}</div>` : '';
                                 return `
                                     <div class="pl-4 border-l-4 border-gray-700">
                                         <div class="flex items-center justify-between">
                                             <div class="flex items-center">
-                                                <h3 class="text-lg font-semibold text-teal-400">${disease.name}</h3>
+                                                <h3 class="text-lg font-semibold text-teal-400">${highlightText(disease.name, searchTerm)}</h3>
                                             </div>
                                             <button class="favorite-disease-btn text-lg" data-complaint-id="${entry.id}" data-disease-name="${disease.name}" title="お気に入り登録"><i class="${diseaseFavoriteClass} fa-star"></i></button>
                                         </div>
                                         <div class="mt-2 pl-8">
-                                            <p class="text-sm text-gray-400 mt-1">${disease.description || ''}</p>
+                                            <p class="text-sm text-gray-400 mt-1">${highlightText(disease.description || '', searchTerm)}</p>
                                             ${diseaseMemoHTML}
-                                            <h4 class="font-bold text-sm text-gray-300 mt-3"><i class="fas fa-lightbulb text-yellow-400 mr-2"></i>キーワード</h4><div class="flex flex-wrap gap-2 mt-1">${(disease.keywords || []).map(k => `<span class="content-keyword-tag bg-gray-700 text-sm text-gray-200 rounded-full px-3 py-1 hover:bg-gray-500 ${App.state.filters.activeKeywords.has(k) ? 'active' : ''}">${k}</span>`).join('')}</div>
-                                            <h4 class="font-bold text-sm text-gray-300 mt-3"><i class="fas fa-exclamation-triangle text-red-400 mr-2"></i>落とし穴</h4><ul class="list-disc list-inside mt-1 text-sm text-gray-300 space-y-1">${(disease.pitfalls || []).map(p => `<li>${App.utils.highlightText(p, App.state.filters.searchTerm)}</li>`).join('')}</ul>
+                                            <h4 class="font-bold text-sm text-gray-300 mt-3"><i class="fas fa-lightbulb text-yellow-400 mr-2"></i>キーワード</h4><div class="flex flex-wrap gap-2 mt-1">${(disease.keywords || []).map(k => `<span class="content-keyword-tag bg-gray-700 text-sm text-gray-200 rounded-full px-3 py-1 hover:bg-gray-500 ${App.state.filters.activeKeywords.has(k) ? 'active' : ''}">${highlightText(k, searchTerm)}</span>`).join('')}</div>
+                                            <h4 class="font-bold text-sm text-gray-300 mt-3"><i class="fas fa-exclamation-triangle text-red-400 mr-2"></i>落とし穴</h4><ul class="list-disc list-inside mt-1 text-sm text-gray-300 space-y-1">${(disease.pitfalls || []).map(p => `<li>${highlightText(p, searchTerm)}</li>`).join('')}</ul>
                                         </div>
                                     </div>`;
                             }).join('<div class="my-4"></div>');
@@ -1067,14 +1074,14 @@
                                 <div class="flex justify-between items-center">
                                     <div class="flex items-center">
                                         <input type="checkbox" class="item-checkbox" data-type="complaint" data-id="${entry.id}" ${isComplaintChecked ? 'checked' : ''}>
-                                        <h2 class="text-xl md:text-2xl font-bold text-blue-400">${originalData.chiefComplaint}</h2>
+                                        <h2 class="text-xl md:text-2xl font-bold text-blue-400">${highlightText(originalData.chiefComplaint, searchTerm)}</h2>
                                     </div>
                                     <div class="flex items-center">
                                         <button class="favorite-btn text-xl mr-4" data-id="${entry.id}" title="お気に入り登録"><i class="${favoriteClass} fa-star"></i></button>
                                         <button class="edit-btn text-gray-400 hover:text-white" data-id="${entry.id}"><i class="fas fa-edit"></i></button>
                                     </div>
                                 </div>
-                                <p class="text-sm text-gray-400 mt-1 ml-10">${originalData.description || ''}</p>
+                                <p class="text-sm text-gray-400 mt-1 ml-10">${highlightText(originalData.description || '', searchTerm)}</p>
                                 ${memoHTML}
                                 <div class="mt-4 space-y-4 pl-6">${diseasesHTML}</div>`;
                             fragment.appendChild(entryDiv);
@@ -1082,32 +1089,28 @@
                         contentArea.appendChild(fragment);
                     },
                     renderKeywordsPanel() {
-                        const { keywordsPanelContentArea } = App.elements;
+                        const { keywordsPanelContentArea, keywordsPanelFilterContainer } = App.elements;
+                        const { ui, dataStore } = App.state;
+
                         if (!keywordsPanelContentArea) return;
                         
                         keywordsPanelContentArea.innerHTML = '';
                         const fragment = document.createDocumentFragment();
                         
                         const allAvailableKeywords = new Set();
-                        if (App.state.ui.selectedItems.size > 0) {
-                             App.state.ui.selectedItems.forEach(itemId => {
-                                const parts = itemId.split('_'); 
-                                const type = parts[0]; 
-                                const entryId = parts[1];
-                                const entry = App.state.dataStore.find(e => e.id === entryId);
-                                if (!entry) return;
+                        
+                        const selectedComplaintIds = new Set();
+                        ui.selectedItems.forEach(item => {
+                            if(item.startsWith('c_')) {
+                                selectedComplaintIds.add(item.split('_')[1]);
+                            }
+                        });
 
-                                if (type === 'c') {
-                                    (entry.diseases || []).forEach(d => (d.keywords || []).forEach(k => allAvailableKeywords.add(k)));
-                                } else if (type === 'd') {
-                                    const diseaseName = parts.slice(2).join(' ').replace(/_/g, ' ');
-                                    const disease = (entry.diseases || []).find(d => d.name === diseaseName);
-                                    if (disease) { (disease.keywords || []).forEach(k => allAvailableKeywords.add(k)); }
-                                }
-                            });
-                        } else {
-                            App.state.dataStore.forEach(entry => (entry.diseases || []).forEach(d => (d.keywords || []).forEach(k => allAvailableKeywords.add(k))));
-                        }
+                        const sourceData = selectedComplaintIds.size > 0 
+                            ? dataStore.filter(entry => selectedComplaintIds.has(entry.id))
+                            : dataStore;
+
+                        sourceData.forEach(entry => (entry.diseases || []).forEach(d => (d.keywords || []).forEach(k => allAvailableKeywords.add(k))));
 
                         if (allAvailableKeywords.size > 0) {
                             const keywordTags = document.createElement('div');
@@ -1232,87 +1235,65 @@
                     },
                     search: {
                         applyHighlights() {
+                            const { ui, filters } = App.state;
                             this.unhighlight();
-                            const { filters, ui } = App.state;
-                            const searchTerm = filters.searchTerm;
                     
-                            if (!searchTerm) {
+                            if (!filters.searchTerm) {
+                                ui.highlightedElements = [];
+                                ui.currentHighlightIndex = -1;
                                 this.updateNav();
                                 return;
                             }
                     
-                            const regex = new RegExp(App.utils.escapeRegExp(searchTerm), 'gi');
-                            const walker = document.createTreeWalker(App.elements.contentArea, NodeFilter.SHOW_TEXT, null, false);
-                            let node;
-                            while (node = walker.nextNode()) {
-                                if (node.parentElement.tagName === 'MARK' || node.parentElement.closest('button, a, input, textarea, select')) continue;
-                                const matches = node.textContent.match(regex);
-                                if (matches) {
-                                    const fragment = document.createDocumentFragment();
-                                    let lastIndex = 0;
-                                    node.textContent.replace(regex, (match, offset) => {
-                                        const textBefore = node.textContent.substring(lastIndex, offset);
-                                        if(textBefore) fragment.appendChild(document.createTextNode(textBefore));
-                                        
-                                        const mark = document.createElement('mark');
-                                        mark.className = 'highlight';
-                                        mark.textContent = match;
-                                        fragment.appendChild(mark);
-                                        
-                                        lastIndex = offset + match.length;
-                                    });
-                                    const textAfter = node.textContent.substring(lastIndex);
-                                    if(textAfter) fragment.appendChild(document.createTextNode(textAfter));
-                                    
-                                    node.parentNode.replaceChild(fragment, node);
-                                }
-                            }
-                    
-                            ui.highlightedElements = App.elements.contentArea.querySelectorAll('.highlight');
+                            ui.highlightedElements = Array.from(App.elements.contentArea.querySelectorAll('.highlight'));
+                            
                             if (ui.highlightedElements.length > 0) {
                                 ui.currentHighlightIndex = 0;
-                                this.navigateToHighlight(0); 
+                                const firstElement = ui.highlightedElements[0];
+                                firstElement.classList.add('current-highlight');
+                                firstElement.scrollIntoView({ behavior: 'smooth', block: 'center' });
                             } else {
                                 ui.currentHighlightIndex = -1;
                             }
                             this.updateNav();
                         },
+                    
                         updateNav() {
                             const { ui } = App.state;
                             const { searchCount, searchPrevBtn, searchNextBtn } = App.elements;
                             const count = ui.highlightedElements.length;
-                            if (searchCount) searchCount.textContent = `${count > 0 ? ui.currentHighlightIndex + 1 : 0}/${count}`;
-                            if (searchPrevBtn) searchPrevBtn.disabled = count === 0;
-                            if (searchNextBtn) searchNextBtn.disabled = count === 0;
+                            const currentIndex = count > 0 ? ui.currentHighlightIndex + 1 : 0;
+                            searchCount.textContent = `${currentIndex}/${count}`;
+                            searchPrevBtn.disabled = count === 0;
+                            searchNextBtn.disabled = count === 0;
                         },
+                    
                         navigateToHighlight(direction) {
                             const { ui } = App.state;
-                            const count = ui.highlightedElements.length;
-                            if (count === 0) return;
-                            
-                            let newIndex = ui.currentHighlightIndex + direction;
-                            
-                            if (newIndex < 0) newIndex = count - 1;
-                            if (newIndex >= count) newIndex = 0;
-                            
-                            ui.currentHighlightIndex = newIndex;
-
-                            ui.highlightedElements.forEach(el => el.classList.remove('current-highlight'));
-                            const currentEl = ui.highlightedElements[ui.currentHighlightIndex];
-                            if(currentEl) {
-                                currentEl.classList.add('current-highlight');
-                                currentEl.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                            const { highlightedElements } = ui;
+                            if (highlightedElements.length === 0) return;
+                    
+                            highlightedElements[ui.currentHighlightIndex].classList.remove('current-highlight');
+                    
+                            ui.currentHighlightIndex += direction;
+                    
+                            if (ui.currentHighlightIndex >= highlightedElements.length) {
+                                ui.currentHighlightIndex = 0;
                             }
+                            if (ui.currentHighlightIndex < 0) {
+                                ui.currentHighlightIndex = highlightedElements.length - 1;
+                            }
+                    
+                            const newElement = highlightedElements[ui.currentHighlightIndex];
+                            newElement.classList.add('current-highlight');
+                            newElement.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                    
                             this.updateNav();
                         },
+                    
                         unhighlight() {
-                            App.elements.contentArea.querySelectorAll('mark.highlight').forEach(el => {
-                                const parent = el.parentNode;
-                                parent.replaceChild(document.createTextNode(el.textContent), el);
-                                parent.normalize();
-                            });
-                             App.state.ui.highlightedElements = [];
-                             App.state.ui.currentHighlightIndex = -1;
+                            const highlighted = App.elements.contentArea.querySelectorAll('.current-highlight');
+                            highlighted.forEach(el => el.classList.remove('current-highlight'));
                         },
                     },
                 },
@@ -2538,11 +2519,17 @@
                         localStorage.setItem(key, typeof value === 'object' ? JSON.stringify(value) : value);
                     },
                     escapeRegExp(string) {
+                        if (typeof string !== 'string') return '';
                         return string.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'); 
                     },
                     highlightText(text, term) {
                         if (!term || !text) return text;
-                        const regex = new RegExp(this.escapeRegExp(term), 'gi');
+
+                        const keywords = term.trim().split(/\s+/).filter(Boolean);
+                        if (keywords.length === 0) return text;
+                
+                        const regex = new RegExp(keywords.map(k => this.escapeRegExp(k)).join('|'), 'gi');
+                        
                         return text.replace(regex, `<mark class="highlight">$&</mark>`);
                     },
                     getAgeCategory(age) {
