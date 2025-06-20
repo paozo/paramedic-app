@@ -62,7 +62,7 @@
         #stopwatch.running { background-color: #166534; }
         
         .toggle-chevron { transition: transform 0.2s ease-in-out; }
-        .toggle-chevron.collapsed { transform: rotate(180deg); }
+        .toggle-chevron.collapsed { transform: rotate(-180deg); }
 
         select.gcs-select { -webkit-appearance: none; appearance: none; background-image: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 20 20'%3e%3cpath stroke='%239ca3af' stroke-linecap='round' stroke-linejoin='round' stroke-width='1.5' d='M6 8l4 4 4-4'/%3e%3c/svg%3e"); background-position: right 0.5rem center; background-repeat: no-repeat; background-size: 1.5em 1.5em; padding-right: 2.5rem; }
 
@@ -88,6 +88,16 @@
         .disease-form-group .drag-handle {
             cursor: grab;
         }
+        
+        /* Vital Status Colors */
+        .vital-normal { color: #e5e7eb; } /* gray-200 */
+        .vital-warning { color: #facc15; } /* yellow-400 */
+        .vital-danger { color: #f87171; } /* red-400 */
+
+        /* Input Border Colors */
+        .input-normal { border-color: #4b5563; }
+        .input-warning { border-color: #facc15 !important; box-shadow: 0 0 0 2px rgba(250, 204, 21, 0.5); }
+        .input-danger { border-color: #f87171 !important; box-shadow: 0 0 0 2px rgba(248, 113, 113, 0.5); }
     </style>
 </head>
 <body class="bg-gray-900 text-gray-100 antialiased text-sm">
@@ -234,10 +244,10 @@
                         <div class="space-y-4 bg-gray-900 p-4 rounded-lg">
                              <h3 class="font-bold text-lg border-b border-gray-700 pb-2">呼吸・循環</h3>
                              <div class="grid grid-cols-2 gap-4">
-                                <div><label for="resp-rate" class="text-sm">呼吸数</label><input name="resp" type="number" id="resp-rate" class="w-full bg-gray-700 p-2 mt-1 rounded-md" placeholder="回/分"></div>
-                                <div><label for="spo2" class="text-sm">SpO2</label><input name="spo2" type="number" id="spo2" class="w-full bg-gray-700 p-2 mt-1 rounded-md" placeholder="%"></div>
-                                <div><label for="pulse-rate" class="text-sm">脈拍数</label><input name="pulse" type="number" id="pulse-rate" class="w-full bg-gray-700 p-2 mt-1 rounded-md" placeholder="回/分"></div>
-                                <div><label for="body-temp" class="text-sm">体温</label><input name="temp" type="number" step="0.1" id="body-temp" class="w-full bg-gray-700 p-2 mt-1 rounded-md" placeholder="℃"></div>
+                                <div><label for="resp-rate" class="text-sm">呼吸数</label><input name="resp" type="number" id="resp-rate" class="w-full bg-gray-700 p-2 mt-1 rounded-md border border-transparent" placeholder="回/分"></div>
+                                <div><label for="spo2" class="text-sm">SpO2</label><input name="spo2" type="number" id="spo2" class="w-full bg-gray-700 p-2 mt-1 rounded-md border border-transparent" placeholder="%"></div>
+                                <div><label for="pulse-rate" class="text-sm">脈拍数</label><input name="pulse" type="number" id="pulse-rate" class="w-full bg-gray-700 p-2 mt-1 rounded-md border border-transparent" placeholder="回/分"></div>
+                                <div><label for="body-temp" class="text-sm">体温</label><input name="temp" type="number" step="0.1" id="body-temp" class="w-full bg-gray-700 p-2 mt-1 rounded-md border border-transparent" placeholder="℃"></div>
                              </div>
                              <div>
                                 <h4 class="block text-sm font-medium mt-4">血圧 (mmHg)</h4>
@@ -245,16 +255,16 @@
                                     <div class="space-y-2 relative">
                                         <div id="pulse-pressure-r" class="absolute right-0 top-0 text-xs"></div>
                                         <label for="bp-sys-r" class="text-xs">収縮期 (右)</label>
-                                        <input name="bp_sys_r" type="number" id="bp-sys-r" class="w-full bg-gray-700 p-2 rounded-md" placeholder="Sys">
+                                        <input name="bp_sys_r" type="number" id="bp-sys-r" class="w-full bg-gray-700 p-2 rounded-md border border-transparent" placeholder="Sys">
                                         <label for="bp-dia-r" class="text-xs">拡張期 (右)</label>
-                                        <input name="bp_dia_r" type="number" id="bp-dia-r" class="w-full bg-gray-700 p-2 rounded-md" placeholder="Dia">
+                                        <input name="bp_dia_r" type="number" id="bp-dia-r" class="w-full bg-gray-700 p-2 rounded-md border border-transparent" placeholder="Dia">
                                     </div>
                                     <div class="space-y-2 relative">
                                         <div id="pulse-pressure-l" class="absolute right-0 top-0 text-xs"></div>
                                         <label for="bp-sys-l" class="text-xs">収縮期 (左)</label>
-                                        <input name="bp_sys_l" type="number" id="bp-sys-l" class="w-full bg-gray-700 p-2 rounded-md" placeholder="Sys">
+                                        <input name="bp_sys_l" type="number" id="bp-sys-l" class="w-full bg-gray-700 p-2 rounded-md border border-transparent" placeholder="Sys">
                                         <label for="bp-dia-l" class="text-xs">拡張期 (左)</label>
-                                        <input name="bp_dia_l" type="number" id="bp-dia_l" class="w-full bg-gray-700 p-2 rounded-md" placeholder="Dia">
+                                        <input name="bp_dia_l" type="number" id="bp-dia_l" class="w-full bg-gray-700 p-2 rounded-md border border-transparent" placeholder="Dia">
                                     </div>
                                 </div>
                              </div>
@@ -335,6 +345,7 @@
                 <div>
                     <h3 class="font-semibold mb-2">データ管理</h3>
                     <div class="space-y-2">
+                         <button id="vitals-settings-btn" class="w-full bg-orange-600 hover:bg-orange-700 text-white font-bold py-2 px-4 rounded-lg"><i class="fas fa-triangle-exclamation mr-2"></i>バイタルアラート設定</button>
                         <button id="export-csv-btn" class="w-full bg-green-600 hover:bg-green-700 text-white font-bold py-2 px-4 rounded-lg"><i class="fas fa-file-csv mr-2"></i>CSVエクスポート</button>
                         <button id="import-csv-btn" class="w-full bg-blue-600 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded-lg"><i class="fas fa-file-import mr-2"></i>CSVインポート</button>
                         <input type="file" id="import-csv-input" class="hidden" accept=".csv">
@@ -471,6 +482,25 @@
             </main>
          </div>
     </div>
+    
+    <div id="vitals-settings-modal" class="modal hidden fixed inset-0 bg-black bg-opacity-80 flex items-center justify-center z-50 p-4">
+         <div class="bg-gray-800 rounded-lg shadow-xl w-full max-w-7xl max-h-[90vh] flex flex-col">
+            <header class="p-4 border-b border-gray-700 flex justify-between items-center">
+                <h2 class="text-xl font-bold">バイタルアラート設定</h2>
+                <button id="vitals-settings-close-btn" class="text-gray-400 hover:text-white"><i class="fas fa-times fa-lg"></i></button>
+            </header>
+            <main class="p-4 flex-1 overflow-auto">
+                <div id="vitals-settings-table-container" class="w-full text-sm"></div>
+            </main>
+            <footer class="p-4 border-t border-gray-700 flex justify-between items-center">
+                 <div class="flex gap-4">
+                    <button id="vitals-settings-add-row-btn" class="bg-green-600 hover:bg-green-700 text-white font-bold py-2 px-4 rounded-lg">年齢区分を追加</button>
+                    <button id="vitals-settings-reset-btn" class="bg-yellow-600 hover:bg-yellow-700 text-white font-bold py-2 px-4 rounded-lg">初期値に戻す</button>
+                 </div>
+                 <button id="vitals-settings-save-btn" class="bg-blue-600 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded-lg">保存して閉じる</button>
+            </footer>
+         </div>
+    </div>
 
 
     <script type="module">
@@ -492,6 +522,7 @@
                         customAppearanceTags: `paramedic_app_custom_appearance_tags`,
                         customEcgTags: `paramedic_app_custom_ecg_tags`,
                         vitalsHistory: `paramedic_app_vitals_history`,
+                        vitalThresholds: `paramedic_app_vital_thresholds`,
                     },
                     stopwatchResetDelay: 700,
                     swipeThreshold: 50,
@@ -505,7 +536,14 @@
                     jcsOptions: ["清明", "1", "2", "3", "10", "20", "30", "100", "200", "300"],
                     defaultAppearanceOptions: ["起坐呼吸", "喘鳴", "顔面蒼白", "頸静脈怒張", "冷や汗"],
                     pupilReflexMap: ["なし(-)", "鈍", "迅速(+)"],
-                    defaultEcgOptions: ["ショック適応", "ショック非適応", "不安定頻拍", "症候性徐脈", "ST上昇", "T波増高", "ST低下", "QT延長", "異常Q波", "J波", "PSVT", "VPC", "Af", "洞調律"]
+                    defaultEcgOptions: ["ショック適応", "ショック非適応", "不安定頻拍", "症候性徐脈", "ST上昇", "T波増高", "ST低下", "QT延長", "異常Q波", "J波", "PSVT", "VPC", "Af", "洞調律"],
+                    defaultVitalThresholds: [
+                        { category: "新生児", age: [0, 0], resp: { lowWarning: 30, highWarning: 60 }, pulse: { lowWarning: 100, highWarning: 180 }, sbp: { lowWarning: 60 } },
+                        { category: "乳児", age: [0, 1], resp: { lowWarning: 25, highWarning: 50 }, pulse: { lowWarning: 90, highWarning: 160 }, sbp: { lowWarning: 70 } },
+                        { category: "幼児", age: [2, 5], resp: { lowWarning: 20, highWarning: 40 }, pulse: { lowWarning: 80, highWarning: 140 }, sbp: { lowWarning: 80 } },
+                        { category: "学童", age: [6, 12], resp: { lowWarning: 15, highWarning: 30 }, pulse: { lowWarning: 70, highWarning: 120 }, sbp: { lowWarning: 90 } },
+                        { category: "成人", age: [13, 130], resp: { lowWarning: 12, lowDanger: 8, highWarning: 20, highDanger: 24 }, pulse: { lowWarning: 60, lowDanger: 50, highWarning: 100, highDanger: 120 }, sbp: { lowWarning: 90, lowDanger: 80, highWarning: 140, highDanger: 180 }, spo2: { lowWarning: 94, lowDanger: 90 } }
+                    ]
 
                 },
                 state: {
@@ -519,6 +557,7 @@
                     customAppearanceTags: [],
                     customEcgTags: [],
                     vitalsHistory: [],
+                    vitalThresholds: [],
                 },
                 init() {
                     this.cacheDomElements();
@@ -611,6 +650,7 @@
                         nextCaseBtn: D.getElementById('next-case-btn'),
                         viewVitalsHistoryBtn: D.getElementById('view-vitals-history-btn'),
                         clearVitalsHistoryBtn: D.getElementById('clear-vitals-history-btn'),
+                        vitalsSettingsBtn: D.getElementById('vitals-settings-btn'),
                         // Data Modal
                         dataModal: D.getElementById('data-modal'),
                         modalTitle: D.getElementById('modal-title'),
@@ -652,6 +692,13 @@
                         vitalsHistoryModal: D.getElementById('vitals-history-modal'),
                         vitalsHistoryCloseBtn: D.getElementById('vitals-history-close-btn'),
                         vitalsHistoryList: D.getElementById('vitals-history-list'),
+                        // Vitals Settings Modal
+                        vitalsSettingsModal: D.getElementById('vitals-settings-modal'),
+                        vitalsSettingsCloseBtn: D.getElementById('vitals-settings-close-btn'),
+                        vitalsSettingsTableContainer: D.getElementById('vitals-settings-table-container'),
+                        vitalsSettingsAddRowBtn: D.getElementById('vitals-settings-add-row-btn'),
+                        vitalsSettingsResetBtn: D.getElementById('vitals-settings-reset-btn'),
+                        vitalsSettingsSaveBtn: D.getElementById('vitals-settings-save-btn'),
                     };
                 },
                 bindEventListeners() {
@@ -699,7 +746,7 @@
                     },
                     handleTimestampClick(type) {
                         const now = new Date();
-                        const timeString = now.toTimeString().split(' ')[0]; // HH:mm:ss
+                        const timeString = now.toTimeString().split(' ')[0].substring(0, 5); // HH:mm
                         App.state.vitals[type] = timeString;
                         App.components.vitalsModal.saveState(); // Save to localStorage
                         App.renderer.renderVitalsSummary();
@@ -791,6 +838,7 @@
                         };
                         App.utils.saveToStorage(App.config.storageKeys.ageAndGender, data);
                         App.renderer.renderVitalsSummary();
+                        App.components.vitalsModal.checkAllVitals();
                     },
                 },
                 pwa: {
@@ -1139,43 +1187,51 @@
                         }
                         
                         let html = '';
-                        const format = (icon, label, value, unit = '', rawHtml = false) => {
-                            if(value === null || value === undefined || value === '' || (Array.isArray(value) && value.length === 0)) return '';
-                            const valueContent = rawHtml ? value : `<b>${value}${unit}</b>`;
-                            return `<span class="flex items-center gap-1"><i class="fa-solid ${icon} fa-fw text-gray-400"></i> ${label}: ${valueContent}</span>`;
-                        };
-                        
+                       
                         const genderText = patientInfo.gender === 'male' ? '男性' : patientInfo.gender === 'female' ? '女性' : '';
-                        html += format('fa-user', '患者', `${patientInfo.age || ''}歳 ${genderText}`.trim());
+                        html += this.formatSummaryEntry('fa-user', '患者', `${patientInfo.age || ''}歳 ${genderText}`.trim());
 
                         if(hasVitals){
-                            html += format('fa-location-dot', '着', vitals.arrival);
-                            html += format('fa-handshake', '接', vitals.contact);
-                            html += format('fa-truck-fast', '出', vitals.departure);
-                            html += format('fa-brain', 'JCS', vitals.jcs);
-                            if(vitals.gcs && parseInt(vitals.gcs) > 0) html += format('fa-arrows-to-dot', 'GCS', vitals.gcs, ` (E${vitals.gcs_e || '?'}V${vitals.gcs_v || '?'}M${vitals.gcs_m || '?'})`);
-                            html += format('fa-lungs', '呼吸', vitals.resp, '回');
-                            html += format('fa-heart-pulse', '脈拍', vitals.pulse, '回');
-                            html += format('fa-o', 'SpO2', vitals.spo2, '%');
-                            html += format('fa-temperature-half', '体温', vitals.temp, '℃');
+                            const age = parseInt(patientInfo.age) || 30; // Default to adult if no age
+                            html += this.formatSummaryEntry('fa-location-dot', '着', vitals.arrival);
+                            html += this.formatSummaryEntry('fa-handshake', '接', vitals.contact);
+                            html += this.formatSummaryEntry('fa-truck-fast', '出', vitals.departure);
+
+                            html += this.formatSummaryEntry('fa-brain', 'JCS', vitals.jcs, '', App.utils.checkVitalSign('jcs', vitals.jcs, age, vitals));
+                            if(vitals.gcs && parseInt(vitals.gcs) > 0) html += this.formatSummaryEntry('fa-arrows-to-dot', 'GCS', vitals.gcs, ` (E${vitals.gcs_e || '?'}V${vitals.gcs_v || '?'}M${vitals.gcs_m || '?'})`, App.utils.checkVitalSign('gcs', vitals.gcs, age, vitals));
+                            html += this.formatSummaryEntry('fa-lungs', '呼吸', vitals.resp, '回', App.utils.checkVitalSign('resp', vitals.resp, age, vitals));
+                            html += this.formatSummaryEntry('fa-heart-pulse', '脈拍', vitals.pulse, '回', App.utils.checkVitalSign('pulse', vitals.pulse, age, vitals));
+                            html += this.formatSummaryEntry('fa-o', 'SpO2', vitals.spo2, '%', App.utils.checkVitalSign('spo2', vitals.spo2, age, vitals));
+                            html += this.formatSummaryEntry('fa-temperature-half', '体温', vitals.temp, '℃', App.utils.checkVitalSign('temp', vitals.temp, age, vitals));
                             
                             let bpTextR = `${vitals.bp_sys_r || '?'}/${vitals.bp_dia_r || '?'}`;
                             if (vitals.pulse_pressure_r) bpTextR += ` <b class="text-red-400">${vitals.pulse_pressure_r}</b>`;
-                            if (vitals.bp_sys_r || vitals.bp_dia_r) html += format('fa-droplet', '血圧(R)', bpTextR, '', true);
+                            if (vitals.bp_sys_r || vitals.bp_dia_r) html += this.formatSummaryEntry('fa-droplet', '血圧(R)', bpTextR, '', App.utils.checkVitalSign('sbp', vitals.bp_sys_r, age, vitals), true);
 
                             let bpTextL = `${vitals.bp_sys_l || '?'}/${vitals.bp_dia_l || '?'}`;
-                            if (vitals.pulse_pressure_l) bpTextL += ` <b class="text-red-400">${vitals.pulse_pressure_l}</b>`;
-                            if (vitals.bp_sys_l || vitals.bp_dia_l) html += format('fa-droplet', '血圧(L)', bpTextL, '', true);
+                             if (vitals.pulse_pressure_l) bpTextL += ` <b class="text-red-400">${vitals.pulse_pressure_l}</b>`;
+                            if (vitals.bp_sys_l || vitals.bp_dia_l) html += this.formatSummaryEntry('fa-droplet', '血圧(L)', bpTextL, '', App.utils.checkVitalSign('sbp', vitals.bp_sys_l, age, vitals), true);
 
-                            if (vitals.pupil_r || vitals.pupil_l) html += format('fa-eye', '瞳孔', `R:${vitals.pupil_r || '?'} L:${vitals.pupil_l || '?'}`);
+                             const pupilCheck = App.utils.checkVitalSign('pupils', vitals, age, vitals);
+                            if (vitals.pupil_r || vitals.pupil_l) html += this.formatSummaryEntry('fa-eye', '瞳孔', `R:${vitals.pupil_r || '?'} L:${vitals.pupil_l || '?'}`,'', pupilCheck);
                         
                             if(vitals.ecg_findings && vitals.ecg_findings.length > 0) {
-                                html += format('fa-heart-pulse', 'ECG', vitals.ecg_findings.join(', '));
+                                html += this.formatSummaryEntry('fa-heart-pulse', 'ECG', vitals.ecg_findings.join(', '));
                             }
                         }
                         
                         vitalsSummaryArea.innerHTML = html;
                         App.utils.show(vitalsSummaryContainer);
+                    },
+                    formatSummaryEntry(icon, label, value, unit = '', dangerLevel = 0, rawHtml = false) {
+                        if (value === null || value === undefined || value === '' || (typeof value === 'string' && value.trim() === '歳')) return '';
+                        
+                        let colorClass = 'vital-normal';
+                        if (dangerLevel === 1) colorClass = 'vital-warning';
+                        else if (dangerLevel === 2) colorClass = 'vital-danger';
+
+                        const valueContent = rawHtml ? `<span class="${colorClass}">${value}</span>` : `<b class="${colorClass}">${value}${unit}</b>`;
+                        return `<span class="flex items-center gap-1"><i class="fa-solid ${icon} fa-fw text-gray-400"></i> ${label}: ${valueContent}</span>`;
                     },
                     setupIntersectionObserver() {
                         if (App.state.intersectionObserver) App.state.intersectionObserver.disconnect();
@@ -1454,14 +1510,53 @@
                                 } else {
                                      this.updateStateFromForm();
                                 }
-                                this.checkPulsePressure();
+                                this.checkAllVitals();
                             });
                              el.vitalsForm.addEventListener('click', e => {
-                                if (e.target.closest('.jcs-btn, .vitals-tag, .ecg-tag')) {
-                                    if(e.target.closest('.vitals-tag, .ecg-tag')) e.target.classList.toggle('active');
+                                const target = e.target.closest('.jcs-btn, .vitals-tag, .ecg-tag');
+                                if (target) {
+                                    if(target.classList.contains('vitals-tag') || target.classList.contains('ecg-tag')) {
+                                        target.classList.toggle('active');
+                                    }
                                     this.updateStateFromForm();
+                                    this.checkAllVitals();
                                 }
                             });
+                             App.elements.ageInput.addEventListener('change', () => this.checkAllVitals());
+                        },
+                        checkAllVitals(){
+                            this.checkPulsePressure();
+                            this.updateVitalsUI();
+                        },
+                        updateVitalsUI() {
+                            const age = App.elements.ageInput.value || 30; // Default age
+                            const vitals = App.state.vitals;
+                             
+                            const formElements = App.elements.vitalsForm.elements;
+                            const vitalKeys = ['resp', 'spo2', 'pulse', 'temp', 'bp_sys_r', 'bp_dia_r', 'bp_sys_l', 'bp_dia_l'];
+                            
+                            vitalKeys.forEach(key => {
+                                const el = formElements[key];
+                                const typeMap = { 'bp_sys_r': 'sbp', 'bp_dia_r': 'dbp', 'bp_sys_l': 'sbp', 'bp_dia_l': 'dbp' };
+                                const vitalType = typeMap[key] || key;
+                                const dangerLevel = App.utils.checkVitalSign(vitalType, vitals[key], age, vitals);
+                                this.updateInputStyle(el, dangerLevel);
+                            });
+
+                            // Special cases for JCS/GCS and pupils
+                            const jcsLevel = App.utils.checkVitalSign('jcs', vitals.jcs, age, vitals);
+                            App.elements.vitalsJcsGroup.querySelectorAll('.jcs-btn').forEach(btn => this.updateInputStyle(btn, btn.textContent === vitals.jcs ? jcsLevel : 0));
+                            this.updateInputStyle(App.elements.gcsTotalEl.parentElement, App.utils.checkVitalSign('gcs', vitals.gcs, age, vitals));
+
+                        },
+                        updateInputStyle(el, level) {
+                            if (!el) return;
+                            el.classList.remove('input-normal', 'input-warning', 'input-danger');
+                             switch(level) {
+                                case 1: el.classList.add('input-warning'); break;
+                                case 2: el.classList.add('input-danger'); break;
+                                default: el.classList.add('input-normal'); break;
+                            }
                         },
                         loadCustomTags() {
                             const { storageKeys, defaultAppearanceOptions, defaultEcgOptions } = App.config;
@@ -1476,7 +1571,11 @@
                                 gcsOptions[type].forEach(opt => select.add(new Option(opt.t, opt.v)));
                             });
                             App.elements.vitalsJcsGroup.innerHTML = '';
-                            jcsOptions.forEach(val => App.elements.vitalsJcsGroup.appendChild(App.utils.createButton(val, 'jcs-btn bg-gray-700 hover:bg-gray-600 p-2 rounded-md flex-grow text-center', e => this.handleJcsClick(e))));
+                            jcsOptions.forEach(val => App.elements.vitalsJcsGroup.appendChild(App.utils.createButton(val, 'jcs-btn bg-gray-700 hover:bg-gray-600 p-2 rounded-md flex-grow text-center', e => {
+                                this.handleJcsClick(e);
+                                this.updateStateFromForm();
+                                this.checkAllVitals();
+                            })));
                             
                             this.renderTagButtons('appearance');
                             this.renderTagButtons('ecg');
@@ -1507,10 +1606,11 @@
                             });
                         },
                         handlePupilSliderChange(side) {
-                            const sizeSlider = document.getElementById(`pupil-size-${side.toLowerCase()}`);
-                            const sizeValueEl = document.getElementById(`pupil-size-value-${side.toUpperCase()}`);
-                            const reflexSlider = document.getElementById(`pupil-reflex-${side.toLowerCase()}`);
-                            const reflexValueEl = document.getElementById(`pupil-reflex-value-${side.toUpperCase()}`);
+                            const s = side.toLowerCase();
+                            const sizeSlider = document.getElementById(`pupil-size-${s}`);
+                            const sizeValueEl = document.getElementById(`pupil-size-value-${side}`);
+                            const reflexSlider = document.getElementById(`pupil-reflex-${s}`);
+                            const reflexValueEl = document.getElementById(`pupil-reflex-value-${side}`);
 
                             if (sizeValueEl && sizeSlider) sizeValueEl.textContent = `${parseFloat(sizeSlider.value).toFixed(1)} mm`;
                             if (reflexValueEl && reflexSlider) reflexValueEl.textContent = App.config.pupilReflexMap[reflexSlider.value];
@@ -1534,7 +1634,7 @@
                              
                              const formData = new FormData(form);
                              for(const [key, value] of formData.entries()){
-                                 if(value) vitals[key] = value;
+                                 vitals[key] = value || null;
                              }
                              vitals.jcs = form.querySelector('#vitals-jcs-group .active')?.textContent.trim() || null;
                              vitals.gcs = this.updateGcsTotal();
@@ -1579,12 +1679,14 @@
                             for (const key in vitals) {
                                 const el = form.elements[key];
                                 if (el && el.type !== 'hidden' && !key.startsWith('pupil') && !['arrival', 'contact', 'departure'].includes(key)) {
-                                    el.value = vitals[key];
+                                    if(el.type !== 'checkbox' && el.type !== 'radio') {
+                                        el.value = vitals[key] || '';
+                                    }
                                 }
                             }
                             App.elements.vitalsJcsGroup.querySelectorAll('.jcs-btn').forEach(b => b.classList.toggle('active', b.textContent === vitals.jcs));
                             this.updateGcsTotal();
-                            this.checkPulsePressure();
+                            this.checkAllVitals();
                             ['R', 'L'].forEach(side => {
                                 const s = side.toLowerCase();
                                 const size = vitals[`pupil_size_${s}`] || '3.5';
@@ -1662,6 +1764,8 @@
                            App.elements.nextCaseBtn.addEventListener('click', () => this.handleNextCase());
                            App.elements.viewVitalsHistoryBtn.addEventListener('click', () => App.components.vitalsHistory.open());
                            App.elements.clearVitalsHistoryBtn.addEventListener('click', () => App.components.vitalsHistory.clear());
+                           App.elements.vitalsSettingsBtn.addEventListener('click', () => App.components.vitalsSettings.open());
+
                         },
                         async handleNextCase() {
                             const confirmed = await App.utils.customConfirm(
@@ -2053,26 +2157,15 @@
                             if (confirmed) {
                                 const originalDataStore = [...App.state.dataStore];
                                 try {
-                                    // 1. Close the modal immediately
                                     this.close();
-
-                                    // 2. Optimistically update the local state
                                     App.state.dataStore = App.state.dataStore.filter(entry => entry.id !== entryId);
-                                    
-                                    // 3. Re-render the UI based on the new local state
                                     App.renderer.renderAll();
-                                    
-                                    // 4. Show the alert
                                     App.utils.customAlert('データが削除されました。');
-
-                                    // 5. Perform the actual deletion from Firestore in the background
                                     await deleteDoc(doc(App.services.db.getCollectionRef(), entryId));
-
                                 } catch (error) {
                                     console.error("Error deleting data:", error);
-                                    // If the deletion fails, revert the optimistic update and show an error
-                                    App.state.dataStore = originalDataStore; // Revert state
-                                    App.renderer.renderAll(); // Re-render to show the item again
+                                    App.state.dataStore = originalDataStore; 
+                                    App.renderer.renderAll();
                                     App.utils.customAlert('データの削除に失敗しました。');
                                 }
                             }
@@ -2244,12 +2337,8 @@
                         }
                     },
                      vitalsHistory: {
-                        init() {
-                            this.bindEventListeners();
-                        },
-                        bindEventListeners() {
-                            App.elements.vitalsHistoryCloseBtn.addEventListener('click', () => this.close());
-                        },
+                        init() { this.bindEventListeners(); },
+                        bindEventListeners() { App.elements.vitalsHistoryCloseBtn.addEventListener('click', () => this.close()); },
                         open() {
                             const history = App.utils.loadFromStorage(App.config.storageKeys.vitalsHistory, []);
                             const listEl = App.elements.vitalsHistoryList;
@@ -2276,20 +2365,11 @@
                                     content += this.formatEntry('fa-o', 'SpO2', vitals.spo2, '%');
                                     content += this.formatEntry('fa-temperature-half', '体温', vitals.temp, '℃');
                                     
-                                    let bpTextR = `${vitals.bp_sys_r || '?'}/${vitals.bp_dia_r || '?'}`;
-                                    if (vitals.bp_sys_r || vitals.bp_dia_r) content += this.formatEntry('fa-droplet', '血圧(R)', bpTextR, '', true);
-
-                                    let bpTextL = `${vitals.bp_sys_l || '?'}/${vitals.bp_dia_l || '?'}`;
-                                    if (vitals.bp_sys_l || vitals.bp_dia_l) content += this.formatEntry('fa-droplet', '血圧(L)', bpTextL, '', true);
-
+                                    if (vitals.bp_sys_r || vitals.bp_dia_r) content += this.formatEntry('fa-droplet', '血圧(R)', `${vitals.bp_sys_r || '?'}/${vitals.bp_dia_r || '?'}`);
+                                    if (vitals.bp_sys_l || vitals.bp_dia_l) content += this.formatEntry('fa-droplet', '血圧(L)', `${vitals.bp_sys_l || '?'}/${vitals.bp_dia_l || '?'}`);
                                     if (vitals.pupil_r || vitals.pupil_l) content += this.formatEntry('fa-eye', '瞳孔', `R:${vitals.pupil_r || '?'} L:${vitals.pupil_l || '?'}`);
-                                
-                                    if(vitals.ecg_findings && vitals.ecg_findings.length > 0) {
-                                        content += this.formatEntry('fa-heart-pulse', 'ECG', vitals.ecg_findings.join(', '));
-                                    }
-                                     if(vitals.appearance && vitals.appearance.length > 0) {
-                                        content += this.formatEntry('fa-user-doctor', '外観', vitals.appearance.join(', '));
-                                    }
+                                    if(vitals.ecg_findings && vitals.ecg_findings.length > 0) content += this.formatEntry('fa-heart-pulse', 'ECG', vitals.ecg_findings.join(', '));
+                                    if(vitals.appearance && vitals.appearance.length > 0) content += this.formatEntry('fa-user-doctor', '外観', vitals.appearance.join(', '));
 
                                     itemEl.innerHTML = content;
                                     listEl.appendChild(itemEl);
@@ -2297,10 +2377,9 @@
                             }
                             App.utils.showModal(App.elements.vitalsHistoryModal);
                         },
-                        formatEntry(icon, label, value, unit = '', rawHtml = false) {
-                            if(value === null || value === undefined || value === '' || value === '歳 ' || (Array.isArray(value) && value.length === 0)) return '';
-                            const valueContent = rawHtml ? value : `<b>${value}${unit}</b>`;
-                            return `<div class="flex items-start gap-2 text-sm"><i class="fa-solid ${icon} fa-fw text-gray-400 mt-1"></i> <span class="w-16">${label}:</span> <span class="flex-1">${valueContent}</span></div>`;
+                        formatEntry(icon, label, value, unit = '') {
+                            if(value === null || value === undefined || value === '' || value.trim() === '歳' || (Array.isArray(value) && value.length === 0)) return '';
+                            return `<div class="flex items-start gap-2 text-sm"><i class="fa-solid ${icon} fa-fw text-gray-400 mt-1"></i> <span class="w-16">${label}:</span> <span class="flex-1"><b>${value}${unit}</b></span></div>`;
                         },
                         async clear() {
                             const confirmed = await App.utils.customConfirm('すべてのバイタル履歴を消去しますか？この操作は元に戻せません。', '履歴の消去');
@@ -2308,13 +2387,124 @@
                                 App.state.vitalsHistory = [];
                                 App.utils.saveToStorage(App.config.storageKeys.vitalsHistory, []);
                                 App.utils.customAlert('バイタル履歴を消去しました。');
-                                if(!App.elements.vitalsHistoryModal.classList.contains('hidden')) {
-                                    this.open(); // Refresh view if open
-                                }
+                                if(!App.elements.vitalsHistoryModal.classList.contains('hidden')) { this.open(); }
                             }
                         },
-                        close() {
-                            App.utils.hideModal(App.elements.vitalsHistoryModal);
+                        close() { App.utils.hideModal(App.elements.vitalsHistoryModal); }
+                    },
+                    vitalsSettings: {
+                        init() {
+                            this.loadThresholds();
+                            this.bindEventListeners();
+                        },
+                        bindEventListeners() {
+                            const el = App.elements;
+                            el.vitalsSettingsBtn.addEventListener('click', () => this.open());
+                            el.vitalsSettingsCloseBtn.addEventListener('click', () => this.close());
+                            el.vitalsSettingsSaveBtn.addEventListener('click', () => this.saveAndClose());
+                            el.vitalsSettingsResetBtn.addEventListener('click', () => this.resetToDefaults());
+                            el.vitalsSettingsAddRowBtn.addEventListener('click', () => this.addTableRow());
+                        },
+                        loadThresholds() {
+                            const saved = App.utils.loadFromStorage(App.config.storageKeys.vitalThresholds);
+                            App.state.vitalThresholds = saved ? saved : JSON.parse(JSON.stringify(App.config.defaultVitalThresholds));
+                        },
+                        open() {
+                            this.renderTable();
+                            App.utils.showModal(App.elements.vitalsSettingsModal);
+                        },
+                        close() { App.utils.hideModal(App.elements.vitalsSettingsModal); },
+                        saveAndClose() {
+                            this.saveTableToState();
+                            App.utils.saveToStorage(App.config.storageKeys.vitalThresholds, App.state.vitalThresholds);
+                            App.utils.customAlert('バイタルアラート設定を保存しました。');
+                            this.close();
+                            App.components.vitalsModal.checkAllVitals();
+                            App.renderer.renderVitalsSummary();
+                        },
+                        async resetToDefaults() {
+                            const confirmed = await App.utils.customConfirm('すべての設定を初期値に戻しますか？', '初期化の確認');
+                            if (confirmed) {
+                                App.state.vitalThresholds = JSON.parse(JSON.stringify(App.config.defaultVitalThresholds));
+                                this.renderTable();
+                                App.utils.customAlert('設定を初期値に戻しました。');
+                            }
+                        },
+                        renderTable() {
+                            const container = App.elements.vitalsSettingsTableContainer;
+                            const thresholds = App.state.vitalThresholds;
+                            const headers = ['年齢区分', '年齢範囲', '呼吸数', '脈拍', '収縮期血圧(SBP)', 'SpO2', '操作'];
+                            const vitalKeys = ['resp', 'pulse', 'sbp', 'spo2'];
+                            
+                            let tableHTML = `<table class="w-full border-collapse"><thead><tr class="bg-gray-700">`;
+                            headers.forEach(h => tableHTML += `<th class="p-2 border border-gray-600">${h}</th>`);
+                            tableHTML += `</tr></thead><tbody id="vitals-settings-tbody">`;
+
+                            thresholds.forEach((row, index) => {
+                                tableHTML += this.getTableRowHTML(row, index, vitalKeys);
+                            });
+
+                            tableHTML += '</tbody></table>';
+                            container.innerHTML = tableHTML;
+
+                            container.querySelectorAll('.delete-row-btn').forEach(btn => {
+                                btn.addEventListener('click', e => this.deleteTableRow(e));
+                            });
+                        },
+                        getTableRowHTML(row, index, vitalKeys) {
+                            let rowHTML = `<tr data-index="${index}">`;
+                            rowHTML += `<td class="p-1 border border-gray-600"><input type="text" class="w-full bg-gray-900 p-1 rounded" value="${row.category}" data-field="category"></td>`;
+                            rowHTML += `<td class="p-1 border border-gray-600"><div class="flex items-center gap-1"><input type="number" class="w-1/2 bg-gray-900 p-1 rounded" value="${row.age[0]}" data-field="age" data-age-index="0"><span>-</span><input type="number" class="w-1/2 bg-gray-900 p-1 rounded" value="${row.age[1]}" data-field="age" data-age-index="1"></div></td>`;
+                            
+                            vitalKeys.forEach(key => {
+                                const val = row[key] || {};
+                                rowHTML += `<td class="p-1 border border-gray-600 space-y-1">
+                                    <div class="grid grid-cols-2 gap-1">
+                                        <input type="number" placeholder="警告(下)" class="w-full bg-yellow-900/50 p-1 rounded text-xs" value="${val.lowWarning || ''}" data-vital="${key}" data-level="lowWarning">
+                                        <input type="number" placeholder="警告(上)" class="w-full bg-yellow-900/50 p-1 rounded text-xs" value="${val.highWarning || ''}" data-vital="${key}" data-level="highWarning">
+                                        <input type="number" placeholder="危険(下)" class="w-full bg-red-900/50 p-1 rounded text-xs" value="${val.lowDanger || ''}" data-vital="${key}" data-level="lowDanger">
+                                        <input type="number" placeholder="危険(上)" class="w-full bg-red-900/50 p-1 rounded text-xs" value="${val.highDanger || ''}" data-vital="${key}" data-level="highDanger">
+                                    </div>
+                                </td>`;
+                            });
+
+                            rowHTML += `<td class="p-1 border border-gray-600 text-center"><button class="delete-row-btn text-red-500 hover:text-red-400 p-2"><i class="fas fa-trash-alt"></i></button></td>`;
+                            rowHTML += '</tr>';
+                            return rowHTML;
+                        },
+                        addTableRow(rowData = { category: '新規', age: [0, 0] }) {
+                            this.saveTableToState();
+                            App.state.vitalThresholds.push(rowData);
+                            this.renderTable();
+                        },
+                        deleteTableRow(event) {
+                             const row = event.target.closest('tr');
+                             const index = parseInt(row.dataset.index, 10);
+                             this.saveTableToState();
+                             App.state.vitalThresholds.splice(index, 1);
+                             this.renderTable();
+                        },
+                        saveTableToState() {
+                            const newThresholds = [];
+                            const tbody = document.getElementById('vitals-settings-tbody');
+                            if (!tbody) return;
+
+                            tbody.querySelectorAll('tr').forEach(row => {
+                                const category = row.querySelector('input[data-field="category"]').value;
+                                const ageInputs = row.querySelectorAll('input[data-field="age"]');
+                                const age = [parseInt(ageInputs[0].value) || 0, parseInt(ageInputs[1].value) || 0];
+                                
+                                const newRow = { category, age };
+                                
+                                row.querySelectorAll('input[data-vital]').forEach(input => {
+                                    const vital = input.dataset.vital;
+                                    const level = input.dataset.level;
+                                    if (!newRow[vital]) newRow[vital] = {};
+                                    if(input.value) newRow[vital][level] = parseFloat(input.value);
+                                });
+                                newThresholds.push(newRow);
+                            });
+                             App.state.vitalThresholds = newThresholds;
                         }
                     }
                 },
@@ -2326,13 +2516,12 @@
                         if (!App.config.firebaseConfig) {
                             console.warn("Firebase config not found globally. Using fallback local config.");
                              App.config.firebaseConfig = {
-                                apiKey: "AIzaSyC6umJXFGulRAkwdhx-Hoj1_5DbEbSdBOQ",
-                                authDomain: "paramedic-app-df696.firebaseapp.com",
-                                projectId: "paramedic-app-df696",
-                                storageBucket: "paramedic-app-df696.firebasestorage.app",
-                                messagingSenderId: "950566286423",
-                                appId: "1:950566286423:web:8086a8eb31b63008465f12",
-                                measurementId: "G-GHKF63GY9X"
+                                apiKey: "YOUR_API_KEY", // Replace with your actual Firebase config
+                                authDomain: "YOUR_AUTH_DOMAIN",
+                                projectId: "YOUR_PROJECT_ID",
+                                storageBucket: "YOUR_STORAGE_BUCKET",
+                                messagingSenderId: "YOUR_MESSAGING_SENDER_ID",
+                                appId: "YOUR_APP_ID"
                             };
                         }
                         App.config.appId = typeof __app_id !== 'undefined' ? __app_id : 'default-app-id';
@@ -2391,7 +2580,49 @@
                         if (!term || !text) return text;
                         const regex = new RegExp(this.escapeRegExp(term), 'gi');
                         return text.replace(regex, `<mark class="highlight">$&</mark>`);
-                    }
+                    },
+                    getAgeCategory(age) {
+                        if (age === null || age === undefined) return null;
+                        const thresholds = App.state.vitalThresholds;
+                        if (!thresholds || thresholds.length === 0) return null;
+                        
+                        // Sort by age to handle overlaps correctly
+                        const sortedThresholds = [...thresholds].sort((a,b) => a.age[0] - b.age[0]);
+
+                        for (const category of sortedThresholds) {
+                            if (age >= category.age[0] && age <= category.age[1]) {
+                                return category;
+                            }
+                        }
+                        return null;
+                    },
+                    checkVitalSign(type, value, age, vitals) {
+                        if (value === null || value === undefined || value === '') return 0;
+                        let val = parseFloat(value);
+                        if(isNaN(val)) return 0;
+
+                        const category = this.getAgeCategory(age);
+                        
+                        // Special checks that don't depend on age category
+                        if (type === 'pupils') {
+                            if (vitals.pupil_reflex_l === '0' || vitals.pupil_reflex_r === '0') return 2; // Danger for no reflex
+                            if (vitals.pupil_size_l !== vitals.pupil_size_r) return 1; // Warning for anisocoria
+                            return 0;
+                        }
+
+                        if (type === 'gcs') return (val < 15) ? ((val < 9) ? 2 : 1) : 0;
+                        if (type === 'jcs') return (value !== '清明') ? ((parseInt(value) >= 100) ? 2 : 1) : 0;
+                        
+                        if (!category || !category[type]) return 0;
+                        const t = category[type];
+
+                        // Danger checks first
+                        if ((t.lowDanger !== undefined && val < t.lowDanger) || (t.highDanger !== undefined && val > t.highDanger)) return 2;
+                        // Then warning checks
+                        if ((t.lowWarning !== undefined && val < t.lowWarning) || (t.highWarning !== undefined && val > t.highWarning)) return 1;
+                        
+                        return 0; // Normal
+                    },
                 }
             };
 
