@@ -796,7 +796,7 @@
                         const allCheckboxes = document.querySelectorAll(`.item-checkbox[data-id='${id}']${name ? `[data-name='${name}']` : ''}, .nav-item-checkbox[data-id='${id}']`);
                         allCheckboxes.forEach(cb => { if (cb.checked !== checkbox.checked) cb.checked = checkbox.checked; });
                         
-                        App.renderer.renderKeywordsPanel();
+                        App.renderer.renderAll();
                     },
                      handleKeywordLogicToggle() {
                         const { filters } = App.state;
@@ -810,7 +810,7 @@
                     handleClearAllSelections() {
                         App.state.ui.selectedItems.clear();
                         document.querySelectorAll('.item-checkbox, .nav-item-checkbox').forEach(cb => cb.checked = false);
-                        App.renderer.renderKeywordsPanel();
+                        App.renderer.renderAll();
                     },
                     handlePatientInfoChange() {
                         const data = {
@@ -940,16 +940,29 @@
                     renderAll() {
                         const dataToRender = this.filterAndSortData();
                         this.renderContent(dataToRender);
-                        this.renderNav(dataToRender);
+                        this.renderNav(); // Always render the full navigation
                         this.renderKeywordsPanel();
                         this.renderVitalsSummary();
-                        this.search.applyHighlights();
+                        this.search.collectAndNavigateHighlights();
                         this.setupIntersectionObserver();
                     },
                     filterAndSortData() {
-                        const { dataStore, filters } = App.state;
+                        const { dataStore, filters, ui } = App.state;
                         let processedData = JSON.parse(JSON.stringify(dataStore));
-
+                    
+                        // Filter by selected complaint checkboxes
+                        const selectedComplaintIds = new Set();
+                        ui.selectedItems.forEach(item => {
+                            if (item.startsWith('c_')) {
+                                selectedComplaintIds.add(item.split('_')[1]);
+                            }
+                        });
+                    
+                        if (selectedComplaintIds.size > 0) {
+                            processedData = processedData.filter(entry => selectedComplaintIds.has(entry.id));
+                        }
+                    
+                        // Filter by favorites
                         if (filters.isFavoritesOnly) {
                              processedData = processedData.map(entry => {
                                 const favoriteDiseases = (entry.diseases || []).filter(d => d.isFavorite);
@@ -959,6 +972,7 @@
                             }).filter(Boolean);
                         }
                         
+                        // Filter by active keywords or search term
                         if (filters.activeKeywords.size > 0) {
                             const activeKeywords = Array.from(filters.activeKeywords);
                              processedData = processedData.map(entry => {
@@ -972,11 +986,10 @@
                                 return null;
                             }).filter(Boolean);
                         } else if (filters.searchTerm) {
-                            const keywords = filters.searchTerm.trim().split(/\s+/).filter(Boolean);
+                            const keywords = filters.searchTerm.trim().toLowerCase().split(/\s+/).filter(Boolean);
                             if (keywords.length > 0) {
-                                const regexes = keywords.map(k => new RegExp(App.utils.escapeRegExp(k), 'i'));
                                 processedData = processedData.filter(entry => {
-                                    let searchableText = [
+                                    const entryText = [
                                         entry.chiefComplaint,
                                         entry.description,
                                         entry.memo,
@@ -987,8 +1000,9 @@
                                             ...(d.keywords || []),
                                             ...(d.pitfalls || [])
                                         ])
-                                    ].join(' ');
-                                    return regexes.every(r => r.test(searchableText));
+                                    ].join(' ').toLowerCase();
+                                    
+                                    return keywords.every(k => entryText.includes(k));
                                 });
                             }
                         }
@@ -997,20 +1011,23 @@
                         
                         return processedData;
                     },
-                    renderNav(data) {
+                    renderNav() {
                         const { navScrollArea } = App.elements;
+                        const { dataStore, ui } = App.state;
+                        
+                        const navData = [...dataStore].sort((a, b) => a.chiefComplaint.localeCompare(b.chiefComplaint, 'ja'));
+
                         navScrollArea.innerHTML = '';
                         const fragment = document.createDocumentFragment();
-                        data.forEach(entry => {
+                        
+                        navData.forEach(entry => {
                             const complaintId = `complaint-${entry.id}`;
-                            const originalData = App.state.dataStore.find(d => d.id === entry.id);
-                            if (!originalData) return;
-                            
                             const navItem = document.createElement('a');
                             navItem.href = `#${complaintId}`;
                             navItem.className = 'nav-item block text-gray-300 hover:bg-blue-600 hover:text-white font-bold rounded-lg transition-colors flex items-center';
-                            const isChecked = App.state.ui.selectedItems.has(`c_${entry.id}`);
-                            const starIcon = originalData.isFavorite ? `<i class="fas fa-star text-yellow-400 mr-2"></i>` : '';
+                            
+                            const isChecked = ui.selectedItems.has(`c_${entry.id}`);
+                            const starIcon = entry.isFavorite ? `<i class="fas fa-star text-yellow-400 mr-2"></i>` : '';
                             
                             navItem.innerHTML = `<input type="checkbox" class="nav-item-checkbox" data-type="complaint" data-id="${entry.id}" ${isChecked ? 'checked' : ''}> ${starIcon}${entry.chiefComplaint}`;
                             navItem.title = entry.chiefComplaint;
@@ -1028,8 +1045,7 @@
                     renderContent(data) {
                         const { contentArea } = App.elements;
                         const { searchTerm } = App.state.filters;
-                        const { highlightText } = App.utils;
-
+                        
                         contentArea.innerHTML = '';
                         if (data.length === 0 && !App.state.isLoading) {
                             contentArea.innerHTML = `<div class="text-center p-8 text-gray-400"><i class="fas fa-folder-open fa-3x mb-4"></i><p>データがありません。<br>「+」ボタンから新しい主訴を追加してください。</p></div>`;
@@ -1046,26 +1062,26 @@
                             entryDiv.className = 'content-card mb-6 bg-gray-800 rounded-xl shadow-md p-4';
                             entryDiv.id = complaintId;
                             
-                            const memoHTML = originalData.memo ? `<div class="mt-4 pl-6 text-sm text-amber-300 bg-gray-900/50 p-3 rounded-lg"><i class="fas fa-pencil-alt fa-fw mr-2 text-amber-400"></i>${highlightText(originalData.memo.replace(/\n/g, '<br>'), searchTerm)}</div>` : '';
+                            const memoHTML = originalData.memo ? `<div class="mt-4 pl-6 text-sm text-amber-300 bg-gray-900/50 p-3 rounded-lg"><i class="fas fa-pencil-alt fa-fw mr-2 text-amber-400"></i>${App.utils.highlightText(originalData.memo, searchTerm).replace(/\n/g, '<br>')}</div>` : '';
                             const favoriteClass = originalData.isFavorite ? 'fas text-yellow-400' : 'far text-gray-500';
             
                             const diseasesHTML = (entry.diseases || []).map(disease => { 
                                 const originalDisease = (originalData.diseases || []).find(d => d.name === disease.name) || {};
                                 const diseaseFavoriteClass = originalDisease.isFavorite ? 'fas text-yellow-400' : 'far text-gray-500';
-                                const diseaseMemoHTML = disease.memo ? `<div class="mt-3 text-sm text-amber-300 bg-gray-900/50 p-2 rounded-lg"><i class="fas fa-pencil-alt fa-fw mr-2 text-amber-400"></i>${highlightText(disease.memo.replace(/\n/g, '<br>'), searchTerm)}</div>` : '';
+                                const diseaseMemoHTML = disease.memo ? `<div class="mt-3 text-sm text-amber-300 bg-gray-900/50 p-2 rounded-lg"><i class="fas fa-pencil-alt fa-fw mr-2 text-amber-400"></i>${App.utils.highlightText(disease.memo, searchTerm).replace(/\n/g, '<br>')}</div>` : '';
                                 return `
                                     <div class="pl-4 border-l-4 border-gray-700">
                                         <div class="flex items-center justify-between">
                                             <div class="flex items-center">
-                                                <h3 class="text-lg font-semibold text-teal-400">${highlightText(disease.name, searchTerm)}</h3>
+                                                <h3 class="text-lg font-semibold text-teal-400">${App.utils.highlightText(disease.name, searchTerm)}</h3>
                                             </div>
                                             <button class="favorite-disease-btn text-lg" data-complaint-id="${entry.id}" data-disease-name="${disease.name}" title="お気に入り登録"><i class="${diseaseFavoriteClass} fa-star"></i></button>
                                         </div>
                                         <div class="mt-2 pl-8">
-                                            <p class="text-sm text-gray-400 mt-1">${highlightText(disease.description || '', searchTerm)}</p>
+                                            <p class="text-sm text-gray-400 mt-1">${App.utils.highlightText(disease.description || '', searchTerm)}</p>
                                             ${diseaseMemoHTML}
-                                            <h4 class="font-bold text-sm text-gray-300 mt-3"><i class="fas fa-lightbulb text-yellow-400 mr-2"></i>キーワード</h4><div class="flex flex-wrap gap-2 mt-1">${(disease.keywords || []).map(k => `<span class="content-keyword-tag bg-gray-700 text-sm text-gray-200 rounded-full px-3 py-1 hover:bg-gray-500 ${App.state.filters.activeKeywords.has(k) ? 'active' : ''}">${highlightText(k, searchTerm)}</span>`).join('')}</div>
-                                            <h4 class="font-bold text-sm text-gray-300 mt-3"><i class="fas fa-exclamation-triangle text-red-400 mr-2"></i>落とし穴</h4><ul class="list-disc list-inside mt-1 text-sm text-gray-300 space-y-1">${(disease.pitfalls || []).map(p => `<li>${highlightText(p, searchTerm)}</li>`).join('')}</ul>
+                                            <h4 class="font-bold text-sm text-gray-300 mt-3"><i class="fas fa-lightbulb text-yellow-400 mr-2"></i>キーワード</h4><div class="flex flex-wrap gap-2 mt-1">${(disease.keywords || []).map(k => `<span class="content-keyword-tag bg-gray-700 text-sm text-gray-200 rounded-full px-3 py-1 hover:bg-gray-500 ${App.state.filters.activeKeywords.has(k) ? 'active' : ''}">${App.utils.highlightText(k, searchTerm)}</span>`).join('')}</div>
+                                            <h4 class="font-bold text-sm text-gray-300 mt-3"><i class="fas fa-exclamation-triangle text-red-400 mr-2"></i>落とし穴</h4><ul class="list-disc list-inside mt-1 text-sm text-gray-300 space-y-1">${(disease.pitfalls || []).map(p => `<li>${App.utils.highlightText(p, searchTerm)}</li>`).join('')}</ul>
                                         </div>
                                     </div>`;
                             }).join('<div class="my-4"></div>');
@@ -1074,14 +1090,14 @@
                                 <div class="flex justify-between items-center">
                                     <div class="flex items-center">
                                         <input type="checkbox" class="item-checkbox" data-type="complaint" data-id="${entry.id}" ${isComplaintChecked ? 'checked' : ''}>
-                                        <h2 class="text-xl md:text-2xl font-bold text-blue-400">${highlightText(originalData.chiefComplaint, searchTerm)}</h2>
+                                        <h2 class="text-xl md:text-2xl font-bold text-blue-400">${App.utils.highlightText(originalData.chiefComplaint, searchTerm)}</h2>
                                     </div>
                                     <div class="flex items-center">
                                         <button class="favorite-btn text-xl mr-4" data-id="${entry.id}" title="お気に入り登録"><i class="${favoriteClass} fa-star"></i></button>
                                         <button class="edit-btn text-gray-400 hover:text-white" data-id="${entry.id}"><i class="fas fa-edit"></i></button>
                                     </div>
                                 </div>
-                                <p class="text-sm text-gray-400 mt-1 ml-10">${highlightText(originalData.description || '', searchTerm)}</p>
+                                <p class="text-sm text-gray-400 mt-1 ml-10">${App.utils.highlightText(originalData.description || '', searchTerm)}</p>
                                 ${memoHTML}
                                 <div class="mt-4 space-y-4 pl-6">${diseasesHTML}</div>`;
                             fragment.appendChild(entryDiv);
@@ -1234,67 +1250,73 @@
                         document.querySelectorAll('.content-card').forEach(card => App.state.intersectionObserver.observe(card));
                     },
                     search: {
-                        applyHighlights() {
+                        collectAndNavigateHighlights() {
                             const { ui, filters } = App.state;
+                            
                             this.unhighlight();
-                    
+        
                             if (!filters.searchTerm) {
                                 ui.highlightedElements = [];
                                 ui.currentHighlightIndex = -1;
                                 this.updateNav();
                                 return;
                             }
-                    
+        
                             ui.highlightedElements = Array.from(App.elements.contentArea.querySelectorAll('.highlight'));
                             
                             if (ui.highlightedElements.length > 0) {
-                                ui.currentHighlightIndex = 0;
-                                const firstElement = ui.highlightedElements[0];
-                                firstElement.classList.add('current-highlight');
-                                firstElement.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                                ui.currentHighlightIndex = -1; 
+                                this.navigateToHighlight(1);
                             } else {
                                 ui.currentHighlightIndex = -1;
+                                this.updateNav();
                             }
-                            this.updateNav();
                         },
-                    
-                        updateNav() {
-                            const { ui } = App.state;
-                            const { searchCount, searchPrevBtn, searchNextBtn } = App.elements;
-                            const count = ui.highlightedElements.length;
-                            const currentIndex = count > 0 ? ui.currentHighlightIndex + 1 : 0;
-                            searchCount.textContent = `${currentIndex}/${count}`;
-                            searchPrevBtn.disabled = count === 0;
-                            searchNextBtn.disabled = count === 0;
-                        },
-                    
+        
                         navigateToHighlight(direction) {
                             const { ui } = App.state;
                             const { highlightedElements } = ui;
                             if (highlightedElements.length === 0) return;
-                    
-                            highlightedElements[ui.currentHighlightIndex].classList.remove('current-highlight');
-                    
+        
+                            if (ui.currentHighlightIndex >= 0 && highlightedElements[ui.currentHighlightIndex]) {
+                                highlightedElements[ui.currentHighlightIndex].classList.remove('current-highlight');
+                            }
+        
                             ui.currentHighlightIndex += direction;
-                    
+        
                             if (ui.currentHighlightIndex >= highlightedElements.length) {
                                 ui.currentHighlightIndex = 0;
                             }
                             if (ui.currentHighlightIndex < 0) {
                                 ui.currentHighlightIndex = highlightedElements.length - 1;
                             }
-                    
+        
                             const newElement = highlightedElements[ui.currentHighlightIndex];
-                            newElement.classList.add('current-highlight');
-                            newElement.scrollIntoView({ behavior: 'smooth', block: 'center' });
-                    
+                            if (newElement) {
+                                newElement.classList.add('current-highlight');
+                                newElement.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                            }
+        
                             this.updateNav();
                         },
-                    
+                        
                         unhighlight() {
-                            const highlighted = App.elements.contentArea.querySelectorAll('.current-highlight');
-                            highlighted.forEach(el => el.classList.remove('current-highlight'));
+                            const current = App.elements.contentArea.querySelector('.current-highlight');
+                            if (current) {
+                                current.classList.remove('current-highlight');
+                            }
                         },
+        
+                        updateNav() {
+                            const { ui } = App.state;
+                            const { searchCount, searchPrevBtn, searchNextBtn } = App.elements;
+                            const count = ui.highlightedElements.length;
+                            const currentIndex = count > 0 ? ui.currentHighlightIndex + 1 : 0;
+                            
+                            searchCount.textContent = `${currentIndex}/${count}`;
+                            searchPrevBtn.disabled = count === 0;
+                            searchNextBtn.disabled = count === 0;
+                        }
                     },
                 },
                 components: {
@@ -2523,14 +2545,13 @@
                         return string.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'); 
                     },
                     highlightText(text, term) {
-                        if (!term || !text) return text;
-
+                        if (!term || !text) return String(text); 
                         const keywords = term.trim().split(/\s+/).filter(Boolean);
-                        if (keywords.length === 0) return text;
+                        if (keywords.length === 0) return String(text);
                 
-                        const regex = new RegExp(keywords.map(k => this.escapeRegExp(k)).join('|'), 'gi');
+                        const regex = new RegExp(keywords.map(k => App.utils.escapeRegExp(k)).join('|'), 'gi');
                         
-                        return text.replace(regex, `<mark class="highlight">$&</mark>`);
+                        return String(text).replace(regex, `<mark class="highlight">$&</mark>`);
                     },
                     getAgeCategory(age) {
                         if (age === null || age === undefined) return null;
