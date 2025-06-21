@@ -15,96 +15,71 @@
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css" xintegrity="sha512-SnH5WK+bZxgPHs44uWIX+LLJAJ9/2PkPKZ5QiAj6Ta86w+fsb2TkcmfRyVX3pBnMFcV7oQPJkl9QevSCWr3W6A==" crossorigin="anonymous" referrerpolicy="no-referrer" />
     <style>
         :root {
-            --font-size-base: 14px; --font-size-sm: 12px; --font-size-xs: 11px;
-            --font-size-lg: 16px; --font-size-xl: 18px; --font-size-2xl: 20px;
+            --bg-dark-900: #111827; --bg-dark-800: #1f2937; --bg-dark-700: #374151; --bg-dark-600: #4b5563;
+            --text-dark-100: #f3f4f6; --text-dark-200: #e5e7eb; --text-dark-300: #d1d5db; --text-dark-400: #9ca3af;
+            --bg-light-100: #f9fafb; --bg-light-200: #f3f4f6; --bg-light-300: #e5e7eb; --bg-light-400: #d1d5db;
+            --text-light-900: #111827; --text-light-700: #374151; --text-light-500: #6b7280;
         }
-        html.text-sm {
-            --font-size-base: 13px; --font-size-sm: 11px; --font-size-xs: 10px; --font-size-lg: 15px; --font-size-xl: 17px; --font-size-2xl: 19px;
+        body.light-mode {
+            --bg-main: var(--bg-light-100); --bg-panel: var(--bg-light-200); --bg-header: var(--bg-light-200);
+            --bg-card: white; --bg-input: var(--bg-light-300); --bg-btn: var(--bg-light-300);
+            --text-main: var(--text-light-900); --text-sub: var(--text-light-700); --text-placeholder: var(--text-light-500);
+            --border-color: var(--bg-light-400);
+            --scrollbar-track: var(--bg-light-300); --scrollbar-thumb: #a0aec0;
         }
-        html.text-lg {
-             --font-size-base: 16px; --font-size-sm: 14px; --font-size-xs: 13px; --font-size-lg: 18px; --font-size-xl: 20px; --font-size-2xl: 22px;
+        body.dark-mode {
+            --bg-main: var(--bg-dark-900); --bg-panel: var(--bg-dark-800); --bg-header: #1f2937e6;
+            --bg-card: var(--bg-dark-800); --bg-input: var(--bg-dark-700); --bg-btn: var(--bg-dark-600);
+            --text-main: var(--text-dark-100); --text-sub: var(--text-dark-300); --text-placeholder: var(--text-dark-400);
+            --border-color: var(--bg-dark-700);
+            --scrollbar-track: var(--bg-dark-800); --scrollbar-thumb: var(--bg-dark-600);
         }
-        body { font-family: 'Inter', 'Noto Sans JP', sans-serif; -webkit-tap-highlight-color: transparent; font-size: var(--font-size-base); }
+
+        html.text-sm { --font-size-base: 13px; --font-size-sm: 11px; --font-size-xs: 10px; --font-size-lg: 15px; --font-size-xl: 17px; --font-size-2xl: 19px; }
+        html.text-lg { --font-size-base: 16px; --font-size-sm: 14px; --font-size-xs: 13px; --font-size-lg: 18px; --font-size-xl: 20px; --font-size-2xl: 22px; }
+        
+        body { font-family: 'Inter', 'Noto Sans JP', sans-serif; -webkit-tap-highlight-color: transparent; font-size: var(--font-size-base); background-color: var(--bg-main); color: var(--text-main); }
         h2 { font-size: var(--font-size-xl); } h3 { font-size: var(--font-size-lg); }
         .text-xs { font-size: var(--font-size-xs); } .text-sm { font-size: var(--font-size-sm); }
         
-        ::-webkit-scrollbar { width: 8px; } ::-webkit-scrollbar-track { background: #1f2937; } ::-webkit-scrollbar-thumb { background: #4b5563; border-radius: 4px; } ::-webkit-scrollbar-thumb:hover { background: #6b7280; }
+        ::-webkit-scrollbar { width: 8px; } ::-webkit-scrollbar-track { background: var(--scrollbar-track); } ::-webkit-scrollbar-thumb { background: var(--scrollbar-thumb); border-radius: 4px; } ::-webkit-scrollbar-thumb:hover { background: #9ca3af; }
         
         .modal { transition: opacity 0.3s ease-in-out, transform 0.3s ease-in-out; }
         .modal.hidden { opacity: 0; transform: scale(0.95); pointer-events: none; }
         
-        .highlight { background-color: yellow; color: #1f2937; padding: 0 2px; border-radius: 2px; }
+        .highlight { background-color: yellow; color: var(--text-light-900); padding: 0 2px; border-radius: 2px; }
         .current-highlight { outline: 2px solid #f97316; scroll-margin-top: 150px; }
         
         button:disabled { opacity: 0.5; cursor: not-allowed; }
         
         .item-checkbox, .nav-item-checkbox { transform: scale(1.0); margin-right: 8px; accent-color: #3b82f6; }
         
-        .keyword-tag, .content-keyword-tag { cursor: pointer; transition: background-color 0.2s ease, color 0.2s ease; }
-        .keyword-tag.active, .content-keyword-tag.active { background-color: yellow; color: #1f2937; font-weight: bold; }
+        .keyword-tag, .content-keyword-tag { cursor: pointer; transition: background-color 0.2s ease, color 0.2s ease; background-color: var(--bg-btn); color: var(--text-main);}
+        .keyword-tag.active, .content-keyword-tag.active { background-color: yellow !important; color: #1f2937 !important; font-weight: bold; }
         
-        .nav-item { padding-left: 0.75rem; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; transition: background-color 0.2s ease, color 0.2s ease; padding-top: 0.5rem; padding-bottom: 0.5rem; }
+        .nav-item { color: var(--text-sub); } .nav-item:hover { background-color: #3b82f6; color: white; }
         .nav-item.active-nav { background-color: #2563eb; color: white; }
         
-        #logic-switch-container { position: relative; display: inline-flex; background-color: #374151; border-radius: 9999px; padding: 2px; cursor: pointer; }
-        .switch-label { padding: 2px 10px; font-weight: 500; color: #d1d5db; transition: color 0.2s ease-in-out; z-index: 10; user-select: none; }
-        .switch-label.active-logic { color: #111827; }
-        #switch-bg { position: absolute; top: 2px; bottom: 2px; background-color: #fBBF24; border-radius: 9999px; transition: transform 0.2s ease-in-out; }
-        #logic-switch-container[data-mode="OR"] #switch-bg { width: calc(50% - 2px); left: 2px; transform: translateX(0); }
-        #logic-switch-container[data-mode="AND"] #switch-bg { width: calc(50% - 2px); left: 2px; transform: translateX(100%); }
-
+        .bg-panel { background-color: var(--bg-panel); } .bg-header { background-color: var(--bg-header); } .bg-card { background-color: var(--bg-card); }
+        .bg-input { background-color: var(--bg-input); } .bg-btn { background-color: var(--bg-btn); }
+        .text-main { color: var(--text-main); } .text-sub { color: var(--text-sub); } .placeholder-color::placeholder { color: var(--text-placeholder); }
+        .border-color { border-color: var(--border-color); }
         
-        #keywords-panel-toggle-btn.active, #filter-favorites-btn.active { color: #fBBF24; }
-        .gender-btn.active, .vitals-tag.active, .jcs-btn.active, .era-btn.active, .ecg-tag.active { background-color: #3b82f6; color: white; }
-        .font-size-btn.active { background-color: #2563eb; }
-        .time-btn.active { background-color: #16a34a; color: white; }
+        .disease-details.collapsed { display: none; }
 
-        #stopwatch.running { background-color: #166534; }
-        
-        .toggle-chevron { transition: transform 0.2s ease-in-out; }
-        .toggle-chevron.collapsed { transform: rotate(-180deg); }
+        .keyword-count-1 { background-color: #facc15 !important; color: #1f2937 !important; } /* yellow-400 */
+        .keyword-count-2 { background-color: #4ade80 !important; color: #1f2937 !important; } /* green-400 */
+        .keyword-count-3 { background-color: #60a5fa !important; color: #1f2937 !important; } /* blue-400 */
+        .keyword-count-4 { background-color: #a78bfa !important; color: #1f2937 !important; } /* purple-400 */
+        .keyword-count-5 { background-color: #f87171 !important; color: #1f2937 !important; } /* red-400 */
 
-        select.gcs-select { -webkit-appearance: none; appearance: none; background-image: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 20 20'%3e%3cpath stroke='%239ca3af' stroke-linecap='round' stroke-linejoin='round' stroke-width='1.5' d='M6 8l4 4 4-4'/%3e%3c/svg%3e"); background-position: right 0.5rem center; background-repeat: no-repeat; background-size: 1.5em 1.5em; padding-right: 2.5rem; }
-
-        @keyframes flash {
-          50% { opacity: 0.2; }
-        }
-        .flashing-indicator {
-          animation: flash 1.5s linear infinite;
-          color: #f87171; /* red-400 */
-          font-weight: bold;
-        }
-
-        .slider-container { position: relative; padding: 10px 0; }
-        .slider-ticks { display: flex; justify-content: space-between; position: absolute; top: 18px; left: 8px; right: 8px; pointer-events: none; }
-        .tick { width: 8px; height: 8px; background-color: #4b5563; border-radius: 50%; }
-
-        input[type="range"]::-webkit-slider-thumb { -webkit-appearance: none; appearance: none; width: 20px; height: 20px; background: #3b82f6; cursor: pointer; border-radius: 50%; border: 2px solid #fff; margin-top: -8px; position: relative; z-index: 10; }
-        input[type="range"]::-moz-range-thumb { width: 16px; height: 16px; background: #3b82f6; cursor: pointer; border-radius: 50%; border: 2px solid #fff;}
-        
-        .disease-form-group.dragging {
-            opacity: 0.4;
-        }
-        .disease-form-group .drag-handle {
-            cursor: grab;
-        }
-        
-        /* Vital Status Colors */
-        .vital-normal { color: #e5e7eb; } /* gray-200 */
-        .vital-warning { color: #facc15; } /* yellow-400 */
-        .vital-danger { color: #f87171; } /* red-400 */
-
-        /* Input Border Colors */
-        .input-normal { border-color: #4b5563; }
-        .input-warning { border-color: #facc15 !important; box-shadow: 0 0 0 2px rgba(250, 204, 21, 0.5); }
-        .input-danger { border-color: #f87171 !important; box-shadow: 0 0 0 2px rgba(248, 113, 113, 0.5); }
     </style>
 </head>
-<body class="bg-gray-900 text-gray-100 antialiased text-sm">
+<body class="dark-mode antialiased text-sm">
 
     <div id="app" class="flex h-screen overflow-hidden">
         <!-- サイドナビゲーション -->
-        <nav id="jump-nav" class="w-48 bg-gray-800 p-2 overflow-y-auto flex flex-col fixed top-0 left-0 h-full z-40 transform -translate-x-full transition-transform md:relative md:w-40 md:translate-x-0 shadow-lg">
+        <nav id="jump-nav" class="bg-panel w-48 p-2 overflow-y-auto flex flex-col fixed top-0 left-0 h-full z-40 transform -translate-x-full transition-transform md:relative md:w-40 md:translate-x-0 shadow-lg">
             <div id="nav-scroll-area" class="flex-1 overflow-y-auto">
                 <!-- Nav items will be injected here -->
             </div>
@@ -113,31 +88,31 @@
 
         <main class="flex-1 flex flex-col">
             <!-- ヘッダー -->
-            <header class="bg-gray-800/50 backdrop-blur-sm p-2 md:p-3 sticky top-0 z-20 shadow-lg">
+            <header class="bg-header backdrop-blur-sm p-2 md:p-3 sticky top-0 z-20 shadow-lg">
                 <div class="flex flex-wrap items-center gap-2">
-                    <button id="sidebar-toggle-btn" class="p-2 text-white hover:text-blue-400 flex-shrink-0" aria-label="ナビゲーションを開く"><i class="fas fa-bars fa-lg"></i></button>
+                    <button id="sidebar-toggle-btn" class="p-2 text-main hover:text-blue-400 flex-shrink-0" aria-label="ナビゲーションを開く"><i class="fas fa-bars fa-lg"></i></button>
                     
-                    <div class="flex items-center space-x-2 bg-gray-700 p-1 rounded-lg flex-shrink-0">
-                        <input type="number" id="age-input" placeholder="年齢" min="0" max="130" class="w-14 bg-gray-600 text-white placeholder-gray-400 text-center rounded-md p-1 focus:outline-none focus:ring-2 focus:ring-blue-500" aria-label="年齢">
-                        <button id="dob-btn" class="p-1 text-white hover:text-blue-400" aria-label="生年月日から年齢を計算"><i class="fas fa-calendar-alt"></i></button>
+                    <div class="flex items-center space-x-2 bg-input p-1 rounded-lg flex-shrink-0">
+                        <input type="number" id="age-input" placeholder="年齢" min="0" max="130" class="w-14 bg-input text-main placeholder-color text-center rounded-md p-1 focus:outline-none focus:ring-2 focus:ring-blue-500" aria-label="年齢">
+                        <button id="dob-btn" class="p-1 text-main hover:text-blue-400" aria-label="生年月日から年齢を計算"><i class="fas fa-calendar-alt"></i></button>
                         <div class="flex">
-                           <button class="gender-btn bg-gray-600 hover:bg-gray-500 text-white font-bold py-1 px-2 md:px-3 rounded-l-md" data-gender="male">男</button>
-                           <button class="gender-btn bg-gray-600 hover:bg-gray-500 text-white font-bold py-1 px-2 md:px-3 rounded-r-md" data-gender="female">女</button>
+                           <button class="gender-btn bg-btn hover:opacity-80 text-main font-bold py-1 px-2 md:px-3 rounded-l-md" data-gender="male">男</button>
+                           <button class="gender-btn bg-btn hover:opacity-80 text-main font-bold py-1 px-2 md:px-3 rounded-r-md" data-gender="female">女</button>
                         </div>
                     </div>
                     
-                    <input type="text" id="temp-memo" placeholder="一時メモ..." class="flex-grow min-w-[120px] bg-gray-700 text-white placeholder-gray-400 rounded-lg p-2 focus:outline-none focus:ring-2 focus:ring-blue-500" aria-label="一時メモ">
+                    <input type="text" id="temp-memo" placeholder="一時メモ..." class="flex-grow min-w-[120px] bg-input text-main placeholder-color rounded-lg p-2 focus:outline-none focus:ring-2 focus:ring-blue-500" aria-label="一時メモ">
 
-                    <div class="flex items-center bg-gray-700 rounded-lg relative">
-                        <input type="text" id="search-input" placeholder="検索..." class="w-24 md:w-32 bg-transparent text-white placeholder-gray-400 rounded-l-lg py-2 pl-4 pr-0 focus:outline-none" aria-label="鑑別検索">
-                        <button id="search-clear-btn" class="text-gray-400 hover:text-white px-2" title="検索文字のクリア" aria-label="検索文字のクリア"><i class="fas fa-times"></i></button>
-                        <div class="flex items-center text-gray-400">
-                             <button id="search-prev-btn" class="hover:text-white disabled:text-gray-600" title="前の検索結果へ"><i class="fas fa-chevron-left"></i></button>
+                    <div class="flex items-center bg-input rounded-lg relative">
+                        <input type="text" id="search-input" placeholder="検索..." class="w-24 md:w-32 bg-transparent text-main placeholder-color rounded-l-lg py-2 pl-4 pr-0 focus:outline-none" aria-label="鑑別検索">
+                        <button id="search-clear-btn" class="text-sub hover:text-main px-2" title="検索文字のクリア" aria-label="検索文字のクリア"><i class="fas fa-times"></i></button>
+                        <div class="flex items-center text-sub">
+                             <button id="search-prev-btn" class="hover:text-main disabled:text-gray-600" title="前の検索結果へ"><i class="fas fa-chevron-left"></i></button>
                              <span id="search-count" class="text-xs px-1">0/0</span>
-                             <button id="search-next-btn" class="hover:text-white disabled:text-gray-600" title="次の検索結果へ"><i class="fas fa-chevron-right"></i></button>
+                             <button id="search-next-btn" class="hover:text-main disabled:text-gray-600" title="次の検索結果へ"><i class="fas fa-chevron-right"></i></button>
                         </div>
-                        <button id="search-history-btn" class="text-gray-400 hover:text-white px-2" title="検索履歴の表示" aria-label="検索履歴の表示"><i class="fas fa-history"></i></button>
-                        <div id="search-history-dropdown" class="hidden absolute top-full left-0 mt-2 w-full bg-gray-800 border border-gray-700 rounded-lg shadow-xl z-30"></div>
+                        <button id="search-history-btn" class="text-sub hover:text-main px-2" title="検索履歴の表示" aria-label="検索履歴の表示"><i class="fas fa-history"></i></button>
+                        <div id="search-history-dropdown" class="hidden absolute top-full left-0 mt-2 w-full bg-panel border border-color rounded-lg shadow-xl z-30"></div>
                     </div>
 
                     <button id="search-exec-btn" class="bg-blue-600 hover:bg-blue-700 text-white p-2 rounded-lg flex-shrink-0 w-10 h-10 flex items-center justify-center" title="検索実行" aria-label="検索実行"><i class="fas fa-search"></i></button>
@@ -147,29 +122,30 @@
                     <!-- Right-aligned action buttons -->
                     <div id="action-buttons-group" class="flex items-center gap-2">
                         <button id="add-new-btn" class="bg-green-600 hover:bg-green-700 text-white font-bold py-2 px-3 rounded-lg flex-shrink-0" title="新規追加"><i class="fas fa-plus"></i></button>
-                        <button id="filter-favorites-btn" class="bg-gray-600 hover:bg-gray-500 text-white font-bold py-2 px-3 rounded-lg flex-shrink-0" title="お気に入りフィルター" aria-label="お気に入りフィルター"><i class="fas fa-star"></i></button>
-                         <button id="clear-selections-btn" class="bg-gray-600 hover:bg-gray-500 text-white font-bold py-2 px-3 rounded-lg flex-shrink-0" title="選択をすべて解除"><i class="fas fa-check-double"></i></button>
-                        <button id="settings-btn" class="bg-gray-600 hover:bg-gray-500 text-white font-bold py-2 px-3 rounded-lg flex-shrink-0" title="設定"><i class="fas fa-cog"></i></button>
+                        <button id="collapse-all-btn" class="bg-btn hover:opacity-80 text-main font-bold py-2 px-3 rounded-lg flex-shrink-0 hidden" title="全疾患の開閉"><i class="fas fa-compress-alt"></i></button>
+                        <button id="filter-favorites-btn" class="bg-btn hover:opacity-80 text-main font-bold py-2 px-3 rounded-lg flex-shrink-0" title="お気に入りフィルター (ダブルタップで選択解除)" aria-label="お気に入りフィルター"><i class="fas fa-star"></i></button>
+                        <button id="clear-selections-btn" class="bg-btn hover:opacity-80 text-main font-bold py-2 px-3 rounded-lg flex-shrink-0" title="選択をすべて解除"><i class="fas fa-check-double"></i></button>
+                        <button id="settings-btn" class="bg-btn hover:opacity-80 text-main font-bold py-2 px-3 rounded-lg flex-shrink-0" title="設定"><i class="fas fa-cog"></i></button>
                        
                         <div class="h-6 border-l border-gray-600 mx-1"></div>
 
                         <button id="random-btn" class="bg-purple-600 hover:bg-purple-700 text-white font-bold py-2 px-3 rounded-lg flex-shrink-0 hidden" title="ランダム表示" aria-label="ランダム表示"><i class="fas fa-dice"></i></button>
-                        <div id="stopwatch" class="bg-gray-700 text-white font-mono text-lg p-2 rounded-lg cursor-pointer flex-shrink-0" title="クリック: スタート/ストップ | 長押し: リセット">00:00</div>
+                        <div id="stopwatch" class="bg-input text-main font-mono text-lg p-2 rounded-lg cursor-pointer flex-shrink-0" title="クリック: スタート/ストップ | 長押し: リセット">00:00</div>
                         <button id="vitals-btn" class="bg-cyan-600 hover:bg-cyan-700 text-white font-bold py-2 px-3 rounded-lg flex-shrink-0" title="バイタル入力" aria-label="バイタル入力モーダルを開く"><i class="fas fa-wave-square"></i></button>
-                        <div class="flex items-center space-x-1 bg-gray-700 p-1 rounded-lg">
-                            <button id="arrival-btn" class="time-btn bg-gray-600 hover:bg-gray-500 text-white font-bold py-1 px-2 rounded-md" title="現着時刻を記録">着</button>
-                            <button id="contact-btn" class="time-btn bg-gray-600 hover:bg-gray-500 text-white font-bold py-1 px-2 rounded-md" title="接触時刻を記録">接</button>
-                            <button id="departure-btn" class="time-btn bg-gray-600 hover:bg-gray-500 text-white font-bold py-1 px-2 rounded-md" title="出発時刻を記録">出</button>
+                        <div class="flex items-center space-x-1 bg-input p-1 rounded-lg">
+                            <button id="arrival-btn" class="time-btn bg-btn hover:opacity-80 text-main font-bold py-1 px-2 rounded-md" title="現着時刻を記録">着</button>
+                            <button id="contact-btn" class="time-btn bg-btn hover:opacity-80 text-main font-bold py-1 px-2 rounded-md" title="接触時刻を記録">接</button>
+                            <button id="departure-btn" class="time-btn bg-btn hover:opacity-80 text-main font-bold py-1 px-2 rounded-md" title="出発時刻を記録">出</button>
                         </div>
-                        <button id="keywords-panel-toggle-btn" class="bg-gray-600 hover:bg-gray-500 text-white font-bold py-2 px-3 rounded-lg flex-shrink-0" aria-label="キーワードパネルを開く"><i class="fas fa-tags fa-lg"></i></button>
+                        <button id="keywords-panel-toggle-btn" class="bg-btn hover:opacity-80 text-main font-bold py-2 px-3 rounded-lg flex-shrink-0" aria-label="キーワードパネルを開く"><i class="fas fa-tags fa-lg"></i></button>
                     </div>
 
                 </div>
                 
                 <div id="vitals-summary-container" class="w-full mt-2 hidden">
                      <div class="flex items-start">
-                        <div id="vitals-summary-area" class="flex flex-wrap gap-x-4 gap-y-1 items-center flex-grow text-gray-300 bg-gray-900/50 p-2 rounded-lg border border-gray-700"></div>
-                         <button id="toggle-vitals-summary-btn" class="ml-2 text-gray-400 hover:text-white p-2 flex-shrink-0" title="バイタル概要の表示切替" aria-label="バイタル概要の表示切替"><i class="fas fa-chevron-up toggle-chevron"></i></button>
+                        <div id="vitals-summary-area" class="flex flex-wrap gap-x-4 gap-y-1 items-center flex-grow text-sub bg-card p-2 rounded-lg border border-color"></div>
+                         <button id="toggle-vitals-summary-btn" class="ml-2 text-sub hover:text-main p-2 flex-shrink-0" title="バイタル概要の表示切替" aria-label="バイタル概要の表示切替"><i class="fas fa-chevron-up toggle-chevron"></i></button>
                     </div>
                  </div>
             </header>
@@ -177,20 +153,20 @@
             <div id="content-area" class="flex-1 overflow-y-auto p-2 sm:p-4">
                  <div id="loading" class="text-center p-8">
                     <i class="fas fa-spinner fa-spin text-4xl text-blue-500"></i>
-                    <p class="mt-4 text-gray-400">データを読み込んでいます...</p>
+                    <p class="mt-4 text-sub">データを読み込んでいます...</p>
                 </div>
             </div>
             
-            <footer class="bg-gray-800 p-2 text-center text-xs text-gray-500">
+            <footer class="bg-panel p-2 text-center text-xs text-sub">
                 UserID: <span id="user-id-display">未ログイン</span>
             </footer>
         </main>
 
         <!-- キーワードパネル -->
-        <aside id="keywords-panel-right" class="w-64 bg-gray-800 flex flex-col fixed top-0 right-0 h-full z-40 transform translate-x-full transition-transform shadow-lg">
-            <div class="p-4 border-b border-gray-700 flex justify-between items-center">
-                <h3 class="text-lg font-bold text-white">キーワードフィルター</h3>
-                <button id="keywords-panel-close-btn" class="text-gray-400 hover:text-white"><i class="fas fa-times fa-lg"></i></button>
+        <aside id="keywords-panel-right" class="bg-panel w-64 flex flex-col fixed top-0 right-0 h-full z-40 transform translate-x-full transition-transform shadow-lg">
+            <div class="p-4 border-b border-color flex justify-between items-center">
+                <h3 class="text-lg font-bold text-main">キーワードフィルター</h3>
+                <button id="keywords-panel-close-btn" class="text-sub hover:text-main"><i class="fas fa-times fa-lg"></i></button>
             </div>
             <div id="keywords-panel-content-area" class="flex-1 p-4 space-y-4 overflow-y-auto"></div>
         </aside>
@@ -199,34 +175,34 @@
 
     <!-- Modals -->
     <div id="vitals-modal" class="modal hidden fixed inset-0 bg-black bg-opacity-80 flex items-center justify-center z-50 p-4">
-        <div class="bg-gray-800 rounded-lg shadow-xl w-full max-w-4xl max-h-[90vh] flex flex-col text-gray-200">
-            <header class="p-4 border-b border-gray-700 flex justify-between items-center">
+        <div class="bg-panel rounded-lg shadow-xl w-full max-w-4xl max-h-[90vh] flex flex-col text-main">
+            <header class="p-4 border-b border-color flex justify-between items-center">
                 <h2 class="text-xl font-bold text-cyan-400 flex items-center"><i class="fas fa-wave-square mr-3"></i>バイタルサイン入力</h2>
-                <button id="vitals-modal-close-btn" class="text-gray-400 hover:text-white"><i class="fas fa-times fa-lg"></i></button>
+                <button id="vitals-modal-close-btn" class="text-sub hover:text-main"><i class="fas fa-times fa-lg"></i></button>
             </header>
             <main class="p-4 flex-1 overflow-y-auto">
                 <form id="vitals-form" class="space-y-6">
-                    <div class="bg-gray-900 p-4 rounded-lg">
-                        <div class="flex justify-between items-center border-b border-gray-700 pb-2 mb-4">
+                    <div class="bg-main p-4 rounded-lg">
+                        <div class="flex justify-between items-center border-b border-color pb-2 mb-4">
                            <h3 class="font-bold text-lg">外観・様子</h3>
-                           <button type="button" id="edit-appearance-tags-btn" class="text-gray-400 hover:text-white"><i class="fas fa-edit"></i></button>
+                           <button type="button" id="edit-appearance-tags-btn" class="text-sub hover:text-main"><i class="fas fa-edit"></i></button>
                         </div>
                         <div id="vitals-appearance-tags" class="flex flex-wrap gap-2"></div>
                     </div>
-                    <div class="bg-gray-900 p-4 rounded-lg">
-                        <div class="flex justify-between items-center border-b border-gray-700 pb-2 mb-4">
+                    <div class="bg-main p-4 rounded-lg">
+                        <div class="flex justify-between items-center border-b border-color pb-2 mb-4">
                             <h3 class="font-bold text-lg">心電図所見</h3>
-                            <button type="button" id="edit-ecg-tags-btn" class="text-gray-400 hover:text-white"><i class="fas fa-edit"></i></button>
+                            <button type="button" id="edit-ecg-tags-btn" class="text-sub hover:text-main"><i class="fas fa-edit"></i></button>
                         </div>
                         <div id="vitals-ecg-tags" class="flex flex-wrap gap-2"></div>
                         <div>
                             <label for="ecg-memo" class="text-sm mt-4 block">心電図自由記載</label>
-                            <textarea name="ecg_memo" id="ecg-memo" rows="2" class="w-full bg-gray-700 p-2 rounded-md mt-1"></textarea>
+                            <textarea name="ecg_memo" id="ecg-memo" rows="2" class="w-full bg-input p-2 rounded-md mt-1"></textarea>
                         </div>
                     </div>
                     <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
-                        <div class="space-y-4 bg-gray-900 p-4 rounded-lg">
-                            <h3 class="font-bold text-lg border-b border-gray-700 pb-2">意識レベル</h3>
+                        <div class="space-y-4 bg-main p-4 rounded-lg">
+                            <h3 class="font-bold text-lg border-b border-color pb-2">意識レベル</h3>
                             <div>
                                 <label class="block text-sm font-medium mb-2">JCS (Japan Coma Scale)</label>
                                 <div id="vitals-jcs-group" class="grid grid-cols-4 sm:grid-cols-5 gap-2"></div>
@@ -234,20 +210,20 @@
                             <div>
                                 <label class="block text-sm font-medium mb-2">GCS (Glasgow Coma Scale) - <span id="gcs-total" class="font-bold">3</span>点</label>
                                 <div class="space-y-2">
-                                    <select id="gcs-e-select" name="gcs_e" class="gcs-select w-full bg-gray-700 p-2 rounded-md border border-gray-600 focus:ring-2 focus:ring-blue-500"></select>
-                                    <select id="gcs-v-select" name="gcs_v" class="gcs-select w-full bg-gray-700 p-2 rounded-md border border-gray-600 focus:ring-2 focus:ring-blue-500"></select>
-                                    <select id="gcs-m-select" name="gcs_m" class="gcs-select w-full bg-gray-700 p-2 rounded-md border border-gray-600 focus:ring-2 focus:ring-blue-500"></select>
+                                    <select id="gcs-e-select" name="gcs_e" class="gcs-select w-full bg-input p-2 rounded-md border border-color focus:ring-2 focus:ring-blue-500"></select>
+                                    <select id="gcs-v-select" name="gcs_v" class="gcs-select w-full bg-input p-2 rounded-md border border-color focus:ring-2 focus:ring-blue-500"></select>
+                                    <select id="gcs-m-select" name="gcs_m" class="gcs-select w-full bg-input p-2 rounded-md border border-color focus:ring-2 focus:ring-blue-500"></select>
                                 </div>
                             </div>
                         </div>
 
-                        <div class="space-y-4 bg-gray-900 p-4 rounded-lg">
-                             <h3 class="font-bold text-lg border-b border-gray-700 pb-2">呼吸・循環</h3>
+                        <div class="space-y-4 bg-main p-4 rounded-lg">
+                             <h3 class="font-bold text-lg border-b border-color pb-2">呼吸・循環</h3>
                              <div class="grid grid-cols-2 gap-4">
-                                <div><label for="resp-rate" class="text-sm">呼吸数</label><input name="resp" type="number" id="resp-rate" class="w-full bg-gray-700 p-2 mt-1 rounded-md border border-transparent" placeholder="回/分"></div>
-                                <div><label for="spo2" class="text-sm">SpO2</label><input name="spo2" type="number" id="spo2" class="w-full bg-gray-700 p-2 mt-1 rounded-md border border-transparent" placeholder="%"></div>
-                                <div><label for="pulse-rate" class="text-sm">脈拍数</label><input name="pulse" type="number" id="pulse-rate" class="w-full bg-gray-700 p-2 mt-1 rounded-md border border-transparent" placeholder="回/分"></div>
-                                <div><label for="body-temp" class="text-sm">体温</label><input name="temp" type="number" step="0.1" id="body-temp" class="w-full bg-gray-700 p-2 mt-1 rounded-md border border-transparent" placeholder="℃"></div>
+                                <div><label for="resp-rate" class="text-sm">呼吸数</label><input name="resp" type="number" id="resp-rate" class="w-full bg-input p-2 mt-1 rounded-md border border-transparent" placeholder="回/分"></div>
+                                <div><label for="spo2" class="text-sm">SpO2</label><input name="spo2" type="number" id="spo2" class="w-full bg-input p-2 mt-1 rounded-md border border-transparent" placeholder="%"></div>
+                                <div><label for="pulse-rate" class="text-sm">脈拍数</label><input name="pulse" type="number" id="pulse-rate" class="w-full bg-input p-2 mt-1 rounded-md border border-transparent" placeholder="回/分"></div>
+                                <div><label for="body-temp" class="text-sm">体温</label><input name="temp" type="number" step="0.1" id="body-temp" class="w-full bg-input p-2 mt-1 rounded-md border border-transparent" placeholder="℃"></div>
                              </div>
                              <div>
                                 <h4 class="block text-sm font-medium mt-4">血圧 (mmHg)</h4>
@@ -255,44 +231,44 @@
                                     <div class="space-y-2 relative">
                                         <div id="pulse-pressure-r" class="absolute right-0 top-0 text-xs"></div>
                                         <label for="bp-sys-r" class="text-xs">収縮期 (右)</label>
-                                        <input name="bp_sys_r" type="number" id="bp-sys-r" class="w-full bg-gray-700 p-2 rounded-md border border-transparent" placeholder="Sys">
+                                        <input name="bp_sys_r" type="number" id="bp-sys-r" class="w-full bg-input p-2 rounded-md border border-transparent" placeholder="Sys">
                                         <label for="bp-dia-r" class="text-xs">拡張期 (右)</label>
-                                        <input name="bp_dia_r" type="number" id="bp-dia-r" class="w-full bg-gray-700 p-2 rounded-md border border-transparent" placeholder="Dia">
+                                        <input name="bp_dia_r" type="number" id="bp-dia-r" class="w-full bg-input p-2 rounded-md border border-transparent" placeholder="Dia">
                                     </div>
                                     <div class="space-y-2 relative">
                                         <div id="pulse-pressure-l" class="absolute right-0 top-0 text-xs"></div>
                                         <label for="bp-sys-l" class="text-xs">収縮期 (左)</label>
-                                        <input name="bp_sys_l" type="number" id="bp-sys-l" class="w-full bg-gray-700 p-2 rounded-md border border-transparent" placeholder="Sys">
+                                        <input name="bp_sys_l" type="number" id="bp-sys-l" class="w-full bg-input p-2 rounded-md border border-transparent" placeholder="Sys">
                                         <label for="bp-dia-l" class="text-xs">拡張期 (左)</label>
-                                        <input name="bp_dia_l" type="number" id="bp-dia_l" class="w-full bg-gray-700 p-2 rounded-md border border-transparent" placeholder="Dia">
+                                        <input name="bp_dia_l" type="number" id="bp-dia_l" class="w-full bg-input p-2 rounded-md border border-transparent" placeholder="Dia">
                                     </div>
                                 </div>
                              </div>
                         </div>
 
-                        <div class="space-y-4 bg-gray-900 p-4 rounded-lg md:col-span-2">
-                            <h3 class="font-bold text-lg border-b border-gray-700 pb-2 mb-4">瞳孔</h3>
+                        <div class="space-y-4 bg-main p-4 rounded-lg md:col-span-2">
+                            <h3 class="font-bold text-lg border-b border-color pb-2 mb-4">瞳孔</h3>
                             <div class="grid grid-cols-1 sm:grid-cols-2 gap-6">
                                 <div class="space-y-4">
                                     <h4 class="font-bold text-center text-lg">右 (R)</h4>
                                     <div>
                                         <label for="pupil-size-r" class="text-sm font-medium">瞳孔サイズ (mm)</label>
-                                        <input type="number" id="pupil-size-r" name="pupil_size_r" min="1" max="10" step="0.5" placeholder="mm" class="w-full bg-gray-700 p-2 mt-1 rounded-md border border-gray-600 focus:ring-2 focus:ring-blue-500">
+                                        <input type="number" id="pupil-size-r" name="pupil_size_r" min="1" max="10" step="0.5" placeholder="mm" class="w-full bg-input p-2 mt-1 rounded-md border border-color focus:ring-2 focus:ring-blue-500">
                                     </div>
                                     <div>
                                         <label for="pupil-reflex-r" class="text-sm font-medium">対光反射</label>
-                                        <select id="pupil-reflex-r" name="pupil_reflex_r" class="gcs-select w-full bg-gray-700 p-2 mt-1 rounded-md border border-gray-600 focus:ring-2 focus:ring-blue-500"></select>
+                                        <select id="pupil-reflex-r" name="pupil_reflex_r" class="gcs-select w-full bg-input p-2 mt-1 rounded-md border border-color focus:ring-2 focus:ring-blue-500"></select>
                                     </div>
                                 </div>
                                 <div class="space-y-4">
                                     <h4 class="font-bold text-center text-lg">左 (L)</h4>
                                     <div>
                                         <label for="pupil-size-l" class="text-sm font-medium">瞳孔サイズ (mm)</label>
-                                        <input type="number" id="pupil-size-l" name="pupil_size_l" min="1" max="10" step="0.5" placeholder="mm" class="w-full bg-gray-700 p-2 mt-1 rounded-md border border-gray-600 focus:ring-2 focus:ring-blue-500">
+                                        <input type="number" id="pupil-size-l" name="pupil_size_l" min="1" max="10" step="0.5" placeholder="mm" class="w-full bg-input p-2 mt-1 rounded-md border border-color focus:ring-2 focus:ring-blue-500">
                                     </div>
                                     <div>
                                         <label for="pupil-reflex-l" class="text-sm font-medium">対光反射</label>
-                                        <select id="pupil-reflex-l" name="pupil_reflex_l" class="gcs-select w-full bg-gray-700 p-2 mt-1 rounded-md border border-gray-600 focus:ring-2 focus:ring-blue-500"></select>
+                                        <select id="pupil-reflex-l" name="pupil_reflex_l" class="gcs-select w-full bg-input p-2 mt-1 rounded-md border border-color focus:ring-2 focus:ring-blue-500"></select>
                                     </div>
                                 </div>
                             </div>
@@ -300,7 +276,7 @@
                     </div>
                 </form>
             </main>
-            <footer class="p-4 border-t border-gray-700 flex justify-end items-center gap-3">
+            <footer class="p-4 border-t border-color flex justify-end items-center gap-3">
                 <button id="vitals-clear-btn" class="bg-red-800 hover:bg-red-700 text-white font-bold py-2 px-4 rounded-lg">クリア</button>
                 <button id="vitals-save-btn" class="bg-blue-600 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded-lg">保存して閉じる</button>
             </footer>
@@ -308,10 +284,10 @@
     </div>
     
     <div id="settings-modal" class="modal hidden fixed inset-0 bg-black bg-opacity-70 flex items-center justify-center z-50 p-4">
-         <div class="bg-gray-800 rounded-lg shadow-xl w-full max-w-md text-gray-200">
-            <header class="p-4 border-b border-gray-700 flex justify-between items-center">
-                <h2 class="text-xl font-bold text-gray-300 flex items-center"><i class="fas fa-cog mr-3"></i>設定</h2>
-                <button id="settings-modal-close-btn" class="text-gray-400 hover:text-white"><i class="fas fa-times fa-lg"></i></button>
+         <div class="bg-panel rounded-lg shadow-xl w-full max-w-md text-main">
+            <header class="p-4 border-b border-color flex justify-between items-center">
+                <h2 class="text-xl font-bold flex items-center"><i class="fas fa-cog mr-3"></i>設定</h2>
+                <button id="settings-modal-close-btn" class="text-sub hover:text-main"><i class="fas fa-times fa-lg"></i></button>
             </header>
             <main class="p-6 space-y-6">
                 <div>
@@ -323,7 +299,7 @@
                  <div>
                     <h3 class="font-semibold mb-2">バイタル履歴</h3>
                     <div class="flex gap-2">
-                        <button id="view-vitals-history-btn" class="flex-1 bg-gray-600 hover:bg-gray-500 text-white font-bold py-2 px-4 rounded-lg"><i class="fas fa-history mr-2"></i>履歴を表示</button>
+                        <button id="view-vitals-history-btn" class="flex-1 bg-btn hover:opacity-80 text-main font-bold py-2 px-4 rounded-lg"><i class="fas fa-history mr-2"></i>履歴を表示</button>
                         <button id="clear-vitals-history-btn" class="flex-1 bg-red-800 hover:bg-red-700 text-white font-bold py-2 px-4 rounded-lg"><i class="fas fa-trash-alt mr-2"></i>履歴を全消去</button>
                     </div>
                 </div>
@@ -338,7 +314,21 @@
                 </div>
                 <div>
                     <h3 class="font-semibold mb-2">表示設定</h3>
-                    <div class="bg-gray-700/50 p-4 rounded-lg space-y-4">
+                    <div class="bg-main p-4 rounded-lg space-y-4">
+                        <div class="flex items-center justify-between">
+                            <label for="theme-switch-toggle" class="font-medium">ライトモード</label>
+                            <label class="relative inline-flex items-center cursor-pointer">
+                                <input type="checkbox" id="theme-switch-toggle" class="sr-only peer">
+                                <div class="w-11 h-6 bg-gray-600 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-blue-600"></div>
+                            </label>
+                        </div>
+                        <div class="flex items-center justify-between">
+                            <label for="show-collapse-btn-toggle" class="font-medium">「一括開閉」ボタンを表示</label>
+                            <label class="relative inline-flex items-center cursor-pointer">
+                                <input type="checkbox" id="show-collapse-btn-toggle" class="sr-only peer">
+                                <div class="w-11 h-6 bg-gray-600 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-blue-600"></div>
+                            </label>
+                        </div>
                          <div class="flex items-center justify-between">
                             <label for="show-random-btn-toggle" class="font-medium">「ランダム表示」ボタンを表示</label>
                             <label class="relative inline-flex items-center cursor-pointer">
@@ -348,10 +338,10 @@
                         </div>
                         <div class="flex items-center justify-between">
                             <span class="font-medium">フォントサイズ</span>
-                            <div id="font-size-controls" class="flex items-center bg-gray-600 rounded-lg p-1">
-                                <button data-size="sm" class="font-size-btn px-3 py-1 text-sm rounded-md hover:bg-gray-500">小</button>
-                                <button data-size="base" class="font-size-btn px-3 py-1 text-sm rounded-md hover:bg-gray-500 active">中</button>
-                                <button data-size="lg" class="font-size-btn px-3 py-1 text-sm rounded-md hover:bg-gray-500">大</button>
+                            <div id="font-size-controls" class="flex items-center bg-input rounded-lg p-1">
+                                <button data-size="sm" class="font-size-btn px-3 py-1 text-sm rounded-md hover:opacity-80">小</button>
+                                <button data-size="base" class="font-size-btn px-3 py-1 text-sm rounded-md hover:opacity-80 active">中</button>
+                                <button data-size="lg" class="font-size-btn px-3 py-1 text-sm rounded-md hover:opacity-80">大</button>
                             </div>
                         </div>
                     </div>
@@ -361,34 +351,34 @@
     </div>
     
     <div id="data-modal" class="modal hidden fixed inset-0 bg-black bg-opacity-70 flex items-center justify-center z-50 p-4">
-         <div class="bg-gray-800 rounded-lg shadow-xl w-full max-w-2xl max-h-[90vh] flex flex-col">
-            <header class="p-4 border-b border-gray-700 flex justify-between items-center">
+         <div class="bg-panel rounded-lg shadow-xl w-full max-w-2xl max-h-[90vh] flex flex-col">
+            <header class="p-4 border-b border-color flex justify-between items-center">
                 <h2 id="modal-title" class="text-xl font-bold"></h2>
-                <button id="modal-close-btn" class="text-gray-400 hover:text-white"><i class="fas fa-times fa-lg"></i></button>
+                <button id="modal-close-btn" class="text-sub hover:text-main"><i class="fas fa-times fa-lg"></i></button>
             </header>
             <main class="p-4 flex-1 overflow-y-auto">
                 <form id="data-form" class="space-y-4">
                     <input type="hidden" id="entry-id">
                     <div>
                         <label for="chief-complaint" class="block font-medium mb-1">主訴</label>
-                        <input type="text" id="chief-complaint" class="w-full bg-gray-700 p-2 rounded-md" required>
+                        <input type="text" id="chief-complaint" class="w-full bg-input p-2 rounded-md" required>
                     </div>
                      <div>
                         <label for="chief-complaint-description" class="block font-medium mb-1">主訴の説明</label>
-                        <textarea id="chief-complaint-description" rows="2" class="w-full bg-gray-700 p-2 rounded-md"></textarea>
+                        <textarea id="chief-complaint-description" rows="2" class="w-full bg-input p-2 rounded-md"></textarea>
                     </div>
                     <div>
                         <label for="chief-complaint-memo" class="block font-medium mb-1">主訴メモ</label>
-                        <textarea id="chief-complaint-memo" rows="2" class="w-full bg-gray-700 p-2 rounded-md"></textarea>
+                        <textarea id="chief-complaint-memo" rows="2" class="w-full bg-input p-2 rounded-md"></textarea>
                     </div>
-                    <div class="border-t border-gray-700 pt-4">
+                    <div class="border-t border-color pt-4">
                         <h3 class="text-lg font-semibold mb-2">鑑別疾患</h3>
                         <div id="diseases-container" class="space-y-4"></div>
                         <button type="button" id="add-disease-btn" class="mt-4 bg-blue-600 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded-lg"><i class="fas fa-plus mr-2"></i>疾患を追加</button>
                     </div>
                 </form>
             </main>
-            <footer class="p-4 border-t border-gray-700 flex justify-between">
+            <footer class="p-4 border-t border-color flex justify-between">
                 <button type="button" id="delete-btn" class="bg-red-800 hover:bg-red-700 text-white font-bold py-2 px-4 rounded-lg">削除</button>
                 <button type="submit" form="data-form" class="bg-green-600 hover:bg-green-700 text-white font-bold py-2 px-4 rounded-lg">保存</button>
             </footer>
@@ -396,44 +386,44 @@
     </div>
     
     <div id="confirm-modal" class="modal hidden fixed inset-0 bg-black bg-opacity-80 flex items-center justify-center z-50 p-4">
-        <div class="bg-gray-800 rounded-lg shadow-xl w-full max-w-sm">
+        <div class="bg-panel rounded-lg shadow-xl w-full max-w-sm">
             <div class="p-6 text-center">
                 <div id="alert-icon" class="mx-auto mb-4"></div>
                 <h3 id="confirm-title" class="text-lg font-bold mb-2"></h3>
-                <p id="confirm-message" class="text-sm text-gray-300"></p>
+                <p id="confirm-message" class="text-sm text-sub"></p>
             </div>
-            <div id="confirm-buttons" class="bg-gray-700/50 p-4 flex justify-end gap-3 rounded-b-lg"></div>
+            <div id="confirm-buttons" class="bg-input p-4 flex justify-end gap-3 rounded-b-lg"></div>
         </div>
     </div>
     
     <div id="compare-modal" class="modal hidden fixed inset-0 bg-black bg-opacity-80 flex items-center justify-center z-50 p-4">
-        <div class="bg-gray-800 rounded-lg shadow-xl w-full max-w-4xl max-h-[90vh] flex flex-col">
-            <header class="p-4 border-b border-gray-700 flex justify-between items-center">
+        <div class="bg-panel rounded-lg shadow-xl w-full max-w-4xl max-h-[90vh] flex flex-col">
+            <header class="p-4 border-b border-color flex justify-between items-center">
                 <h2 class="text-xl font-bold text-indigo-400 flex items-center"><i class="fas fa-exchange-alt mr-3"></i>疾患の比較</h2>
-                <button id="compare-modal-close-btn" class="text-gray-400 hover:text-white"><i class="fas fa-times fa-lg"></i></button>
+                <button id="compare-modal-close-btn" class="text-sub hover:text-main"><i class="fas fa-times fa-lg"></i></button>
             </header>
             <main id="compare-modal-body" class="p-4 flex-1 overflow-y-auto"></main>
         </div>
     </div>
 
     <div id="dob-era-modal" class="modal hidden fixed inset-0 bg-black bg-opacity-70 flex items-center justify-center z-50 p-4">
-         <div class="bg-gray-800 rounded-lg shadow-xl w-full max-w-sm">
-            <header class="p-4 border-b border-gray-700 flex justify-between items-center">
+         <div class="bg-panel rounded-lg shadow-xl w-full max-w-sm">
+            <header class="p-4 border-b border-color flex justify-between items-center">
                 <h2 class="text-xl font-bold">生年月日から計算</h2>
-                <button id="dob-modal-close-btn" class="text-gray-400 hover:text-white"><i class="fas fa-times fa-lg"></i></button>
+                <button id="dob-modal-close-btn" class="text-sub hover:text-main"><i class="fas fa-times fa-lg"></i></button>
             </header>
             <main class="p-6 space-y-4">
                 <div class="grid grid-cols-5 gap-2" id="era-buttons">
-                    <button class="era-btn bg-gray-600 p-2 rounded-md" data-era="M">明治</button>
-                    <button class="era-btn bg-gray-600 p-2 rounded-md" data-era="T">大正</button>
-                    <button class="era-btn bg-gray-600 p-2 rounded-md" data-era="S">昭和</button>
-                    <button class="era-btn bg-gray-600 p-2 rounded-md" data-era="H">平成</button>
-                    <button class="era-btn bg-gray-600 p-2 rounded-md" data-era="R">令和</button>
+                    <button class="era-btn bg-btn p-2 rounded-md" data-era="M">明治</button>
+                    <button class="era-btn bg-btn p-2 rounded-md" data-era="T">大正</button>
+                    <button class="era-btn bg-btn p-2 rounded-md" data-era="S">昭和</button>
+                    <button class="era-btn bg-btn p-2 rounded-md" data-era="H">平成</button>
+                    <button class="era-btn bg-btn p-2 rounded-md" data-era="R">令和</button>
                 </div>
                 <div class="flex items-center gap-2">
-                    <input type="number" id="era-year" class="w-full bg-gray-700 p-2 rounded-md" placeholder="年">
-                    <input type="number" id="era-month" class="w-full bg-gray-700 p-2 rounded-md" placeholder="月">
-                    <input type="number" id="era-day" class="w-full bg-gray-700 p-2 rounded-md" placeholder="日">
+                    <input type="number" id="era-year" class="w-full bg-input p-2 rounded-md" placeholder="年">
+                    <input type="number" id="era-month" class="w-full bg-input p-2 rounded-md" placeholder="月">
+                    <input type="number" id="era-day" class="w-full bg-input p-2 rounded-md" placeholder="日">
                 </div>
                 <button id="dob-calc-btn" class="w-full bg-blue-600 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded-lg">年齢を計算</button>
             </main>
@@ -441,15 +431,15 @@
     </div>
 
     <div id="tag-editor-modal" class="modal hidden fixed inset-0 bg-black bg-opacity-80 flex items-center justify-center z-50 p-4">
-         <div class="bg-gray-800 rounded-lg shadow-xl w-full max-w-md">
-            <header class="p-4 border-b border-gray-700 flex justify-between items-center">
+         <div class="bg-panel rounded-lg shadow-xl w-full max-w-md">
+            <header class="p-4 border-b border-color flex justify-between items-center">
                 <h2 id="tag-editor-title" class="text-xl font-bold">タグの編集</h2>
-                <button id="tag-editor-close-btn" class="text-gray-400 hover:text-white"><i class="fas fa-times fa-lg"></i></button>
+                <button id="tag-editor-close-btn" class="text-sub hover:text-main"><i class="fas fa-times fa-lg"></i></button>
             </header>
             <main class="p-6 space-y-4">
                 <div id="tag-editor-list" class="space-y-2 max-h-60 overflow-y-auto"></div>
-                <div class="flex gap-2 pt-4 border-t border-gray-600">
-                    <input type="text" id="new-tag-input" class="w-full bg-gray-700 p-2 rounded-md" placeholder="新しいタグを追加...">
+                <div class="flex gap-2 pt-4 border-t border-color">
+                    <input type="text" id="new-tag-input" class="w-full bg-input p-2 rounded-md" placeholder="新しいタグを追加...">
                     <button id="add-tag-btn" class="bg-green-600 hover:bg-green-700 text-white font-bold py-2 px-4 rounded-lg">追加</button>
                 </div>
             </main>
@@ -457,10 +447,10 @@
     </div>
 
     <div id="vitals-history-modal" class="modal hidden fixed inset-0 bg-black bg-opacity-80 flex items-center justify-center z-50 p-4">
-         <div class="bg-gray-800 rounded-lg shadow-xl w-full max-w-2xl max-h-[90vh] flex flex-col">
-            <header class="p-4 border-b border-gray-700 flex justify-between items-center">
+         <div class="bg-panel rounded-lg shadow-xl w-full max-w-2xl max-h-[90vh] flex flex-col">
+            <header class="p-4 border-b border-color flex justify-between items-center">
                 <h2 class="text-xl font-bold">バイタル履歴</h2>
-                <button id="vitals-history-close-btn" class="text-gray-400 hover:text-white"><i class="fas fa-times fa-lg"></i></button>
+                <button id="vitals-history-close-btn" class="text-sub hover:text-main"><i class="fas fa-times fa-lg"></i></button>
             </header>
             <main id="vitals-history-list" class="p-4 flex-1 overflow-y-auto space-y-4">
                 <!-- History items will be injected here -->
@@ -469,15 +459,15 @@
     </div>
     
     <div id="vitals-settings-modal" class="modal hidden fixed inset-0 bg-black bg-opacity-80 flex items-center justify-center z-50 p-4">
-         <div class="bg-gray-800 rounded-lg shadow-xl w-full max-w-7xl max-h-[90vh] flex flex-col">
-            <header class="p-4 border-b border-gray-700 flex justify-between items-center">
+         <div class="bg-panel rounded-lg shadow-xl w-full max-w-7xl max-h-[90vh] flex flex-col">
+            <header class="p-4 border-b border-color flex justify-between items-center">
                 <h2 class="text-xl font-bold">バイタルアラート設定</h2>
-                <button id="vitals-settings-close-btn" class="text-gray-400 hover:text-white"><i class="fas fa-times fa-lg"></i></button>
+                <button id="vitals-settings-close-btn" class="text-sub hover:text-main"><i class="fas fa-times fa-lg"></i></button>
             </header>
             <main class="p-4 flex-1 overflow-auto">
                 <div id="vitals-settings-table-container" class="w-full text-sm"></div>
             </main>
-            <footer class="p-4 border-t border-gray-700 flex justify-between items-center">
+            <footer class="p-4 border-t border-color flex justify-between items-center">
                  <div class="flex gap-4">
                     <button id="vitals-settings-add-row-btn" class="bg-green-600 hover:bg-green-700 text-white font-bold py-2 px-4 rounded-lg">年齢区分を追加</button>
                     <button id="vitals-settings-reset-btn" class="bg-yellow-600 hover:bg-yellow-700 text-white font-bold py-2 px-4 rounded-lg">初期値に戻す</button>
@@ -500,6 +490,8 @@
                     maxHistoryItems: 15,
                     storageKeys: {
                         showRandomBtn: `paramedic_app_show_random_button`,
+                        showCollapseBtn: `paramedic_app_show_collapse_button`,
+                        theme: `paramedic_app_theme`,
                         fontSize: `paramedic_app_font_size`,
                         vitals: `paramedic_app_vitals`,
                         tempMemo: `paramedic_app_temp_memo`,
@@ -511,6 +503,7 @@
                     },
                     stopwatchResetDelay: 700,
                     swipeThreshold: 50,
+                    doubleTapDelay: 300,
                     firebaseConfig: null,
                     appId: 'default-app-id',
                     gcsOptions: {
@@ -535,7 +528,8 @@
                     db: null, auth: null, userId: null, dataStore: [], isLoading: true,
                     intersectionObserver: null,
                     filters: { searchTerm: '', activeKeywords: new Set(), keywordMode: 'OR', isFavoritesOnly: false, sortBy: 'name' },
-                    ui: { selectedItems: new Set(), highlightedElements: [], currentHighlightIndex: -1 },
+                    ui: { selectedItems: new Set(), highlightedElements: [], currentHighlightIndex: -1, isAllCollapsed: false },
+                    settings: { showRandomBtn: false, showCollapseBtn: false, theme: 'dark' },
                     stopwatch: { interval: null, isRunning: false, elapsedSeconds: 0, pressTimer: null },
                     vitals: {},
                     sidebar: { touchStartX: 0, touchCurrentX: 0, isDragging: false },
@@ -543,13 +537,14 @@
                     customEcgTags: [],
                     vitalsHistory: [],
                     vitalThresholds: [],
+                    lastTap: 0,
                 },
                 init() {
                     this.cacheDomElements();
                     this.utils.initFirebaseConfig();
                     this.services.auth.init();
                     this.bindEventListeners();
-                    this.pwa.init(); // Initialize PWA features
+                    this.pwa.init(); 
                     Object.values(this.components).forEach(component => component.init?.());
                 },
                 cacheDomElements() {
@@ -567,6 +562,7 @@
                         sidebarBackdrop: D.getElementById('sidebar-backdrop'),
                         // Header Buttons
                         addNewBtn: D.getElementById('add-new-btn'),
+                        collapseAllBtn: D.getElementById('collapse-all-btn'),
                         filterFavoritesBtn: D.getElementById('filter-favorites-btn'),
                         clearSelectionsBtn: D.getElementById('clear-selections-btn'),
                         settingsBtn: D.getElementById('settings-btn'),
@@ -626,6 +622,8 @@
                         exportCsvBtn: D.getElementById('export-csv-btn'),
                         importCsvBtn: D.getElementById('import-csv-btn'),
                         importCsvInput: D.getElementById('import-csv-input'),
+                        themeSwitchToggle: D.getElementById('theme-switch-toggle'),
+                        showCollapseBtnToggle: D.getElementById('show-collapse-btn-toggle'),
                         showRandomBtnToggle: D.getElementById('show-random-btn-toggle'),
                         fontSizeControls: D.getElementById('font-size-controls'),
                         nextCaseBtn: D.getElementById('next-case-btn'),
@@ -692,11 +690,11 @@
                     el.searchPrevBtn.addEventListener('click', () => this.renderer.search.navigateToHighlight(-1));
                     
                     el.contentArea.addEventListener('click', e => h.handleContentAreaClick(e));
-                    el.contentArea.addEventListener('change', e => h.handleCheckboxChange(e));
                     el.navScrollArea.addEventListener('change', e => h.handleCheckboxChange(e));
 
                     el.addNewBtn.addEventListener('click', () => this.components.dataModal.openForNew());
-                    el.filterFavoritesBtn.addEventListener('click', () => h.handleToggleFavoritesFilter());
+                    el.collapseAllBtn.addEventListener('click', () => h.handleCollapseAll());
+                    el.filterFavoritesBtn.addEventListener('click', (e) => h.handleFavoriteFilterClick(e));
                     el.clearSelectionsBtn.addEventListener('click', () => h.handleClearAllSelections());
                     el.settingsBtn.addEventListener('click', () => this.components.settings.open());
 
@@ -741,8 +739,22 @@
                         const allComplaintCards = App.elements.contentArea.querySelectorAll('.content-card');
                         if (allComplaintCards.length > 0) {
                             const randomIndex = Math.floor(Math.random() * allComplaintCards.length);
-                            allComplaintCards[randomIndex].scrollIntoView({ behavior: 'smooth', block: 'center' });
+                            allComplaintCards[randomIndex].scrollIntoView({ behavior: 'smooth', block: 'start' });
                         }
+                    },
+                    handleCollapseAll() {
+                        App.state.ui.isAllCollapsed = !App.state.ui.isAllCollapsed;
+                        App.renderer.renderAll();
+                    },
+                    handleFavoriteFilterClick(e) {
+                         const currentTime = new Date().getTime();
+                         if(currentTime - App.state.lastTap < App.config.doubleTapDelay) {
+                            this.handleClearAllSelections();
+                            App.state.lastTap = 0; // Prevent further double taps
+                         } else {
+                            this.handleToggleFavoritesFilter();
+                         }
+                         App.state.lastTap = currentTime;
                     },
                     handleToggleFavoritesFilter() {
                         App.state.filters.isFavoritesOnly = !App.state.filters.isFavoritesOnly;
@@ -793,9 +805,9 @@
                             App.state.ui.selectedItems.delete(uniqueId);
                         }
                         
-                        const allCheckboxes = document.querySelectorAll(`.item-checkbox[data-id='${id}']${name ? `[data-name='${name}']` : ''}, .nav-item-checkbox[data-id='${id}']`);
-                        allCheckboxes.forEach(cb => { if (cb.checked !== checkbox.checked) cb.checked = checkbox.checked; });
-                        
+                        const navCheckboxes = document.querySelectorAll(`.nav-item-checkbox[data-id='${id}']`);
+                        navCheckboxes.forEach(cb => { if(cb !== checkbox) cb.checked = checkbox.checked });
+
                         App.renderer.renderAll();
                     },
                      handleKeywordLogicToggle() {
@@ -939,8 +951,8 @@
                 renderer: {
                     renderAll() {
                         const dataToRender = this.filterAndSortData();
+                        this.renderNav(); 
                         this.renderContent(dataToRender);
-                        this.renderNav(); // Always render the full navigation
                         this.renderKeywordsPanel();
                         this.renderVitalsSummary();
                         this.search.collectAndNavigateHighlights();
@@ -950,7 +962,6 @@
                         const { dataStore, filters, ui } = App.state;
                         let processedData = JSON.parse(JSON.stringify(dataStore));
                     
-                        // Filter by selected complaint checkboxes
                         const selectedComplaintIds = new Set();
                         ui.selectedItems.forEach(item => {
                             if (item.startsWith('c_')) {
@@ -962,7 +973,6 @@
                             processedData = processedData.filter(entry => selectedComplaintIds.has(entry.id));
                         }
                     
-                        // Filter by favorites
                         if (filters.isFavoritesOnly) {
                              processedData = processedData.map(entry => {
                                 const favoriteDiseases = (entry.diseases || []).filter(d => d.isFavorite);
@@ -972,7 +982,6 @@
                             }).filter(Boolean);
                         }
                         
-                        // Filter by active keywords or search term
                         if (filters.activeKeywords.size > 0) {
                             const activeKeywords = Array.from(filters.activeKeywords);
                              processedData = processedData.map(entry => {
@@ -1014,24 +1023,19 @@
                     renderNav() {
                         const { navScrollArea } = App.elements;
                         const { dataStore, ui } = App.state;
-                        
                         const navData = [...dataStore].sort((a, b) => a.chiefComplaint.localeCompare(b.chiefComplaint, 'ja'));
-
                         navScrollArea.innerHTML = '';
                         const fragment = document.createDocumentFragment();
-                        
                         navData.forEach(entry => {
                             const complaintId = `complaint-${entry.id}`;
                             const navItem = document.createElement('a');
                             navItem.href = `#${complaintId}`;
-                            navItem.className = 'nav-item block text-gray-300 hover:bg-blue-600 hover:text-white font-bold rounded-lg transition-colors flex items-center';
-                            
+                            navItem.className = 'nav-item flex items-center rounded-lg transition-colors';
                             const isChecked = ui.selectedItems.has(`c_${entry.id}`);
                             const starIcon = entry.isFavorite ? `<i class="fas fa-star text-yellow-400 mr-2"></i>` : '';
-                            
                             navItem.innerHTML = `<input type="checkbox" class="nav-item-checkbox" data-type="complaint" data-id="${entry.id}" ${isChecked ? 'checked' : ''}> ${starIcon}${entry.chiefComplaint}`;
                             navItem.title = entry.chiefComplaint;
-                            navItem.querySelector('.nav-item-checkbox').addEventListener('click', e => e.stopPropagation());
+                            navItem.querySelector('.nav-item-checkbox').addEventListener('click', e => { e.stopPropagation(); App.handlers.handleCheckboxChange(e); });
                             navItem.addEventListener('click', (e) => { 
                                 e.preventDefault(); 
                                 const targetEl = document.getElementById(complaintId);
@@ -1043,12 +1047,18 @@
                         navScrollArea.appendChild(fragment);
                     },
                     renderContent(data) {
-                        const { contentArea } = App.elements;
-                        const { searchTerm } = App.state.filters;
+                        const { contentArea, collapseAllBtn } = App.elements;
+                        const { searchTerm, activeKeywords } = App.state.filters;
+                        const { isAllCollapsed } = App.state.ui;
+                        
+                        const icon = collapseAllBtn.querySelector('i');
+                        if(icon) {
+                            icon.className = isAllCollapsed ? 'fas fa-expand-arrows-alt' : 'fas fa-compress-alt';
+                        }
                         
                         contentArea.innerHTML = '';
                         if (data.length === 0 && !App.state.isLoading) {
-                            contentArea.innerHTML = `<div class="text-center p-8 text-gray-400"><i class="fas fa-folder-open fa-3x mb-4"></i><p>データがありません。<br>「+」ボタンから新しい主訴を追加してください。</p></div>`;
+                            contentArea.innerHTML = `<div class="text-center p-8 text-sub"><i class="fas fa-folder-open fa-3x mb-4"></i><p>データがありません。<br>「+」ボタンから新しい主訴を追加してください。</p></div>`;
                             return;
                         }
                         
@@ -1057,95 +1067,104 @@
                             const originalData = App.state.dataStore.find(d => d.id === entry.id);
                              if (!originalData) return;
                             const complaintId = `complaint-${entry.id}`;
-                            const isComplaintChecked = App.state.ui.selectedItems.has(`c_${entry.id}`);
                             const entryDiv = document.createElement('div');
-                            entryDiv.className = 'content-card mb-6 bg-gray-800 rounded-xl shadow-md p-4';
+                            entryDiv.className = 'content-card bg-card mb-6 rounded-xl shadow-md p-4';
                             entryDiv.id = complaintId;
                             
-                            const memoHTML = originalData.memo ? `<div class="mt-4 pl-6 text-sm text-amber-300 bg-gray-900/50 p-3 rounded-lg"><i class="fas fa-pencil-alt fa-fw mr-2 text-amber-400"></i>${App.utils.highlightText(originalData.memo, searchTerm).replace(/\n/g, '<br>')}</div>` : '';
-                            const favoriteClass = originalData.isFavorite ? 'fas text-yellow-400' : 'far text-gray-500';
+                            const memoHTML = originalData.memo ? `<div class="mt-4 pl-6 text-sm text-amber-300 bg-main p-3 rounded-lg"><i class="fas fa-pencil-alt fa-fw mr-2 text-amber-400"></i>${App.utils.highlightText(originalData.memo, searchTerm).replace(/\n/g, '<br>')}</div>` : '';
+                            const favoriteClass = originalData.isFavorite ? 'fas text-yellow-400' : 'far text-sub';
             
                             const diseasesHTML = (entry.diseases || []).map(disease => { 
-                                const originalDisease = (originalData.diseases || []).find(d => d.name === disease.name) || {};
-                                const diseaseFavoriteClass = originalDisease.isFavorite ? 'fas text-yellow-400' : 'far text-gray-500';
-                                const diseaseMemoHTML = disease.memo ? `<div class="mt-3 text-sm text-amber-300 bg-gray-900/50 p-2 rounded-lg"><i class="fas fa-pencil-alt fa-fw mr-2 text-amber-400"></i>${App.utils.highlightText(disease.memo, searchTerm).replace(/\n/g, '<br>')}</div>` : '';
+                                const diseaseFavoriteClass = disease.isFavorite ? 'fas text-yellow-400' : 'far text-sub';
+                                const diseaseMemoHTML = disease.memo ? `<div class="mt-3 text-sm text-amber-300 bg-main p-2 rounded-lg"><i class="fas fa-pencil-alt fa-fw mr-2 text-amber-400"></i>${App.utils.highlightText(disease.memo, searchTerm).replace(/\n/g, '<br>')}</div>` : '';
                                 return `
-                                    <div class="pl-4 border-l-4 border-gray-700">
+                                    <div class="pl-4 border-l-4 border-color">
                                         <div class="flex items-center justify-between">
-                                            <div class="flex items-center">
-                                                <h3 class="text-lg font-semibold text-teal-400">${App.utils.highlightText(disease.name, searchTerm)}</h3>
-                                            </div>
+                                            <h3 class="text-lg font-semibold text-teal-400">${App.utils.highlightText(disease.name, searchTerm)}</h3>
                                             <button class="favorite-disease-btn text-lg" data-complaint-id="${entry.id}" data-disease-name="${disease.name}" title="お気に入り登録"><i class="${diseaseFavoriteClass} fa-star"></i></button>
                                         </div>
-                                        <div class="mt-2 pl-8">
-                                            <p class="text-sm text-gray-400 mt-1">${App.utils.highlightText(disease.description || '', searchTerm)}</p>
+                                        <div class="disease-details mt-2 pl-8 ${isAllCollapsed ? 'collapsed' : ''}">
+                                            <p class="text-sm text-sub mt-1">${App.utils.highlightText(disease.description || '', searchTerm)}</p>
                                             ${diseaseMemoHTML}
-                                            <h4 class="font-bold text-sm text-gray-300 mt-3"><i class="fas fa-lightbulb text-yellow-400 mr-2"></i>キーワード</h4><div class="flex flex-wrap gap-2 mt-1">${(disease.keywords || []).map(k => `<span class="content-keyword-tag bg-gray-700 text-sm text-gray-200 rounded-full px-3 py-1 hover:bg-gray-500 ${App.state.filters.activeKeywords.has(k) ? 'active' : ''}">${App.utils.highlightText(k, searchTerm)}</span>`).join('')}</div>
-                                            <h4 class="font-bold text-sm text-gray-300 mt-3"><i class="fas fa-exclamation-triangle text-red-400 mr-2"></i>落とし穴</h4><ul class="list-disc list-inside mt-1 text-sm text-gray-300 space-y-1">${(disease.pitfalls || []).map(p => `<li>${App.utils.highlightText(p, searchTerm)}</li>`).join('')}</ul>
+                                            <h4 class="font-bold text-sm mt-3"><i class="fas fa-lightbulb text-yellow-400 mr-2"></i>キーワード</h4><div class="flex flex-wrap gap-2 mt-1">${(disease.keywords || []).map(k => `<span class="content-keyword-tag text-sm rounded-full px-3 py-1 hover:opacity-80 ${activeKeywords.has(k) ? 'active' : ''}">${App.utils.highlightText(k, searchTerm)}</span>`).join('')}</div>
+                                            <h4 class="font-bold text-sm mt-3"><i class="fas fa-exclamation-triangle text-red-400 mr-2"></i>落とし穴</h4><ul class="list-disc list-inside mt-1 text-sm space-y-1">${(disease.pitfalls || []).map(p => `<li>${App.utils.highlightText(p, searchTerm)}</li>`).join('')}</ul>
                                         </div>
                                     </div>`;
                             }).join('<div class="my-4"></div>');
 
                             entryDiv.innerHTML = `
                                 <div class="flex justify-between items-center">
-                                    <div class="flex items-center">
-                                        <input type="checkbox" class="item-checkbox" data-type="complaint" data-id="${entry.id}" ${isComplaintChecked ? 'checked' : ''}>
-                                        <h2 class="text-xl md:text-2xl font-bold text-blue-400">${App.utils.highlightText(originalData.chiefComplaint, searchTerm)}</h2>
-                                    </div>
+                                    <h2 class="text-xl md:text-2xl font-bold text-blue-400">${App.utils.highlightText(originalData.chiefComplaint, searchTerm)}</h2>
                                     <div class="flex items-center">
                                         <button class="favorite-btn text-xl mr-4" data-id="${entry.id}" title="お気に入り登録"><i class="${favoriteClass} fa-star"></i></button>
-                                        <button class="edit-btn text-gray-400 hover:text-white" data-id="${entry.id}"><i class="fas fa-edit"></i></button>
+                                        <button class="edit-btn text-sub hover:text-main" data-id="${entry.id}"><i class="fas fa-edit"></i></button>
                                     </div>
                                 </div>
-                                <p class="text-sm text-gray-400 mt-1 ml-10">${App.utils.highlightText(originalData.description || '', searchTerm)}</p>
+                                <p class="text-sm text-sub mt-1">${App.utils.highlightText(originalData.description || '', searchTerm)}</p>
                                 ${memoHTML}
-                                <div class="mt-4 space-y-4 pl-6">${diseasesHTML}</div>`;
+                                <div class="mt-4 space-y-4">${diseasesHTML}</div>`;
                             fragment.appendChild(entryDiv);
                         });
                         contentArea.appendChild(fragment);
                     },
                     renderKeywordsPanel() {
-                        const { keywordsPanelContentArea, keywordsPanelFilterContainer } = App.elements;
-                        const { ui, dataStore } = App.state;
-
+                        const { keywordsPanelContentArea } = App.elements;
+                        const { ui, dataStore, filters } = App.state;
                         if (!keywordsPanelContentArea) return;
                         
                         keywordsPanelContentArea.innerHTML = '';
-                        const fragment = document.createDocumentFragment();
-                        
-                        const allAvailableKeywords = new Set();
                         
                         const selectedComplaintIds = new Set();
-                        ui.selectedItems.forEach(item => {
-                            if(item.startsWith('c_')) {
-                                selectedComplaintIds.add(item.split('_')[1]);
-                            }
-                        });
-
+                        ui.selectedItems.forEach(item => { if (item.startsWith('c_')) selectedComplaintIds.add(item.split('_')[1]); });
+                        
                         const sourceData = selectedComplaintIds.size > 0 
                             ? dataStore.filter(entry => selectedComplaintIds.has(entry.id))
                             : dataStore;
 
-                        sourceData.forEach(entry => (entry.diseases || []).forEach(d => (d.keywords || []).forEach(k => allAvailableKeywords.add(k))));
+                        const allKeywords = new Set();
+                        sourceData.forEach(entry => (entry.diseases || []).forEach(d => (d.keywords || []).forEach(k => allKeywords.add(k))));
+                        
+                        const keywordCounts = {};
+                        if (selectedComplaintIds.size > 0) {
+                            sourceData.forEach(entry => {
+                                (entry.diseases || []).forEach(d => {
+                                    (d.keywords || []).forEach(k => {
+                                        keywordCounts[k] = (keywordCounts[k] || 0) + 1;
+                                    });
+                                });
+                            });
+                        }
 
-                        if (allAvailableKeywords.size > 0) {
+                        if (allKeywords.size > 0) {
+                            const fragment = document.createDocumentFragment();
                             const keywordTags = document.createElement('div');
                             keywordTags.className = 'flex flex-wrap gap-2';
-                            [...allAvailableKeywords].sort((a, b) => a.localeCompare(b, 'ja')).forEach(keyword => {
+                            
+                            [...allKeywords].sort((a, b) => a.localeCompare(b, 'ja')).forEach(keyword => {
+                                const count = keywordCounts[keyword] || 0;
+                                let colorClass = '';
+                                if(count > 0){
+                                     if (count >= 5) colorClass = 'keyword-count-5';
+                                     else if (count >= 4) colorClass = 'keyword-count-4';
+                                     else if (count >= 3) colorClass = 'keyword-count-3';
+                                     else if (count >= 2) colorClass = 'keyword-count-2';
+                                     else if (count >= 1) colorClass = 'keyword-count-1';
+                                }
+
                                 const tag = document.createElement('span');
-                                tag.className = `keyword-tag bg-gray-700 hover:bg-gray-600 text-sm py-1 px-3 rounded-full transition-colors ${App.state.filters.activeKeywords.has(keyword) ? 'active' : ''}`;
+                                tag.className = `keyword-tag bg-btn hover:opacity-80 text-sm py-1 px-3 rounded-full transition-colors ${filters.activeKeywords.has(keyword) ? 'active' : ''} ${colorClass}`;
                                 tag.textContent = keyword;
                                 tag.onclick = () => App.handlers.handleKeywordTagClick(keyword);
                                 keywordTags.appendChild(tag);
                             });
                             fragment.appendChild(keywordTags);
+                            keywordsPanelContentArea.appendChild(fragment);
                         }
 
                         const controlsContainer = document.createElement('div');
-                        controlsContainer.className = "mt-4 pt-4 border-t border-gray-700 flex flex-col items-center gap-3";
+                        controlsContainer.className = "mt-4 pt-4 border-t border-color flex flex-col items-center gap-3";
                         
-                        if (App.state.filters.activeKeywords.size > 0) {
-                            if (App.state.filters.activeKeywords.size > 1) {
+                        if (filters.activeKeywords.size > 1) {
                                 const switchContainer = document.createElement('div');
                                 switchContainer.id = 'logic-switch-container';
                                 switchContainer.dataset.mode = App.state.filters.keywordMode;
@@ -1153,13 +1172,14 @@
                                 switchContainer.innerHTML = `<div id="switch-bg"></div><span class="switch-label ${App.state.filters.keywordMode === 'OR' ? 'active-logic' : ''}">OR</span><span class="switch-label ${App.state.filters.keywordMode === 'AND' ? 'active-logic' : ''}">AND</span>`;
                                 switchContainer.onclick = () => App.handlers.handleKeywordLogicToggle();
                                 controlsContainer.appendChild(switchContainer);
-                            }
+                        }
+                        if (filters.activeKeywords.size > 0) {
                             const clearBtn = App.utils.createButton('<i class="fas fa-times-circle mr-1"></i> フィルター解除', 'text-sm text-red-500 hover:text-red-400 flex items-center', () => App.handlers.handleClearKeywordFilter());
                             controlsContainer.appendChild(clearBtn);
                         }
                         
                         let diseaseCount = 0;
-                        App.state.ui.selectedItems.forEach(itemId => { if (itemId.startsWith('d_')) diseaseCount++; });
+                        ui.selectedItems.forEach(itemId => { if (itemId.startsWith('d_')) diseaseCount++; });
                 
                         if (diseaseCount >= 2) {
                             const compareBtn = App.utils.createButton('<i class="fas fa-exchange-alt mr-2"></i>選択した疾患を比較', 'w-full text-sm bg-indigo-600 hover:bg-indigo-700 text-white font-bold py-2 px-4 rounded-lg flex items-center justify-center', () => App.components.compareModal.open());
@@ -1167,10 +1187,8 @@
                         }
                 
                         if (controlsContainer.children.length > 0) {
-                           fragment.appendChild(controlsContainer);
+                           keywordsPanelContentArea.appendChild(controlsContainer);
                         }
-                        
-                        keywordsPanelContentArea.appendChild(fragment);
                     },
                     renderVitalsSummary() {
                         const { vitalsSummaryContainer, vitalsSummaryArea } = App.elements;
@@ -1230,7 +1248,7 @@
                         else if (dangerLevel === 2) colorClass = 'vital-danger';
 
                         const valueContent = rawHtml ? `<span class="${colorClass}">${value}</span>` : `<b class="${colorClass}">${value}${unit}</b>`;
-                        return `<span class="flex items-center gap-1"><i class="fa-solid ${icon} fa-fw text-gray-400"></i> ${label}: ${valueContent}</span>`;
+                        return `<span class="flex items-center gap-1"><i class="fa-solid ${icon} fa-fw text-sub"></i> ${label}: ${valueContent}</span>`;
                     },
                     setupIntersectionObserver() {
                         if (App.state.intersectionObserver) App.state.intersectionObserver.disconnect();
@@ -1552,7 +1570,7 @@
                             });
                             
                             App.elements.vitalsJcsGroup.innerHTML = '';
-                            jcsOptions.forEach(val => App.elements.vitalsJcsGroup.appendChild(App.utils.createButton(val, 'jcs-btn bg-gray-700 hover:bg-gray-600 p-2 rounded-md flex-grow text-center', e => {
+                            jcsOptions.forEach(val => App.elements.vitalsJcsGroup.appendChild(App.utils.createButton(val, 'jcs-btn bg-btn hover:opacity-80 p-2 rounded-md flex-grow text-center', e => {
                                 this.handleJcsClick(e);
                                 this.updateStateFromForm();
                                 this.checkAllVitals();
@@ -1577,7 +1595,7 @@
                             const className = type === 'appearance' ? 'vitals-tag' : 'ecg-tag';
                             
                             container.innerHTML = '';
-                            tags.forEach(val => container.appendChild(App.utils.createButton(val, `${className} bg-gray-600 hover:bg-gray-500 text-sm py-1 px-3 rounded-full whitespace-nowrap`)));
+                            tags.forEach(val => container.appendChild(App.utils.createButton(val, `${className} bg-btn hover:opacity-80 text-sm py-1 px-3 rounded-full whitespace-nowrap`)));
                         },
                          handleJcsClick(e) {
                             App.elements.vitalsJcsGroup.querySelectorAll('.active').forEach(b => b.classList.remove('active'));
@@ -1713,24 +1731,41 @@
                     },
                     settings: {
                         init(){
-                             const showRandom = App.utils.loadFromStorage(App.config.storageKeys.showRandomBtn, false);
-                             App.elements.showRandomBtnToggle.checked = showRandom;
-                             this.toggleRandomButtonVisibility(showRandom);
+                             const settings = App.state.settings;
+                             settings.theme = App.utils.loadFromStorage(App.config.storageKeys.theme, 'dark');
+                             settings.showRandomBtn = App.utils.loadFromStorage(App.config.storageKeys.showRandomBtn, false);
+                             settings.showCollapseBtn = App.utils.loadFromStorage(App.config.storageKeys.showCollapseBtn, false);
                              const fontSize = App.utils.loadFromStorage(App.config.storageKeys.fontSize, 'base');
+                             
+                             this.applyTheme(settings.theme);
+                             this.toggleRandomButtonVisibility(settings.showRandomBtn);
+                             this.toggleCollapseButtonVisibility(settings.showCollapseBtn);
                              this.applyFontSize(fontSize);
                         },
                         bindEventListeners() {
-                           App.elements.settingsModalCloseBtn.addEventListener('click', () => this.close());
-                           App.elements.exportCsvBtn.addEventListener('click', () => this.exportCSV());
-                           App.elements.importCsvBtn.addEventListener('click', () => App.elements.importCsvInput.click());
-                           App.elements.importCsvInput.addEventListener('change', e => this.handleCSVFileSelect(e));
-                           App.elements.showRandomBtnToggle.addEventListener('change', e => this.toggleRandomButtonVisibility(e.target.checked));
-                           App.elements.fontSizeControls.addEventListener('click', e => this.handleFontSizeChange(e));
-                           App.elements.nextCaseBtn.addEventListener('click', () => this.handleNextCase());
-                           App.elements.viewVitalsHistoryBtn.addEventListener('click', () => App.components.vitalsHistory.open());
-                           App.elements.clearVitalsHistoryBtn.addEventListener('click', () => App.components.vitalsHistory.clear());
-                           App.elements.vitalsSettingsBtn.addEventListener('click', () => App.components.vitalsSettings.open());
-
+                           const el = App.elements;
+                           el.settingsModalCloseBtn.addEventListener('click', () => this.close());
+                           el.exportCsvBtn.addEventListener('click', () => this.exportCSV());
+                           el.importCsvBtn.addEventListener('click', () => el.importCsvInput.click());
+                           el.importCsvInput.addEventListener('change', e => this.handleCSVFileSelect(e));
+                           el.themeSwitchToggle.addEventListener('change', e => this.handleThemeChange(e));
+                           el.showCollapseBtnToggle.addEventListener('change', e => this.toggleCollapseButtonVisibility(e.target.checked));
+                           el.showRandomBtnToggle.addEventListener('change', e => this.toggleRandomButtonVisibility(e.target.checked));
+                           el.fontSizeControls.addEventListener('click', e => this.handleFontSizeChange(e));
+                           el.nextCaseBtn.addEventListener('click', () => this.handleNextCase());
+                           el.viewVitalsHistoryBtn.addEventListener('click', () => App.components.vitalsHistory.open());
+                           el.clearVitalsHistoryBtn.addEventListener('click', () => App.components.vitalsHistory.clear());
+                           el.vitalsSettingsBtn.addEventListener('click', () => App.components.vitalsSettings.open());
+                        },
+                        handleThemeChange(e) {
+                             const newTheme = e.target.checked ? 'light' : 'dark';
+                             this.applyTheme(newTheme);
+                             App.utils.saveToStorage(App.config.storageKeys.theme, newTheme);
+                        },
+                        applyTheme(theme) {
+                            App.elements.body.className = `${theme}-mode`;
+                            App.elements.themeSwitchToggle.checked = theme === 'light';
+                            document.querySelector('meta[name="theme-color"]').setAttribute('content', theme === 'dark' ? '#111827' : '#f9fafb');
                         },
                         async handleNextCase() {
                             const confirmed = await App.utils.customConfirm(
@@ -1738,34 +1773,39 @@
                                 '次の症例へ'
                             );
                             if (confirmed) {
-                                // 1. Reset patient info
                                 App.elements.ageInput.value = '';
                                 App.elements.genderBtns.forEach(btn => btn.classList.remove('active'));
                                 App.utils.saveToStorage(App.config.storageKeys.ageAndGender, {});
 
-                                // 2. Reset temp memo
                                 App.elements.tempMemo.value = '';
                                 App.utils.saveToStorage(App.config.storageKeys.tempMemo, '');
 
-                                // 3. Reset filters and selections
                                 App.state.filters.isFavoritesOnly = false;
                                 App.elements.filterFavoritesBtn.classList.remove('active');
                                 App.handlers.handleClearAllSelections();
 
-                                // 4. Reset stopwatch
                                 App.components.stopwatch.reset();
                                 
-                                // 5. Reset vitals
-                                await App.components.vitalsModal.clear(false); // Clear without confirmation
+                                await App.components.vitalsModal.clear(false);
 
-                                // 6. Close the settings modal
                                 this.close();
                                 App.utils.customAlert('次の症例の準備ができました。');
                             }
                         },
-                        open() { App.utils.showModal(App.elements.settingsModal); },
+                        open() { 
+                             App.elements.showRandomBtnToggle.checked = App.state.settings.showRandomBtn;
+                             App.elements.showCollapseBtnToggle.checked = App.state.settings.showCollapseBtn;
+                             App.elements.themeSwitchToggle.checked = App.state.settings.theme === 'light';
+                             App.utils.showModal(App.elements.settingsModal); 
+                        },
                         close() { App.utils.hideModal(App.elements.settingsModal); },
+                        toggleCollapseButtonVisibility(isVisible) {
+                             App.state.settings.showCollapseBtn = isVisible;
+                             App.utils.saveToStorage(App.config.storageKeys.showCollapseBtn, isVisible);
+                             App.elements.collapseAllBtn.classList.toggle('hidden', !isVisible)
+                        },
                         toggleRandomButtonVisibility(isVisible) {
+                             App.state.settings.showRandomBtn = isVisible;
                              App.utils.saveToStorage(App.config.storageKeys.showRandomBtn, isVisible);
                              App.elements.randomBtn.classList.toggle('hidden', !isVisible)
                         },
@@ -1787,7 +1827,6 @@
                                 return;
                             }
 
-                            // Flatten data for CSV
                             const flattenedData = [];
                             data.forEach(entry => {
                                 if (entry.diseases && entry.diseases.length > 0) {
@@ -1798,7 +1837,7 @@
                                             memo: entry.memo || '',
                                             diseaseName: disease.name || '',
                                             diseaseDescription: disease.description || '',
-                                            diseaseKeywords: (disease.keywords || []).join(';'), // Use semicolon to avoid comma issues
+                                            diseaseKeywords: (disease.keywords || []).join(';'),
                                             diseasePitfalls: (disease.pitfalls || []).join(';'),
                                             diseaseMemo: disease.memo || ''
                                         });
@@ -1813,14 +1852,13 @@
                                 }
                             });
                             
-                            // Convert to CSV string
                             const header = Object.keys(flattenedData[0]).join(',');
                             const csv = flattenedData.map(row => 
                                 Object.values(row).map(value => `"${String(value).replace(/"/g, '""')}"`).join(',')
                             ).join('\n');
                             
                             const csvContent = `${header}\n${csv}`;
-                            const blob = new Blob([`\uFEFF${csvContent}`], { type: 'text/csv;charset=utf-8;' }); // Add BOM for Excel
+                            const blob = new Blob([`\uFEFF${csvContent}`], { type: 'text/csv;charset=utf-8;' });
                             const url = URL.createObjectURL(blob);
                             const a = document.createElement('a');
                             a.href = url;
@@ -1847,14 +1885,14 @@
                              reader.onerror = () => {
                                 App.utils.customAlert('ファイルの読み込み中にエラーが発生しました。');
                             };
-                            reader.readAsText(file, 'Shift_JIS'); // Specify Shift_JIS encoding
+                            reader.readAsText(file, 'Shift_JIS');
                         },
                         async importCSV(csvString) {
                             try {
                                 const lines = csvString.trim().split('\n');
                                 const header = lines[0].split(',').map(h => h.trim().replace(/"/g, ''));
                                 const rows = lines.slice(1).map(line => {
-                                    const data = line.split(/,(?=(?:(?:[^"]*"){2})*[^"]*$)/); // Handle commas inside quotes
+                                    const data = line.split(/,(?=(?:(?:[^"]*"){2})*[^"]*$)/); 
                                     const rowData = {};
                                     header.forEach((key, i) => {
                                         rowData[key] = (data[i] || '').trim().replace(/(^"|"$)/g, '').replace(/""/g, '"');
@@ -1862,7 +1900,6 @@
                                     return rowData;
                                 });
 
-                                // Group by chiefComplaint to reconstruct nested structure
                                 const groupedByComplaint = rows.reduce((acc, row) => {
                                     const complaint = row.chiefComplaint;
                                     if (!acc[complaint]) {
@@ -1880,7 +1917,6 @@
                                         acc[complaint].diseases.push({
                                             name: row.diseaseName,
                                             description: row.diseaseDescription || '',
-                                            // FIX: Split by semicolon instead of comma
                                             keywords: (row.diseaseKeywords || '').split(';').map(k => k.trim()).filter(Boolean),
                                             pitfalls: (row.diseasePitfalls || '').split(';').map(p => p.trim()).filter(Boolean),
                                             memo: row.diseaseMemo || '',
@@ -1892,17 +1928,14 @@
 
                                 const finalData = Object.values(groupedByComplaint);
 
-                                // Batch write to Firestore
                                 const collectionRef = App.services.db.getCollectionRef();
                                 if (!collectionRef) return;
 
-                                // Delete existing documents
                                 const snapshot = await getDocs(collectionRef);
                                 const deleteBatch = writeBatch(App.state.db);
                                 snapshot.docs.forEach(d => deleteBatch.delete(d.ref));
                                 await deleteBatch.commit();
 
-                                // Add new documents
                                 const addBatch = writeBatch(App.state.db);
                                 finalData.forEach(item => {
                                     const docRef = doc(collectionRef);
@@ -1942,20 +1975,20 @@
                             const history = this.get();
                             searchHistoryDropdown.innerHTML = '';
                             if (history.length === 0) {
-                                searchHistoryDropdown.innerHTML = '<div class="p-3 text-sm text-gray-500 text-center">検索履歴はありません。</div>';
+                                searchHistoryDropdown.innerHTML = '<div class="p-3 text-sm text-sub text-center">検索履歴はありません。</div>';
                                 return;
                             }
                             const list = document.createElement('ul');
                             history.forEach(term => {
                                 const item = document.createElement('li');
-                                item.className = 'px-4 py-2 hover:bg-gray-700 cursor-pointer text-gray-200';
+                                item.className = 'px-4 py-2 hover:bg-input cursor-pointer text-main';
                                 item.textContent = term;
                                 item.addEventListener('click', () => { App.elements.searchInput.value = term; App.handlers.handleSearch(); App.utils.hide(searchHistoryDropdown); });
                                 list.appendChild(item);
                             });
                             searchHistoryDropdown.appendChild(list);
                             const footer = document.createElement('div');
-                            footer.className = 'p-2 border-t border-gray-700 text-center';
+                            footer.className = 'p-2 border-t border-color text-center';
                             const clearButton = App.utils.createButton('履歴を消去', 'text-sm text-red-500 hover:text-red-400', e => { e.stopPropagation(); this.clear(); });
                             footer.appendChild(clearButton);
                             searchHistoryDropdown.appendChild(footer);
@@ -1978,7 +2011,6 @@
                             el.dataForm.addEventListener('submit', e => { e.preventDefault(); this.submit(); });
                             el.deleteBtn.addEventListener('click', () => this.delete());
                             
-                            // Drag and Drop Listeners
                             el.diseasesContainer.addEventListener('dragstart', e => this.onDragStart(e));
                             el.diseasesContainer.addEventListener('dragend', e => this.onDragEnd(e));
                             el.diseasesContainer.addEventListener('dragover', e => this.onDragOver(e));
@@ -1987,7 +2019,7 @@
                             if (e.target.classList.contains('disease-form-group')) {
                                 this.dragged = e.target;
                                 e.dataTransfer.effectAllowed = 'move';
-                                e.dataTransfer.setData('text/plain', null); // Required for Firefox
+                                e.dataTransfer.setData('text/plain', null); 
                                 setTimeout(() => {
                                     this.dragged.classList.add('dragging');
                                 }, 0);
@@ -2051,17 +2083,17 @@
                         addDiseaseForm(disease = {}) {
                             const container = App.elements.diseasesContainer;
                             const diseaseDiv = document.createElement('div');
-                            diseaseDiv.className = 'disease-form-group bg-gray-700/50 p-4 pl-10 rounded-lg space-y-2 relative';
+                            diseaseDiv.className = 'disease-form-group bg-main p-4 pl-10 rounded-lg space-y-2 relative';
                             diseaseDiv.draggable = true;
                             const diseaseId = `disease_${Date.now()}_${Math.random()}`;
                             diseaseDiv.innerHTML = `
-                                <span class="drag-handle absolute top-1/2 -translate-y-1/2 left-2 text-gray-500 hover:text-white" title="ドラッグして並び替え"><i class="fas fa-grip-vertical fa-lg"></i></span>
-                                <button type="button" class="remove-disease-btn absolute top-2 right-2 text-gray-500 hover:text-red-500"><i class="fas fa-times-circle"></i></button>
-                                <div><label class="text-sm">疾患名</label><input type="text" name="${diseaseId}_name" class="w-full bg-gray-600 p-2 rounded-md mt-1" value="${disease.name || ''}" required></div>
-                                <div><label class="text-sm">説明</label><textarea name="${diseaseId}_description" rows="2" class="w-full bg-gray-600 p-2 rounded-md mt-1">${disease.description || ''}</textarea></div>
-                                <div><label class="text-sm">キーワード (カンマ区切り)</label><input type="text" name="${diseaseId}_keywords" class="w-full bg-gray-600 p-2 rounded-md mt-1" value="${(disease.keywords || []).join(', ')}"></div>
-                                <div><label class="text-sm">落とし穴 (カンマ区切り)</label><input type="text" name="${diseaseId}_pitfalls" class="w-full bg-gray-600 p-2 rounded-md mt-1" value="${(disease.pitfalls || []).join(', ')}"></div>
-                                <div><label class="text-sm">疾患メモ</label><textarea name="${diseaseId}_memo" rows="2" class="w-full bg-gray-600 p-2 rounded-md mt-1">${disease.memo || ''}</textarea></div>`;
+                                <span class="drag-handle absolute top-1/2 -translate-y-1/2 left-2 text-sub hover:text-main" title="ドラッグして並び替え"><i class="fas fa-grip-vertical fa-lg"></i></span>
+                                <button type="button" class="remove-disease-btn absolute top-2 right-2 text-sub hover:text-red-500"><i class="fas fa-times-circle"></i></button>
+                                <div><label class="text-sm">疾患名</label><input type="text" name="${diseaseId}_name" class="w-full bg-input p-2 rounded-md mt-1" value="${disease.name || ''}" required></div>
+                                <div><label class="text-sm">説明</label><textarea name="${diseaseId}_description" rows="2" class="w-full bg-input p-2 rounded-md mt-1">${disease.description || ''}</textarea></div>
+                                <div><label class="text-sm">キーワード (カンマ区切り)</label><input type="text" name="${diseaseId}_keywords" class="w-full bg-input p-2 rounded-md mt-1" value="${(disease.keywords || []).join(', ')}"></div>
+                                <div><label class="text-sm">落とし穴 (カンマ区切り)</label><input type="text" name="${diseaseId}_pitfalls" class="w-full bg-input p-2 rounded-md mt-1" value="${(disease.pitfalls || []).join(', ')}"></div>
+                                <div><label class="text-sm">疾患メモ</label><textarea name="${diseaseId}_memo" rows="2" class="w-full bg-input p-2 rounded-md mt-1">${disease.memo || ''}</textarea></div>`;
                             diseaseDiv.querySelector('.remove-disease-btn').onclick = () => diseaseDiv.remove();
                             container.appendChild(diseaseDiv);
                         },
@@ -2161,27 +2193,27 @@
                             const allKeywords = [...new Set(selectedDiseases.flatMap(d => d.keywords || []))];
                             const allPitfalls = [...new Set(selectedDiseases.flatMap(d => d.pitfalls || []))];
                             let tableHTML = `<div class="overflow-x-auto"><table class="w-full text-left border-collapse">`;
-                            tableHTML += '<thead><tr class="bg-gray-700"><th class="p-2 border border-gray-600">特徴</th>';
+                            tableHTML += `<thead><tr class="bg-input"><th class="p-2 border border-color">特徴</th>`;
                             selectedDiseases.forEach(d => {
-                                tableHTML += `<th class="p-2 border border-gray-600 text-teal-400">${d.name} <span class="text-xs text-gray-400">(${d.complaint})</span></th>`;
+                                tableHTML += `<th class="p-2 border border-color text-teal-400">${d.name} <span class="text-xs text-sub">(${d.complaint})</span></th>`;
                             });
                             tableHTML += '</tr></thead>';
                             tableHTML += '<tbody>';
-                            tableHTML += `<tr><td class="p-2 border border-gray-600 font-bold bg-gray-700/50" colspan="${selectedDiseases.length + 1}">キーワード</td></tr>`;
+                            tableHTML += `<tr><td class="p-2 border border-color font-bold bg-input" colspan="${selectedDiseases.length + 1}">キーワード</td></tr>`;
                             allKeywords.forEach(keyword => {
-                                tableHTML += `<tr><td class="p-2 border border-gray-600">${keyword}</td>`;
+                                tableHTML += `<tr><td class="p-2 border border-color">${keyword}</td>`;
                                 selectedDiseases.forEach(d => {
                                     const hasKeyword = (d.keywords || []).includes(keyword);
-                                    tableHTML += `<td class="p-2 border border-gray-600 text-center">${hasKeyword ? '<i class="fas fa-check text-green-400"></i>' : '<i class="fas fa-times text-red-400"></i>'}</td>`;
+                                    tableHTML += `<td class="p-2 border border-color text-center">${hasKeyword ? '<i class="fas fa-check text-green-400"></i>' : '<i class="fas fa-times text-red-400"></i>'}</td>`;
                                 });
                                 tableHTML += '</tr>';
                             });
-                            tableHTML += `<tr><td class="p-2 border border-gray-600 font-bold bg-gray-700/50" colspan="${selectedDiseases.length + 1}">落とし穴</td></tr>`;
+                            tableHTML += `<tr><td class="p-2 border border-color font-bold bg-input" colspan="${selectedDiseases.length + 1}">落とし穴</td></tr>`;
                             allPitfalls.forEach(pitfall => {
-                                tableHTML += `<tr><td class="p-2 border border-gray-600">${pitfall}</td>`;
+                                tableHTML += `<tr><td class="p-2 border border-color">${pitfall}</td>`;
                                 selectedDiseases.forEach(d => {
                                     const hasPitfall = (d.pitfalls || []).includes(pitfall);
-                                    tableHTML += `<td class="p-2 border border-gray-600 text-center">${hasPitfall ? '<i class="fas fa-check text-green-400"></i>' : ''}</td>`;
+                                    tableHTML += `<td class="p-2 border border-color text-center">${hasPitfall ? '<i class="fas fa-check text-green-400"></i>' : ''}</td>`;
                                 });
                                 tableHTML += '</tr>';
                             });
@@ -2265,7 +2297,7 @@
                             listEl.innerHTML = '';
                             tags.forEach(tag => {
                                 const item = document.createElement('div');
-                                item.className = 'flex items-center justify-between bg-gray-700 p-2 rounded';
+                                item.className = 'flex items-center justify-between bg-input p-2 rounded';
                                 item.innerHTML = `<span>${tag}</span><button class="delete-tag-btn text-red-500 hover:text-red-400"><i class="fas fa-trash-alt"></i></button>`;
                                 item.querySelector('.delete-tag-btn').onclick = () => this.deleteTag(tag);
                                 listEl.appendChild(item);
@@ -2311,13 +2343,13 @@
                             listEl.innerHTML = '';
 
                             if(history.length === 0) {
-                                listEl.innerHTML = '<p class="text-gray-400 text-center">バイタル履歴はありません。</p>';
+                                listEl.innerHTML = '<p class="text-sub text-center">バイタル履歴はありません。</p>';
                             } else {
                                 history.forEach(entry => {
                                     const itemEl = document.createElement('div');
-                                    itemEl.className = 'bg-gray-700/50 p-3 rounded-lg';
+                                    itemEl.className = 'bg-input p-3 rounded-lg';
                                     
-                                    let content = `<div class="font-bold text-lg text-cyan-300 border-b border-gray-600 pb-2 mb-2">${entry.timestamp}</div>`;
+                                    let content = `<div class="font-bold text-lg text-cyan-300 border-b border-color pb-2 mb-2">${entry.timestamp}</div>`;
                                     
                                     const patientInfo = entry.patient;
                                     const genderText = patientInfo.gender === 'male' ? '男性' : patientInfo.gender === 'female' ? '女性' : '';
@@ -2345,7 +2377,7 @@
                         },
                         formatEntry(icon, label, value, unit = '') {
                             if(value === null || value === undefined || value === '' || value.trim() === '歳' || (Array.isArray(value) && value.length === 0)) return '';
-                            return `<div class="flex items-start gap-2 text-sm"><i class="fa-solid ${icon} fa-fw text-gray-400 mt-1"></i> <span class="w-16">${label}:</span> <span class="flex-1"><b>${value}${unit}</b></span></div>`;
+                            return `<div class="flex items-start gap-2 text-sm"><i class="fa-solid ${icon} fa-fw text-sub mt-1"></i> <span class="w-16">${label}:</span> <span class="flex-1"><b>${value}${unit}</b></span></div>`;
                         },
                         async clear() {
                             const confirmed = await App.utils.customConfirm('すべてのバイタル履歴を消去しますか？この操作は元に戻せません。', '履歴の消去');
@@ -2402,8 +2434,8 @@
                             const headers = ['年齢区分', '年齢範囲', '呼吸数', '脈拍', '収縮期血圧(SBP)', 'SpO2', '操作'];
                             const vitalKeys = ['resp', 'pulse', 'sbp', 'spo2'];
                             
-                            let tableHTML = `<table class="w-full border-collapse"><thead><tr class="bg-gray-700">`;
-                            headers.forEach(h => tableHTML += `<th class="p-2 border border-gray-600">${h}</th>`);
+                            let tableHTML = `<table class="w-full border-collapse"><thead><tr class="bg-input">`;
+                            headers.forEach(h => tableHTML += `<th class="p-2 border border-color">${h}</th>`);
                             tableHTML += `</tr></thead><tbody id="vitals-settings-tbody">`;
 
                             thresholds.forEach((row, index) => {
@@ -2419,12 +2451,12 @@
                         },
                         getTableRowHTML(row, index, vitalKeys) {
                             let rowHTML = `<tr data-index="${index}">`;
-                            rowHTML += `<td class="p-1 border border-gray-600"><input type="text" class="w-full bg-gray-900 p-1 rounded" value="${row.category}" data-field="category"></td>`;
-                            rowHTML += `<td class="p-1 border border-gray-600"><div class="flex items-center gap-1"><input type="number" class="w-1/2 bg-gray-900 p-1 rounded" value="${row.age[0]}" data-field="age" data-age-index="0"><span>-</span><input type="number" class="w-1/2 bg-gray-900 p-1 rounded" value="${row.age[1]}" data-field="age" data-age-index="1"></div></td>`;
+                            rowHTML += `<td class="p-1 border border-color"><input type="text" class="w-full bg-main p-1 rounded" value="${row.category}" data-field="category"></td>`;
+                            rowHTML += `<td class="p-1 border border-color"><div class="flex items-center gap-1"><input type="number" class="w-1/2 bg-main p-1 rounded" value="${row.age[0]}" data-field="age" data-age-index="0"><span>-</span><input type="number" class="w-1/2 bg-main p-1 rounded" value="${row.age[1]}" data-field="age" data-age-index="1"></div></td>`;
                             
                             vitalKeys.forEach(key => {
                                 const val = row[key] || {};
-                                rowHTML += `<td class="p-1 border border-gray-600 space-y-1">
+                                rowHTML += `<td class="p-1 border border-color space-y-1">
                                     <div class="grid grid-cols-2 gap-1">
                                         <input type="number" placeholder="警告(下)" class="w-full bg-yellow-900/50 p-1 rounded text-xs" value="${val.lowWarning || ''}" data-vital="${key}" data-level="lowWarning">
                                         <input type="number" placeholder="警告(上)" class="w-full bg-yellow-900/50 p-1 rounded text-xs" value="${val.highWarning || ''}" data-vital="${key}" data-level="highWarning">
@@ -2434,7 +2466,7 @@
                                 </td>`;
                             });
 
-                            rowHTML += `<td class="p-1 border border-gray-600 text-center"><button class="delete-row-btn text-red-500 hover:text-red-400 p-2"><i class="fas fa-trash-alt"></i></button></td>`;
+                            rowHTML += `<td class="p-1 border border-color text-center"><button class="delete-row-btn text-red-500 hover:text-red-400 p-2"><i class="fas fa-trash-alt"></i></button></td>`;
                             rowHTML += '</tr>';
                             return rowHTML;
                         },
@@ -2525,7 +2557,7 @@
                             confirmMessage.textContent = message;
                             alertIcon.innerHTML = `<i class="fas fa-exclamation-triangle text-yellow-400 text-2xl"></i>`;
                             confirmButtons.innerHTML = `
-                                <button id="confirm-cancel-btn" class="mt-3 w-full inline-flex justify-center rounded-md border border-gray-500 shadow-sm px-4 py-2 bg-gray-600 text-base font-medium text-white hover:bg-gray-500 focus:outline-none sm:mt-0 sm:w-auto sm:text-sm">キャンセル</button>
+                                <button id="confirm-cancel-btn" class="mt-3 w-full inline-flex justify-center rounded-md border border-gray-500 shadow-sm px-4 py-2 bg-btn text-base font-medium text-main hover:opacity-80 focus:outline-none sm:mt-0 sm:w-auto sm:text-sm">キャンセル</button>
                                 <button id="confirm-ok-btn" class="w-full inline-flex justify-center rounded-md border border-transparent shadow-sm px-4 py-2 bg-red-600 text-base font-medium text-white hover:bg-red-700 focus:outline-none sm:ml-3 sm:w-auto sm:text-sm">実行</button>`;
                             this.showModal(confirmModal);
                             document.getElementById('confirm-ok-btn').onclick = () => { this.hideModal(confirmModal); resolve(true); };
@@ -2549,7 +2581,7 @@
                         const keywords = term.trim().split(/\s+/).filter(Boolean);
                         if (keywords.length === 0) return String(text);
                 
-                        const regex = new RegExp(keywords.map(k => App.utils.escapeRegExp(k)).join('|'), 'gi');
+                        const regex = new RegExp(keywords.map(k => this.escapeRegExp(k)).join('|'), 'gi');
                         
                         return String(text).replace(regex, `<mark class="highlight">$&</mark>`);
                     },
