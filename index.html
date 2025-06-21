@@ -65,9 +65,12 @@
         .text-main { color: var(--text-main); } .text-sub { color: var(--text-sub); } .placeholder-color::placeholder { color: var(--text-placeholder); }
         .border-color { border-color: var(--border-color); }
         
-        .disease-details.collapsed { display: none; }
+        .disease-details.collapsed-fully > *:not(:first-child) { display: none; }
+        .disease-details.collapsed-partially > *:not(.disease-title-container):not(.keywords-container) { display: none; }
+
         h3.disease-title { cursor: pointer; }
 
+        .keyword-count { font-size: 0.65rem; padding-left: 4px; opacity: 0.7; }
         .keyword-count-1 { background-color: #facc15 !important; color: #1f2937 !important; } /* yellow-400 */
         .keyword-count-2 { background-color: #4ade80 !important; color: #1f2937 !important; } /* green-400 */
         .keyword-count-3 { background-color: #60a5fa !important; color: #1f2937 !important; } /* blue-400 */
@@ -245,6 +248,11 @@
                                         <input name="bp_dia_l" type="number" id="bp-dia_l" class="w-full bg-input p-2 rounded-md border border-transparent" placeholder="Dia">
                                     </div>
                                 </div>
+                                <div id="bp-warnings" class="mt-2 text-xs"></div>
+                             </div>
+                             <div>
+                                <h4 class="block text-sm font-medium mt-4">ショック指数 (SI)</h4>
+                                <div id="shock-index-display" class="mt-2"></div>
                              </div>
                         </div>
 
@@ -530,8 +538,13 @@
                     db: null, auth: null, userId: null, dataStore: [], isLoading: true,
                     intersectionObserver: null,
                     filters: { searchTerm: '', activeKeywords: new Set(), keywordMode: 'OR', isFavoritesOnly: false, sortBy: 'name' },
-                    ui: { selectedItems: new Set(), highlightedElements: [], currentHighlightIndex: -1, isAllCollapsed: false },
-                    settings: { showRandomBtn: false, showCollapseBtn: false, theme: 'dark' },
+                    ui: { 
+                        selectedItems: new Set(), 
+                        highlightedElements: [], 
+                        currentHighlightIndex: -1, 
+                        collapseState: 0 // 0: expanded, 1: partial, 2: collapsed
+                    },
+                    settings: { showRandomBtn: false, showCollapseBtn: false, theme: 'dark', fontSize: 'base' },
                     stopwatch: { interval: null, isRunning: false, elapsedSeconds: 0, pressTimer: null },
                     vitals: {},
                     sidebar: { touchStartX: 0, touchCurrentX: 0, isDragging: false },
@@ -616,6 +629,8 @@
                         pulsePressureL: D.getElementById('pulse-pressure-l'),
                         vitalsEcgTags: D.getElementById('vitals-ecg-tags'),
                         ecgMemo: D.getElementById('ecg-memo'),
+                        bpWarnings: D.getElementById('bp-warnings'),
+                        shockIndexDisplay: D.getElementById('shock-index-display'),
                         editAppearanceTagsBtn: D.getElementById('edit-appearance-tags-btn'),
                         editEcgTagsBtn: D.getElementById('edit-ecg-tags-btn'),
                         // Settings Modal
@@ -730,7 +745,7 @@
                         const timeString = now.toTimeString().split(' ')[0].substring(0, 5); // HH:mm
                         App.state.vitals[type] = timeString;
                         App.components.vitalsModal.saveState(); // Save to localStorage
-                        
+                        App.renderer.renderVitalsSummary();
                         const btn = App.elements[`${type}Btn`];
                         if (btn) {
                             btn.classList.add('active');
@@ -745,7 +760,8 @@
                         }
                     },
                     handleCollapseAll() {
-                        App.state.ui.isAllCollapsed = !App.state.ui.isAllCollapsed;
+                        const { ui } = App.state;
+                        ui.collapseState = (ui.collapseState + 1) % 3; // Cycle through 0, 1, 2
                         App.renderer.renderAll();
                     },
                     handleFavoriteFilterClick(e) {
@@ -777,12 +793,15 @@
                             'favorite-btn': el => App.services.db.toggleFavorite('complaint', el.dataset.id),
                             'learned-complaint-btn': el => App.services.db.toggleLearnedStatus('complaint', el.dataset.id),
                             'disease-title': el => {
-                                const details = el.closest('.pl-4').querySelector('.disease-details');
-                                if (details) details.classList.toggle('collapsed');
+                                const details = el.closest('.disease-title-container').nextElementSibling;
+                                if (details) {
+                                     details.classList.toggle('collapsed-fully');
+                                     details.classList.remove('collapsed-partially');
+                                }
                             },
                             'favorite-disease-btn': el => App.services.db.toggleFavorite('disease', el.dataset.complaintId, el.dataset.diseaseName),
                             'learned-disease-btn': el => App.services.db.toggleLearnedStatus('disease', el.dataset.complaintId, el.dataset.diseaseName),
-                            'content-keyword-tag': el => this.handleKeywordTagClick(el.textContent.trim()),
+                            'content-keyword-tag': el => this.handleKeywordTagClick(el.textContent.trim().replace(/\d+$/, '')),
                         };
                         for (const className in actions) {
                             const el = target.closest(`.${className}`);
@@ -960,7 +979,7 @@
                         this.renderNav(); 
                         this.renderContent(dataToRender);
                         this.renderKeywordsPanel();
-                        this.renderer.renderVitalsSummary();
+                        App.renderer.renderVitalsSummary();
                         this.search.collectAndNavigateHighlights();
                         this.setupIntersectionObserver();
                     },
@@ -968,7 +987,6 @@
                         const { dataStore, filters, ui } = App.state;
                         let processedData = JSON.parse(JSON.stringify(dataStore));
                     
-                        // Filter by selected complaint checkboxes
                         const selectedComplaintIds = new Set();
                         ui.selectedItems.forEach(item => {
                             if (item.startsWith('c_')) {
@@ -980,7 +998,6 @@
                             processedData = processedData.filter(entry => selectedComplaintIds.has(entry.id));
                         }
                     
-                        // Filter by favorites
                         if (filters.isFavoritesOnly) {
                              processedData = processedData.map(entry => {
                                 const favoriteDiseases = (entry.diseases || []).filter(d => d.isFavorite);
@@ -990,7 +1007,6 @@
                             }).filter(Boolean);
                         }
                         
-                        // Filter by active keywords or search term
                         if (filters.activeKeywords.size > 0) {
                             const activeKeywords = Array.from(filters.activeKeywords);
                              processedData = processedData.map(entry => {
@@ -1058,11 +1074,13 @@
                     renderContent(data) {
                         const { contentArea, collapseAllBtn } = App.elements;
                         const { searchTerm, activeKeywords } = App.state.filters;
-                        const { isAllCollapsed, selectedItems } = App.state.ui;
+                        const { collapseState, selectedItems } = App.state.ui;
                         
                         const icon = collapseAllBtn.querySelector('i');
-                        if(icon) {
-                            icon.className = isAllCollapsed ? 'fas fa-expand-arrows-alt' : 'fas fa-compress-alt';
+                        if (icon) {
+                            if (collapseState === 2) icon.className = 'fas fa-expand';
+                            else if (collapseState === 1) icon.className = 'fas fa-compress-arrows-alt';
+                            else icon.className = 'fas fa-compress';
                         }
                         
                         contentArea.innerHTML = '';
@@ -1076,6 +1094,7 @@
                             const originalData = App.state.dataStore.find(d => d.id === entry.id);
                              if (!originalData) return;
                             const complaintId = `complaint-${entry.id}`;
+                            const isComplaintChecked = selectedItems.has(`c_${entry.id}`); 
                             const entryDiv = document.createElement('div');
                             entryDiv.className = 'content-card bg-card mb-6 rounded-xl shadow-md p-4';
                             entryDiv.id = complaintId;
@@ -1087,20 +1106,27 @@
                             const diseasesHTML = (entry.diseases || []).map(disease => { 
                                 const diseaseFavoriteClass = disease.isFavorite ? 'fas fa-star text-yellow-400' : 'far text-sub';
                                 const diseaseLearnedClass = disease.isLearned ? 'fas fa-bookmark learned-mark' : 'far fa-bookmark text-sub';
+
+                                let detailsClass = '';
+                                if(collapseState === 1) detailsClass = 'collapsed-partially';
+                                if(collapseState === 2) detailsClass = 'collapsed-fully';
+                                
                                 const diseaseMemoHTML = disease.memo ? `<div class="mt-3 text-sm text-amber-300 bg-main p-2 rounded-lg"><i class="fas fa-pencil-alt fa-fw mr-2 text-amber-400"></i>${App.utils.highlightText(disease.memo, searchTerm).replace(/\n/g, '<br>')}</div>` : '';
                                 return `
                                     <div class="pl-4 border-l-4 border-color">
-                                        <div class="flex items-center justify-between">
+                                        <div class="disease-title-container flex items-center justify-between">
                                             <h3 class="disease-title text-lg font-semibold text-teal-400 flex-grow">${App.utils.highlightText(disease.name, searchTerm)}</h3>
                                             <div class="flex items-center ml-2">
                                                 <button class="learned-disease-btn text-lg mr-2" data-complaint-id="${entry.id}" data-disease-name="${disease.name}" title="覚えたマーク"><i class="${diseaseLearnedClass}"></i></button>
                                                 <button class="favorite-disease-btn text-lg" data-complaint-id="${entry.id}" data-disease-name="${disease.name}" title="お気に入り登録"><i class="${diseaseFavoriteClass} fa-star"></i></button>
                                             </div>
                                         </div>
-                                        <div class="disease-details mt-2 pl-8 ${isAllCollapsed ? 'collapsed' : ''}">
+                                        <div class="disease-details mt-2 pl-8 ${detailsClass}">
                                             <p class="text-sm text-sub mt-1">${App.utils.highlightText(disease.description || '', searchTerm)}</p>
                                             ${diseaseMemoHTML}
-                                            <h4 class="font-bold text-sm mt-3"><i class="fas fa-lightbulb text-yellow-400 mr-2"></i>キーワード</h4><div class="flex flex-wrap gap-2 mt-1">${(disease.keywords || []).map(k => `<span class="content-keyword-tag text-sm rounded-full px-3 py-1 hover:opacity-80 ${activeKeywords.has(k) ? 'active' : ''}">${App.utils.highlightText(k, searchTerm)}</span>`).join('')}</div>
+                                            <div class="keywords-container">
+                                                <h4 class="font-bold text-sm mt-3"><i class="fas fa-lightbulb text-yellow-400 mr-2"></i>キーワード</h4><div class="flex flex-wrap gap-2 mt-1">${(disease.keywords || []).map(k => `<span class="content-keyword-tag text-sm rounded-full px-3 py-1 hover:opacity-80 ${activeKeywords.has(k) ? 'active' : ''}">${App.utils.highlightText(k, searchTerm)}</span>`).join('')}</div>
+                                            </div>
                                             <h4 class="font-bold text-sm mt-3"><i class="fas fa-exclamation-triangle text-red-400 mr-2"></i>落とし穴</h4><ul class="list-disc list-inside mt-1 text-sm space-y-1">${(disease.pitfalls || []).map(p => `<li>${App.utils.highlightText(p, searchTerm)}</li>`).join('')}</ul>
                                         </div>
                                     </div>`;
@@ -1109,6 +1135,7 @@
                             entryDiv.innerHTML = `
                                 <div class="flex justify-between items-center">
                                     <div class="flex items-center">
+                                        <input type="checkbox" class="item-checkbox" data-type="complaint" data-id="${entry.id}" ${isComplaintChecked ? 'checked' : ''}>
                                         <h2 class="text-xl md:text-2xl font-bold text-blue-400">${App.utils.highlightText(originalData.chiefComplaint, searchTerm)}</h2>
                                     </div>
                                     <div class="flex items-center">
@@ -1117,7 +1144,7 @@
                                         <button class="edit-btn text-sub hover:text-main" data-id="${entry.id}"><i class="fas fa-edit"></i></button>
                                     </div>
                                 </div>
-                                <p class="text-sm text-sub mt-1">${App.utils.highlightText(originalData.description || '', searchTerm)}</p>
+                                <p class="text-sm text-sub mt-1 ml-10">${App.utils.highlightText(originalData.description || '', searchTerm)}</p>
                                 ${memoHTML}
                                 <div class="mt-4 space-y-4">${diseasesHTML}</div>`;
                             fragment.appendChild(entryDiv);
@@ -1162,7 +1189,7 @@
                             [...allKeywords].sort((a, b) => a.localeCompare(b, 'ja')).forEach(keyword => {
                                 const count = keywordCounts[keyword] || 0;
                                 let colorClass = '';
-                                if(count > 0){
+                                if(count > 0 && selectedComplaintIds.size > 0){ // Only color if complaints are selected
                                      if (count >= 5) colorClass = 'keyword-count-5';
                                      else if (count >= 4) colorClass = 'keyword-count-4';
                                      else if (count >= 3) colorClass = 'keyword-count-3';
@@ -1173,6 +1200,9 @@
                                 const tag = document.createElement('span');
                                 tag.className = `keyword-tag bg-btn hover:opacity-80 text-sm py-1 px-3 rounded-full transition-colors ${filters.activeKeywords.has(keyword) ? 'active' : ''} ${colorClass}`;
                                 tag.textContent = keyword;
+                                if(count > 0 && selectedComplaintIds.size > 1){
+                                   tag.innerHTML += `<span class="keyword-count">${count}</span>`;
+                                }
                                 tag.onclick = () => App.handlers.handleKeywordTagClick(keyword);
                                 keywordTags.appendChild(tag);
                             });
@@ -1247,6 +1277,12 @@
                             let bpTextL = `${vitals.bp_sys_l || '?'}/${vitals.bp_dia_l || '?'}`;
                              if (vitals.pulse_pressure_l) bpTextL += ` <b class="text-red-400">${vitals.pulse_pressure_l}</b>`;
                             if (vitals.bp_sys_l || vitals.bp_dia_l) html += this.formatSummaryEntry('fa-droplet', '血圧(L)', bpTextL, '', App.utils.checkVitalSign('sbp', vitals.bp_sys_l, age, vitals), true);
+                            
+                            if (vitals.bp_difference_warning) html += `<span class="vital-danger flex items-center gap-1"><i class="fas fa-triangle-exclamation"></i>${vitals.bp_difference_warning}</span>`;
+                            if (vitals.shock_index) {
+                                const siWarning = vitals.shock_index_warning ? 'vital-danger' : '';
+                                html += this.formatSummaryEntry('fa-calculator', 'SI', `<span class="${siWarning}">${vitals.shock_index} ${vitals.shock_index_warning || ''}</span>`, '', 0, true);
+                            }
 
                              const pupilCheck = App.utils.checkVitalSign('pupils', vitals, age, vitals);
                             if (vitals.pupil_r || vitals.pupil_l) html += this.formatSummaryEntry('fa-eye', '瞳孔', `R:${vitals.pupil_r || '?'} L:${vitals.pupil_l || '?'}`,'', pupilCheck);
@@ -1530,9 +1566,10 @@
                              el.vitalsForm.addEventListener('click', e => {
                                 const target = e.target.closest('.jcs-btn, .vitals-tag, .ecg-tag');
                                 if (target) {
-                                    if(target.classList.contains('vitals-tag') || target.classList.contains('ecg-tag')) {
-                                        target.classList.toggle('active');
+                                    if(target.classList.contains('jcs-btn')) {
+                                       App.elements.vitalsJcsGroup.querySelectorAll('.active').forEach(b => b.classList.remove('active'));
                                     }
+                                    target.classList.toggle('active');
                                     this.updateStateFromForm();
                                     this.checkAllVitals();
                                 }
@@ -1541,6 +1578,7 @@
                         },
                         checkAllVitals(){
                             this.checkPulsePressure();
+                            this.checkShockIndex();
                             this.updateVitalsUI();
                         },
                         updateVitalsUI() {
@@ -1562,7 +1600,13 @@
                             const jcsLevel = App.utils.checkVitalSign('jcs', vitals.jcs, age, vitals);
                             App.elements.vitalsJcsGroup.querySelectorAll('.jcs-btn').forEach(btn => this.updateInputStyle(btn, btn.textContent === vitals.jcs ? jcsLevel : 0));
                             this.updateInputStyle(App.elements.gcsTotalEl.parentElement, App.utils.checkVitalSign('gcs', vitals.gcs, age, vitals));
-
+                            
+                            const bpDifference = Math.abs((parseInt(vitals.bp_sys_r) || 0) - (parseInt(vitals.bp_sys_l) || 0));
+                            if (bpDifference >= 20) {
+                                App.elements.bpWarnings.innerHTML = `<span class="vital-danger"><i class="fas fa-triangle-exclamation mr-1"></i>血圧の左右差 (${bpDifference} mmHg)</span>`;
+                            } else {
+                                App.elements.bpWarnings.innerHTML = '';
+                            }
                         },
                         updateInputStyle(el, level) {
                             if (!el) return;
@@ -1570,7 +1614,7 @@
                              switch(level) {
                                 case 1: el.classList.add('input-warning'); break;
                                 case 2: el.classList.add('input-danger'); break;
-                                default: el.classList.add('input-normal'); break;
+                                default: break;
                             }
                         },
                         loadCustomTags() {
@@ -1591,8 +1635,6 @@
                             App.elements.vitalsJcsGroup.innerHTML = '';
                             jcsOptions.forEach(val => App.elements.vitalsJcsGroup.appendChild(App.utils.createButton(val, 'jcs-btn bg-btn hover:opacity-80 p-2 rounded-md flex-grow text-center', e => {
                                 this.handleJcsClick(e);
-                                this.updateStateFromForm();
-                                this.checkAllVitals();
                             })));
                             
                             ['r', 'l'].forEach(side => {
@@ -1617,8 +1659,13 @@
                             tags.forEach(val => container.appendChild(App.utils.createButton(val, `${className} bg-btn hover:opacity-80 text-sm py-1 px-3 rounded-full whitespace-nowrap`)));
                         },
                          handleJcsClick(e) {
-                            App.elements.vitalsJcsGroup.querySelectorAll('.active').forEach(b => b.classList.remove('active'));
-                            e.target.classList.add('active');
+                            const target = e.currentTarget;
+                            if (target.classList.contains('active')) {
+                                target.classList.remove('active');
+                            } else {
+                                App.elements.vitalsJcsGroup.querySelectorAll('.active').forEach(b => b.classList.remove('active'));
+                                target.classList.add('active');
+                            }
                         },
                          updateGcsTotal() {
                             const { gcsESelect, gcsVSelect, gcsMSelect, gcsTotalEl } = App.elements;
@@ -1628,7 +1675,7 @@
                         },
                          updateStateFromForm() {
                              const form = App.elements.vitalsForm;
-                             const vitals = App.state.vitals; // Keep existing timestamps
+                             const vitals = App.state.vitals; 
                              const { config } = App;
                              
                              const formData = new FormData(form);
@@ -1648,7 +1695,31 @@
                              });
                              vitals.appearance = Array.from(form.querySelectorAll('#vitals-appearance-tags .active')).map(t => t.textContent.trim());
                              vitals.ecg_findings = Array.from(form.querySelectorAll('#vitals-ecg-tags .active')).map(t => t.textContent.trim());
+                             
+                             const bpSysR = parseInt(vitals.bp_sys_r);
+                             const bpSysL = parseInt(vitals.bp_sys_l);
+                             vitals.bp_difference_warning = (bpSysR && bpSysL && Math.abs(bpSysR - bpSysL) >= 20) ? `血圧の左右差` : null;
+
+                             const pulse = parseInt(vitals.pulse);
+                             const sbp = bpSysR || bpSysL;
+                             if(pulse && sbp) {
+                                 vitals.shock_index = (pulse / sbp).toFixed(2);
+                                 vitals.shock_index_warning = vitals.shock_index >= 1.0 ? 'ショック指数' : null;
+                             } else {
+                                 vitals.shock_index = null;
+                                 vitals.shock_index_warning = null;
+                             }
+                             
                              App.state.vitals = vitals;
+                        },
+                        checkShockIndex() {
+                            const { shockIndexDisplay } = App.elements;
+                            const { shock_index, shock_index_warning } = App.state.vitals;
+                            if (shock_index !== null) {
+                                shockIndexDisplay.innerHTML = `値: <b class="${shock_index_warning ? 'vital-danger' : ''}">${shock_index}</b> ${shock_index_warning ? `<span class="vital-danger ml-2"><i class="fas fa-triangle-exclamation"></i> ${shock_index_warning}</span>` : ''}`;
+                            } else {
+                                shockIndexDisplay.innerHTML = 'N/A';
+                            }
                         },
                         checkPulsePressure() {
                             ['r', 'l'].forEach(side => {
@@ -1735,7 +1806,7 @@
                                 this.saveState(false); // Do not save empty vitals to history
                                 this.updateFormFromState();
                                 App.renderer.renderVitalsSummary();
-                                App.elements.vitalsForm.querySelectorAll('.vitals-tag.active, .ecg-tag.active').forEach(tag => tag.classList.remove('active'));
+                                App.elements.vitalsForm.querySelectorAll('.vitals-tag.active, .ecg-tag.active, .jcs-btn.active').forEach(tag => tag.classList.remove('active'));
                              };
 
                             if (withConfirmation) {
@@ -1754,12 +1825,12 @@
                              settings.theme = App.utils.loadFromStorage(App.config.storageKeys.theme, 'dark');
                              settings.showRandomBtn = App.utils.loadFromStorage(App.config.storageKeys.showRandomBtn, false);
                              settings.showCollapseBtn = App.utils.loadFromStorage(App.config.storageKeys.showCollapseBtn, false);
-                             const fontSize = App.utils.loadFromStorage(App.config.storageKeys.fontSize, 'base');
+                             settings.fontSize = App.utils.loadFromStorage(App.config.storageKeys.fontSize, 'base');
                              
                              this.applyTheme(settings.theme);
                              this.toggleRandomButtonVisibility(settings.showRandomBtn);
                              this.toggleCollapseButtonVisibility(settings.showCollapseBtn);
-                             this.applyFontSize(fontSize);
+                             this.applyFontSize(settings.fontSize);
                         },
                         bindEventListeners() {
                            const el = App.elements;
@@ -1787,8 +1858,9 @@
                              App.utils.saveToStorage(App.config.storageKeys.theme, newTheme);
                         },
                         applyTheme(theme) {
-                            App.elements.body.className = `text-${App.state.settings.fontSize || 'base'}`;
+                            App.elements.body.classList.remove('light-mode', 'dark-mode');
                             App.elements.body.classList.add(`${theme}-mode`);
+                            App.state.settings.theme = theme;
                             App.elements.themeSwitchToggle.checked = theme === 'light';
                             document.querySelector('meta[name="theme-color"]').setAttribute('content', theme === 'dark' ? '#111827' : '#f9fafb');
                         },
@@ -1821,6 +1893,7 @@
                              App.elements.showRandomBtnToggle.checked = App.state.settings.showRandomBtn;
                              App.elements.showCollapseBtnToggle.checked = App.state.settings.showCollapseBtn;
                              App.elements.themeSwitchToggle.checked = App.state.settings.theme === 'light';
+                             this.applyFontSize(App.state.settings.fontSize);
                              App.utils.showModal(App.elements.settingsModal); 
                         },
                         close() { App.utils.hideModal(App.elements.settingsModal); },
@@ -1839,9 +1912,11 @@
                             if(btn) this.applyFontSize(btn.dataset.size);
                         },
                         applyFontSize(size) {
-                            const htmlEl = App.elements.html;
-                            htmlEl.classList.remove('text-sm', 'text-base', 'text-lg');
-                            htmlEl.classList.add(`text-${size}`);
+                            const { body } = App.elements;
+                            const currentTheme = App.state.settings.theme;
+
+                            body.className = `${currentTheme}-mode text-${size}`;
+                            App.state.settings.fontSize = size;
                             
                             App.elements.fontSizeControls.querySelectorAll('.font-size-btn').forEach(b => {
                                 b.classList.toggle('active', b.dataset.size === size);
