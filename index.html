@@ -66,13 +66,15 @@
         .border-color { border-color: var(--border-color); }
         
         .disease-details.collapsed { display: none; }
+        h3.disease-title { cursor: pointer; }
 
         .keyword-count-1 { background-color: #facc15 !important; color: #1f2937 !important; } /* yellow-400 */
         .keyword-count-2 { background-color: #4ade80 !important; color: #1f2937 !important; } /* green-400 */
         .keyword-count-3 { background-color: #60a5fa !important; color: #1f2937 !important; } /* blue-400 */
         .keyword-count-4 { background-color: #a78bfa !important; color: #1f2937 !important; } /* purple-400 */
         .keyword-count-5 { background-color: #f87171 !important; color: #1f2937 !important; } /* red-400 */
-
+        
+        .learned-mark { color: #3b82f6; } /* blue-500 */
     </style>
 </head>
 <body class="dark-mode antialiased text-sm">
@@ -728,7 +730,7 @@
                         const timeString = now.toTimeString().split(' ')[0].substring(0, 5); // HH:mm
                         App.state.vitals[type] = timeString;
                         App.components.vitalsModal.saveState(); // Save to localStorage
-                        App.renderer.renderVitalsSummary();
+                        
                         const btn = App.elements[`${type}Btn`];
                         if (btn) {
                             btn.classList.add('active');
@@ -773,7 +775,13 @@
                         const actions = {
                             'edit-btn': el => App.components.dataModal.openForEdit(el.dataset.id),
                             'favorite-btn': el => App.services.db.toggleFavorite('complaint', el.dataset.id),
+                            'learned-complaint-btn': el => App.services.db.toggleLearnedStatus('complaint', el.dataset.id),
+                            'disease-title': el => {
+                                const details = el.closest('.pl-4').querySelector('.disease-details');
+                                if (details) details.classList.toggle('collapsed');
+                            },
                             'favorite-disease-btn': el => App.services.db.toggleFavorite('disease', el.dataset.complaintId, el.dataset.diseaseName),
+                            'learned-disease-btn': el => App.services.db.toggleLearnedStatus('disease', el.dataset.complaintId, el.dataset.diseaseName),
                             'content-keyword-tag': el => this.handleKeywordTagClick(el.textContent.trim()),
                         };
                         for (const className in actions) {
@@ -815,10 +823,6 @@
                         filters.keywordMode = filters.keywordMode === 'OR' ? 'AND' : 'OR';
                         App.renderer.renderAll();
                     },
-                    handleClearKeywordFilter() {
-                        App.state.filters.activeKeywords.clear();
-                        App.renderer.renderAll();
-                    },
                     handleClearAllSelections() {
                         App.state.ui.selectedItems.clear();
                         document.querySelectorAll('.item-checkbox, .nav-item-checkbox').forEach(cb => cb.checked = false);
@@ -830,7 +834,6 @@
                             gender: document.querySelector('.gender-btn.active')?.dataset.gender || null
                         };
                         App.utils.saveToStorage(App.config.storageKeys.ageAndGender, data);
-                        App.renderer.renderVitalsSummary();
                         App.components.vitalsModal.checkAllVitals();
                     },
                 },
@@ -909,29 +912,31 @@
                             });
                         },
                         async toggleFavorite(type, id, diseaseName = null) {
+                            await this.toggleBooleanField(type, id, diseaseName, 'isFavorite');
+                        },
+                        async toggleLearnedStatus(type, id, diseaseName = null) {
+                            await this.toggleBooleanField(type, id, diseaseName, 'isLearned');
+                        },
+                        async toggleBooleanField(type, id, diseaseName, field) {
                             const entryIndex = App.state.dataStore.findIndex(e => e.id === id);
                             if (entryIndex === -1) return;
-                            
-                            const entry = { ...App.state.dataStore[entryIndex] };
+
+                            const entry = JSON.parse(JSON.stringify(App.state.dataStore[entryIndex]));
                             const collectionRef = this.getCollectionRef();
                             if (!collectionRef) return;
                             const docRef = doc(collectionRef, id);
 
-                            let updatePayload = {
-                                updatedAt: new Date().toISOString()
-                            };
+                            let updatePayload = { updatedAt: new Date().toISOString() };
 
-                            if(type === 'complaint') {
-                                entry.isFavorite = !entry.isFavorite;
-                                updatePayload.isFavorite = entry.isFavorite;
+                            if (type === 'complaint') {
+                                entry[field] = !entry[field];
+                                updatePayload[field] = entry[field];
                             } else {
-                                entry.diseases = entry.diseases.map(d => {
-                                    if(d.name === diseaseName) {
-                                        return {...d, isFavorite: !d.isFavorite};
-                                    }
-                                    return d;
-                                });
-                                updatePayload.diseases = entry.diseases;
+                                const diseaseIndex = entry.diseases.findIndex(d => d.name === diseaseName);
+                                if (diseaseIndex !== -1) {
+                                    entry.diseases[diseaseIndex][field] = !entry.diseases[diseaseIndex][field];
+                                    updatePayload.diseases = entry.diseases;
+                                }
                             }
                             
                             App.state.dataStore[entryIndex] = entry;
@@ -940,12 +945,13 @@
                             try {
                                 await updateDoc(docRef, updatePayload);
                             } catch (error) {
-                                console.error("Error updating favorite status:", error);
+                                console.error(`Error updating ${field} status:`, error);
+                                // Revert optimistic update
                                 App.state.dataStore[entryIndex] = App.state.dataStore.find(e => e.id === id);
                                 App.renderer.renderAll();
-                                App.utils.customAlert("お気に入り状態の更新に失敗しました。");
+                                App.utils.customAlert("状態の更新に失敗しました。");
                             }
-                        },
+                        }
                     }
                 },
                 renderer: {
@@ -954,7 +960,7 @@
                         this.renderNav(); 
                         this.renderContent(dataToRender);
                         this.renderKeywordsPanel();
-                        this.renderVitalsSummary();
+                        this.renderer.renderVitalsSummary();
                         this.search.collectAndNavigateHighlights();
                         this.setupIntersectionObserver();
                     },
@@ -962,6 +968,7 @@
                         const { dataStore, filters, ui } = App.state;
                         let processedData = JSON.parse(JSON.stringify(dataStore));
                     
+                        // Filter by selected complaint checkboxes
                         const selectedComplaintIds = new Set();
                         ui.selectedItems.forEach(item => {
                             if (item.startsWith('c_')) {
@@ -973,6 +980,7 @@
                             processedData = processedData.filter(entry => selectedComplaintIds.has(entry.id));
                         }
                     
+                        // Filter by favorites
                         if (filters.isFavoritesOnly) {
                              processedData = processedData.map(entry => {
                                 const favoriteDiseases = (entry.diseases || []).filter(d => d.isFavorite);
@@ -982,6 +990,7 @@
                             }).filter(Boolean);
                         }
                         
+                        // Filter by active keywords or search term
                         if (filters.activeKeywords.size > 0) {
                             const activeKeywords = Array.from(filters.activeKeywords);
                              processedData = processedData.map(entry => {
@@ -1049,7 +1058,7 @@
                     renderContent(data) {
                         const { contentArea, collapseAllBtn } = App.elements;
                         const { searchTerm, activeKeywords } = App.state.filters;
-                        const { isAllCollapsed } = App.state.ui;
+                        const { isAllCollapsed, selectedItems } = App.state.ui; // FIX: added selectedItems
                         
                         const icon = collapseAllBtn.querySelector('i');
                         if(icon) {
@@ -1067,21 +1076,27 @@
                             const originalData = App.state.dataStore.find(d => d.id === entry.id);
                              if (!originalData) return;
                             const complaintId = `complaint-${entry.id}`;
+                            const isComplaintChecked = selectedItems.has(`c_${entry.id}`); // FIX: isComplaintChecked definition
                             const entryDiv = document.createElement('div');
                             entryDiv.className = 'content-card bg-card mb-6 rounded-xl shadow-md p-4';
                             entryDiv.id = complaintId;
                             
                             const memoHTML = originalData.memo ? `<div class="mt-4 pl-6 text-sm text-amber-300 bg-main p-3 rounded-lg"><i class="fas fa-pencil-alt fa-fw mr-2 text-amber-400"></i>${App.utils.highlightText(originalData.memo, searchTerm).replace(/\n/g, '<br>')}</div>` : '';
-                            const favoriteClass = originalData.isFavorite ? 'fas text-yellow-400' : 'far text-sub';
+                            const favoriteClass = originalData.isFavorite ? 'fas fa-star text-yellow-400' : 'far text-sub';
+                            const learnedClass = originalData.isLearned ? 'fas fa-bookmark learned-mark' : 'far fa-bookmark text-sub';
             
                             const diseasesHTML = (entry.diseases || []).map(disease => { 
-                                const diseaseFavoriteClass = disease.isFavorite ? 'fas text-yellow-400' : 'far text-sub';
+                                const diseaseFavoriteClass = disease.isFavorite ? 'fas fa-star text-yellow-400' : 'far text-sub';
+                                const diseaseLearnedClass = disease.isLearned ? 'fas fa-bookmark learned-mark' : 'far fa-bookmark text-sub';
                                 const diseaseMemoHTML = disease.memo ? `<div class="mt-3 text-sm text-amber-300 bg-main p-2 rounded-lg"><i class="fas fa-pencil-alt fa-fw mr-2 text-amber-400"></i>${App.utils.highlightText(disease.memo, searchTerm).replace(/\n/g, '<br>')}</div>` : '';
                                 return `
                                     <div class="pl-4 border-l-4 border-color">
                                         <div class="flex items-center justify-between">
-                                            <h3 class="text-lg font-semibold text-teal-400">${App.utils.highlightText(disease.name, searchTerm)}</h3>
-                                            <button class="favorite-disease-btn text-lg" data-complaint-id="${entry.id}" data-disease-name="${disease.name}" title="お気に入り登録"><i class="${diseaseFavoriteClass} fa-star"></i></button>
+                                            <h3 class="disease-title text-lg font-semibold text-teal-400 flex-grow">${App.utils.highlightText(disease.name, searchTerm)}</h3>
+                                            <div class="flex items-center ml-2">
+                                                <button class="learned-disease-btn text-lg mr-2" data-complaint-id="${entry.id}" data-disease-name="${disease.name}" title="覚えたマーク"><i class="${diseaseLearnedClass}"></i></button>
+                                                <button class="favorite-disease-btn text-lg" data-complaint-id="${entry.id}" data-disease-name="${disease.name}" title="お気に入り登録"><i class="${diseaseFavoriteClass} fa-star"></i></button>
+                                            </div>
                                         </div>
                                         <div class="disease-details mt-2 pl-8 ${isAllCollapsed ? 'collapsed' : ''}">
                                             <p class="text-sm text-sub mt-1">${App.utils.highlightText(disease.description || '', searchTerm)}</p>
@@ -1094,8 +1109,11 @@
 
                             entryDiv.innerHTML = `
                                 <div class="flex justify-between items-center">
-                                    <h2 class="text-xl md:text-2xl font-bold text-blue-400">${App.utils.highlightText(originalData.chiefComplaint, searchTerm)}</h2>
                                     <div class="flex items-center">
+                                        <h2 class="text-xl md:text-2xl font-bold text-blue-400">${App.utils.highlightText(originalData.chiefComplaint, searchTerm)}</h2>
+                                    </div>
+                                    <div class="flex items-center">
+                                         <button class="learned-complaint-btn text-xl mr-4" data-id="${entry.id}" title="覚えたマーク"><i class="${learnedClass}"></i></button>
                                         <button class="favorite-btn text-xl mr-4" data-id="${entry.id}" title="お気に入り登録"><i class="${favoriteClass} fa-star"></i></button>
                                         <button class="edit-btn text-sub hover:text-main" data-id="${entry.id}"><i class="fas fa-edit"></i></button>
                                     </div>
@@ -1126,12 +1144,14 @@
                         
                         const keywordCounts = {};
                         if (selectedComplaintIds.size > 0) {
-                            sourceData.forEach(entry => {
-                                (entry.diseases || []).forEach(d => {
-                                    (d.keywords || []).forEach(k => {
-                                        keywordCounts[k] = (keywordCounts[k] || 0) + 1;
-                                    });
+                            allKeywords.forEach(k => {
+                                let count = 0;
+                                sourceData.forEach(entry => {
+                                    if ((entry.diseases || []).some(d => (d.keywords || []).includes(k))) {
+                                        count++;
+                                    }
                                 });
+                                keywordCounts[k] = count;
                             });
                         }
 
@@ -2111,6 +2131,7 @@
                                     pitfalls: group.querySelector('input[name$="_pitfalls"]').value.split(',').map(p => p.trim()).filter(Boolean),
                                     memo: group.querySelector('textarea[name$="_memo"]').value.trim(),
                                     isFavorite: false,
+                                    isLearned: false
                                 };
                                 diseases.push(disease);
                             });
@@ -2119,19 +2140,24 @@
                                 description: form.querySelector('#chief-complaint-description').value,
                                 memo: form.querySelector('#chief-complaint-memo').value,
                                 diseases: diseases,
-                                updatedAt: new Date().toISOString()
+                                updatedAt: new Date().toISOString(),
+                                isLearned: false,
                             };
                             try {
                                 const collectionRef = App.services.db.getCollectionRef();
                                 if (entryId) {
                                     const existingData = App.state.dataStore.find(d => d.id === entryId);
                                     data.isFavorite = existingData?.isFavorite || false;
+                                    data.isLearned = existingData?.isLearned || false;
                                     if (existingData?.createdAt) {
                                         data.createdAt = existingData.createdAt;
                                     }
                                     data.diseases.forEach(d => {
                                         const existingDisease = (existingData.diseases || []).find(ed => ed.name === d.name);
-                                        if (existingDisease) d.isFavorite = existingDisease.isFavorite;
+                                        if (existingDisease) {
+                                           d.isFavorite = existingDisease.isFavorite;
+                                           d.isLearned = existingDisease.isLearned;
+                                        }
                                     });
                                     await setDoc(doc(collectionRef, entryId), data);
                                     App.utils.customAlert('データが更新されました。');
@@ -2581,7 +2607,7 @@
                         const keywords = term.trim().split(/\s+/).filter(Boolean);
                         if (keywords.length === 0) return String(text);
                 
-                        const regex = new RegExp(keywords.map(k => this.escapeRegExp(k)).join('|'), 'gi');
+                        const regex = new RegExp(keywords.map(k => App.utils.escapeRegExp(k)).join('|'), 'gi');
                         
                         return String(text).replace(regex, `<mark class="highlight">$&</mark>`);
                     },
