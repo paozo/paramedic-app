@@ -93,6 +93,8 @@
         .vital-normal { color: #e5e7eb; } /* gray-200 */
         .vital-warning { color: #facc15; } /* yellow-400 */
         .vital-danger { color: #f87171; } /* red-400 */
+        .warning-text { color: #f87171; font-weight: bold;}
+        .warning-text-sm { color: #f87171; font-weight: bold; font-size: var(--font-size-xs); }
 
         /* Input Border Colors */
         .input-normal { border-color: #4b5563; }
@@ -300,9 +302,14 @@
                     </div>
                 </form>
             </main>
-            <footer class="p-4 border-t border-gray-700 flex justify-end items-center gap-3">
-                <button id="vitals-clear-btn" class="bg-red-800 hover:bg-red-700 text-white font-bold py-2 px-4 rounded-lg">クリア</button>
-                <button id="vitals-save-btn" class="bg-blue-600 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded-lg">保存して閉じる</button>
+            <footer class="p-4 border-t border-gray-700 flex justify-between items-start gap-3">
+                <div id="vitals-warnings-container" class="flex-grow flex flex-col gap-1 text-sm">
+                    <!-- Warning messages will be injected here -->
+                </div>
+                <div class="flex-shrink-0 flex gap-2">
+                    <button id="vitals-clear-btn" class="bg-red-800 hover:bg-red-700 text-white font-bold py-2 px-4 rounded-lg">クリア</button>
+                    <button id="vitals-save-btn" class="bg-blue-600 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded-lg">保存して閉じる</button>
+                </div>
             </footer>
         </div>
     </div>
@@ -543,6 +550,7 @@
                     customEcgTags: [],
                     vitalsHistory: [],
                     vitalThresholds: [],
+                    globalKeywordCounts: new Map(), // New state for keyword counts
                 },
                 init() {
                     this.cacheDomElements();
@@ -620,6 +628,7 @@
                         ecgMemo: D.getElementById('ecg-memo'),
                         editAppearanceTagsBtn: D.getElementById('edit-appearance-tags-btn'),
                         editEcgTagsBtn: D.getElementById('edit-ecg-tags-btn'),
+                        vitalsWarningsContainer: D.getElementById('vitals-warnings-container'), // New element
                         // Settings Modal
                         settingsModal: D.getElementById('settings-modal'),
                         settingsModalCloseBtn: D.getElementById('settings-modal-close-btn'),
@@ -773,9 +782,11 @@
                         }
                     },
                     handleKeywordTagClick(keyword) {
+                        // Remove count from keyword if present
+                        const keywordName = keyword.replace(/\s\(\d+\)$/, '').trim();
                         const { activeKeywords } = App.state.filters;
-                        if (activeKeywords.has(keyword)) activeKeywords.delete(keyword);
-                        else activeKeywords.add(keyword);
+                        if (activeKeywords.has(keywordName)) activeKeywords.delete(keywordName);
+                        else activeKeywords.add(keywordName);
                         App.state.filters.searchTerm = '';
                         App.elements.searchInput.value = '';
                         App.renderer.renderAll();
@@ -939,12 +950,23 @@
                 renderer: {
                     renderAll() {
                         const dataToRender = this.filterAndSortData();
+                        this.updateGlobalKeywordCounts(dataToRender);
                         this.renderContent(dataToRender);
-                        this.renderNav(); // Always render the full navigation
-                        this.renderKeywordsPanel();
+                        this.renderNav();
+                        this.renderKeywordsPanel(dataToRender);
                         this.renderVitalsSummary();
                         this.search.collectAndNavigateHighlights();
                         this.setupIntersectionObserver();
+                    },
+                    updateGlobalKeywordCounts(data) {
+                        App.state.globalKeywordCounts.clear();
+                        data.forEach(entry => {
+                            (entry.diseases || []).forEach(d => {
+                                (d.keywords || []).forEach(k => {
+                                    App.state.globalKeywordCounts.set(k, (App.state.globalKeywordCounts.get(k) || 0) + 1);
+                                });
+                            });
+                        });
                     },
                     filterAndSortData() {
                         const { dataStore, filters, ui } = App.state;
@@ -1044,7 +1066,7 @@
                     },
                     renderContent(data) {
                         const { contentArea } = App.elements;
-                        const { searchTerm } = App.state.filters;
+                        const { searchTerm, activeKeywords } = App.state.filters;
                         
                         contentArea.innerHTML = '';
                         if (data.length === 0 && !App.state.isLoading) {
@@ -1069,6 +1091,13 @@
                                 const originalDisease = (originalData.diseases || []).find(d => d.name === disease.name) || {};
                                 const diseaseFavoriteClass = originalDisease.isFavorite ? 'fas text-yellow-400' : 'far text-gray-500';
                                 const diseaseMemoHTML = disease.memo ? `<div class="mt-3 text-sm text-amber-300 bg-gray-900/50 p-2 rounded-lg"><i class="fas fa-pencil-alt fa-fw mr-2 text-amber-400"></i>${App.utils.highlightText(disease.memo, searchTerm).replace(/\n/g, '<br>')}</div>` : '';
+                                
+                                const keywordTagsHTML = (disease.keywords || []).map(k => {
+                                    const count = App.state.globalKeywordCounts.get(k) || 0;
+                                    const countHTML = count > 1 ? ` <span class="text-red-400 font-bold">(${count})</span>` : '';
+                                    return `<span class="content-keyword-tag bg-gray-700 text-sm text-gray-200 rounded-full px-3 py-1 hover:bg-gray-500 ${activeKeywords.has(k) ? 'active' : ''}">${App.utils.highlightText(k, searchTerm)}${countHTML}</span>`;
+                                }).join('');
+
                                 return `
                                     <div class="pl-4 border-l-4 border-gray-700">
                                         <div class="flex items-center justify-between">
@@ -1080,7 +1109,7 @@
                                         <div class="mt-2 pl-8">
                                             <p class="text-sm text-gray-400 mt-1">${App.utils.highlightText(disease.description || '', searchTerm)}</p>
                                             ${diseaseMemoHTML}
-                                            <h4 class="font-bold text-sm text-gray-300 mt-3"><i class="fas fa-lightbulb text-yellow-400 mr-2"></i>キーワード</h4><div class="flex flex-wrap gap-2 mt-1">${(disease.keywords || []).map(k => `<span class="content-keyword-tag bg-gray-700 text-sm text-gray-200 rounded-full px-3 py-1 hover:bg-gray-500 ${App.state.filters.activeKeywords.has(k) ? 'active' : ''}">${App.utils.highlightText(k, searchTerm)}</span>`).join('')}</div>
+                                            <h4 class="font-bold text-sm text-gray-300 mt-3"><i class="fas fa-lightbulb text-yellow-400 mr-2"></i>キーワード</h4><div class="flex flex-wrap gap-2 mt-1">${keywordTagsHTML}</div>
                                             <h4 class="font-bold text-sm text-gray-300 mt-3"><i class="fas fa-exclamation-triangle text-red-400 mr-2"></i>落とし穴</h4><ul class="list-disc list-inside mt-1 text-sm text-gray-300 space-y-1">${(disease.pitfalls || []).map(p => `<li>${App.utils.highlightText(p, searchTerm)}</li>`).join('')}</ul>
                                         </div>
                                     </div>`;
@@ -1104,37 +1133,44 @@
                         });
                         contentArea.appendChild(fragment);
                     },
-                    renderKeywordsPanel() {
-                        const { keywordsPanelContentArea, keywordsPanelFilterContainer } = App.elements;
-                        const { ui, dataStore } = App.state;
+                    renderKeywordsPanel(dataToRender) {
+                        const { keywordsPanelContentArea } = App.elements;
+                        const { filters, ui } = App.state;
 
                         if (!keywordsPanelContentArea) return;
                         
                         keywordsPanelContentArea.innerHTML = '';
                         const fragment = document.createDocumentFragment();
                         
-                        const allAvailableKeywords = new Set();
-                        
-                        const selectedComplaintIds = new Set();
-                        ui.selectedItems.forEach(item => {
-                            if(item.startsWith('c_')) {
-                                selectedComplaintIds.add(item.split('_')[1]);
-                            }
-                        });
-
+                        const keywordCounts = new Map();
+                        const selectedComplaintIds = new Set([...ui.selectedItems].filter(item => item.startsWith('c_')).map(item => item.split('_')[1]));
                         const sourceData = selectedComplaintIds.size > 0 
-                            ? dataStore.filter(entry => selectedComplaintIds.has(entry.id))
-                            : dataStore;
+                            ? App.state.dataStore.filter(entry => selectedComplaintIds.has(entry.id))
+                            : App.state.dataStore; 
 
-                        sourceData.forEach(entry => (entry.diseases || []).forEach(d => (d.keywords || []).forEach(k => allAvailableKeywords.add(k))));
+                        sourceData.forEach(entry => {
+                            (entry.diseases || []).forEach(d => {
+                                (d.keywords || []).forEach(k => {
+                                    keywordCounts.set(k, (keywordCounts.get(k) || 0) + 1);
+                                });
+                            });
+                        });
+                        
+                        const allAvailableKeywords = new Set();
+                        dataToRender.forEach(entry => (entry.diseases || []).forEach(d => (d.keywords || []).forEach(k => allAvailableKeywords.add(k))));
 
                         if (allAvailableKeywords.size > 0) {
                             const keywordTags = document.createElement('div');
                             keywordTags.className = 'flex flex-wrap gap-2';
                             [...allAvailableKeywords].sort((a, b) => a.localeCompare(b, 'ja')).forEach(keyword => {
                                 const tag = document.createElement('span');
-                                tag.className = `keyword-tag bg-gray-700 hover:bg-gray-600 text-sm py-1 px-3 rounded-full transition-colors ${App.state.filters.activeKeywords.has(keyword) ? 'active' : ''}`;
-                                tag.textContent = keyword;
+                                const count = keywordCounts.get(keyword) || 0;
+                                let tagContent = keyword;
+                                if (count > 1) {
+                                    tagContent += ` <span class="text-red-400 font-bold">(${count})</span>`;
+                                }
+                                tag.className = `keyword-tag bg-gray-700 hover:bg-gray-600 text-sm py-1 px-3 rounded-full transition-colors ${filters.activeKeywords.has(keyword) ? 'active' : ''}`;
+                                tag.innerHTML = tagContent;
                                 tag.onclick = () => App.handlers.handleKeywordTagClick(keyword);
                                 keywordTags.appendChild(tag);
                             });
@@ -1144,13 +1180,13 @@
                         const controlsContainer = document.createElement('div');
                         controlsContainer.className = "mt-4 pt-4 border-t border-gray-700 flex flex-col items-center gap-3";
                         
-                        if (App.state.filters.activeKeywords.size > 0) {
-                            if (App.state.filters.activeKeywords.size > 1) {
+                        if (filters.activeKeywords.size > 0) {
+                            if (filters.activeKeywords.size > 1) {
                                 const switchContainer = document.createElement('div');
                                 switchContainer.id = 'logic-switch-container';
-                                switchContainer.dataset.mode = App.state.filters.keywordMode;
+                                switchContainer.dataset.mode = filters.keywordMode;
                                 switchContainer.title = "検索ロジックを切り替え";
-                                switchContainer.innerHTML = `<div id="switch-bg"></div><span class="switch-label ${App.state.filters.keywordMode === 'OR' ? 'active-logic' : ''}">OR</span><span class="switch-label ${App.state.filters.keywordMode === 'AND' ? 'active-logic' : ''}">AND</span>`;
+                                switchContainer.innerHTML = `<div id="switch-bg"></div><span class="switch-label ${filters.keywordMode === 'OR' ? 'active-logic' : ''}">OR</span><span class="switch-label ${filters.keywordMode === 'AND' ? 'active-logic' : ''}">AND</span>`;
                                 switchContainer.onclick = () => App.handlers.handleKeywordLogicToggle();
                                 controlsContainer.appendChild(switchContainer);
                             }
@@ -1159,7 +1195,7 @@
                         }
                         
                         let diseaseCount = 0;
-                        App.state.ui.selectedItems.forEach(itemId => { if (itemId.startsWith('d_')) diseaseCount++; });
+                        ui.selectedItems.forEach(itemId => { if (itemId.startsWith('d_')) diseaseCount++; });
                 
                         if (diseaseCount >= 2) {
                             const compareBtn = App.utils.createButton('<i class="fas fa-exchange-alt mr-2"></i>選択した疾患を比較', 'w-full text-sm bg-indigo-600 hover:bg-indigo-700 text-white font-bold py-2 px-4 rounded-lg flex items-center justify-center', () => App.components.compareModal.open());
@@ -1217,6 +1253,15 @@
                             if(vitals.ecg_findings && vitals.ecg_findings.length > 0) {
                                 html += this.formatSummaryEntry('fa-heart-pulse', 'ECG', vitals.ecg_findings.join(', '));
                             }
+                            
+                            // Render warnings
+                            const warnings = vitals.warnings || {};
+                            if (warnings.anisocoria) html += this.formatWarningEntry('fa-eye', '瞳孔不同');
+                            if (warnings.isBpDiffHigh) html += this.formatWarningEntry('fa-arrows-left-right-to-line', '血圧左右差', `${warnings.bpDiff}mmHg`);
+                            if (warnings.shockIndex) html += this.formatWarningEntry('fa-bolt', 'ショック指数', warnings.shockIndex.toFixed(2), warnings.isShockIndexHigh);
+                            if (warnings.isQsofaPositive) html += this.formatWarningEntry('fa-lungs-virus', 'qSOFA', `陽性 (${warnings.qsofaScore}点)`);
+                            if (warnings.miosis) html += this.formatWarningEntry('fa-compress', '瞳孔縮小');
+                            if (warnings.mydriasis) html += this.formatWarningEntry('fa-expand', '瞳孔散大');
                         }
                         
                         vitalsSummaryArea.innerHTML = html;
@@ -1231,6 +1276,11 @@
 
                         const valueContent = rawHtml ? `<span class="${colorClass}">${value}</span>` : `<b class="${colorClass}">${value}${unit}</b>`;
                         return `<span class="flex items-center gap-1"><i class="fa-solid ${icon} fa-fw text-gray-400"></i> ${label}: ${valueContent}</span>`;
+                    },
+                    formatWarningEntry(icon, label, value, isDanger = true) {
+                        if (value === null || value === undefined) value = '';
+                        const colorClass = isDanger ? 'vital-danger' : 'vital-normal';
+                        return `<span class="flex items-center gap-1"><i class="fa-solid ${icon} fa-fw ${colorClass}"></i> ${label}: <b class="${colorClass}">${value}</b></span>`;
                     },
                     setupIntersectionObserver() {
                         if (App.state.intersectionObserver) App.state.intersectionObserver.disconnect();
@@ -1504,11 +1554,14 @@
                         },
                         checkAllVitals(){
                             this.checkPulsePressure();
+                            this.calculateWarningScores();
                             this.updateVitalsUI();
+                            this.renderVitalsWarnings();
                         },
                         updateVitalsUI() {
                             const age = App.elements.ageInput.value || 30; // Default age
                             const vitals = App.state.vitals;
+                            const warnings = vitals.warnings || {};
                              
                             const formElements = App.elements.vitalsForm.elements;
                             const vitalKeys = ['resp', 'spo2', 'pulse', 'temp', 'bp_sys_r', 'bp_dia_r', 'bp_sys_l', 'bp_dia_l'];
@@ -1521,11 +1574,16 @@
                                 this.updateInputStyle(el, dangerLevel);
                             });
 
-                            // Special cases for JCS/GCS and pupils
+                            // JCS/GCS
                             const jcsLevel = App.utils.checkVitalSign('jcs', vitals.jcs, age, vitals);
                             App.elements.vitalsJcsGroup.querySelectorAll('.jcs-btn').forEach(btn => this.updateInputStyle(btn, btn.textContent === vitals.jcs ? jcsLevel : 0));
                             this.updateInputStyle(App.elements.gcsTotalEl.parentElement, App.utils.checkVitalSign('gcs', vitals.gcs, age, vitals));
 
+                            // Pupils
+                            this.updateInputStyle(formElements.pupil_size_r, warnings.miosis || warnings.mydriasis ? 2 : (warnings.anisocoria ? 1: 0));
+                            this.updateInputStyle(formElements.pupil_size_l, warnings.miosis || warnings.mydriasis ? 2 : (warnings.anisocoria ? 1: 0));
+                            this.updateInputStyle(formElements.pupil_reflex_r, vitals.pupil_reflex_r === '0' ? 2 : (vitals.pupil_reflex_r === '1' ? 1 : 0));
+                            this.updateInputStyle(formElements.pupil_reflex_l, vitals.pupil_reflex_l === '0' ? 2 : (vitals.pupil_reflex_l === '1' ? 1 : 0));
                         },
                         updateInputStyle(el, level) {
                             if (!el) return;
@@ -1634,11 +1692,70 @@
                                 }
                             });
                         },
+                        calculateWarningScores() {
+                            const v = App.state.vitals;
+                            const warnings = {};
+
+                            // BP Difference
+                            const sysR = parseFloat(v.bp_sys_r);
+                            const sysL = parseFloat(v.bp_sys_l);
+                            if (!isNaN(sysR) && !isNaN(sysL)) {
+                                warnings.bpDiff = Math.abs(sysR - sysL);
+                                warnings.isBpDiffHigh = warnings.bpDiff >= 20;
+                            }
+
+                            // Shock Index
+                            const pulse = parseFloat(v.pulse);
+                            if (!isNaN(pulse) && pulse > 0) {
+                                const siR = !isNaN(sysR) && sysR > 0 ? pulse / sysR : 0;
+                                const siL = !isNaN(sysL) && sysL > 0 ? pulse / sysL : 0;
+                                warnings.shockIndex = Math.max(siR, siL);
+                                warnings.isShockIndexHigh = warnings.shockIndex >= 1.0;
+                            }
+
+                            // qSOFA
+                            let score = 0;
+                            const resp = parseFloat(v.resp);
+                            const gcs = parseInt(v.gcs, 10);
+                            const jcs = v.jcs;
+                            const sbp = Math.min(sysR || Infinity, sysL || Infinity);
+
+                            if (!isNaN(resp) && resp >= 22) score++;
+                            if ((jcs && jcs !== '清明') || (!isNaN(gcs) && gcs <= 14)) score++;
+                            if (!isNaN(sbp) && sbp <= 100) score++;
+                            
+                            warnings.qsofaScore = score;
+                            warnings.isQsofaPositive = score >= 2;
+
+                            // Pupil warnings
+                            const sizeR = parseFloat(v.pupil_size_r);
+                            const sizeL = parseFloat(v.pupil_size_l);
+                            if(!isNaN(sizeR) && !isNaN(sizeL) && Math.abs(sizeR - sizeL) >= 1) warnings.anisocoria = true;
+                            if((!isNaN(sizeR) && sizeR <= 2) || (!isNaN(sizeL) && sizeL <= 2)) warnings.miosis = true;
+                            if((!isNaN(sizeR) && sizeR >= 4.5) || (!isNaN(sizeL) && sizeL >= 4.5)) warnings.mydriasis = true;
+
+                            App.state.vitals.warnings = warnings;
+                        },
+                        renderVitalsWarnings() {
+                            const container = App.elements.vitalsWarningsContainer;
+                            const warnings = App.state.vitals.warnings || {};
+                            let html = '';
+
+                            if (warnings.isBpDiffHigh) html += `<div class="warning-text"><i class="fas fa-arrows-left-right-to-line mr-1"></i>血圧左右差: ${warnings.bpDiff}mmHg</div>`;
+                            if (warnings.isShockIndexHigh) html += `<div class="warning-text"><i class="fas fa-bolt mr-1"></i>ショック指数: ${warnings.shockIndex.toFixed(2)}</div>`;
+                            if (warnings.isQsofaPositive) html += `<div class="warning-text"><i class="fas fa-lungs-virus mr-1"></i>qSOFA陽性 (${warnings.qsofaScore}点)</div>`;
+                            if (warnings.anisocoria) html += `<div class="warning-text"><i class="fas fa-eye mr-1"></i>瞳孔不同</div>`;
+                            if (warnings.miosis) html += `<div class="warning-text-sm"><i class="fas fa-compress mr-1"></i>瞳孔縮小（橋出血,有機リン中毒など）</div>`;
+                            if (warnings.mydriasis) html += `<div class="warning-text-sm"><i class="fas fa-expand mr-1"></i>瞳孔散大（CPA,低酸素血症など）</div>`;
+                            
+                            container.innerHTML = html;
+                        },
                         updateFormFromState() {
                             const vitals = App.state.vitals || {};
                             const form = App.elements.vitalsForm;
                             form.reset();
                             for (const key in vitals) {
+                                if (key === 'warnings') continue;
                                 const el = form.elements[key];
                                 if (el && el.type !== 'hidden' && !key.startsWith('pupil') && !['arrival', 'contact', 'departure'].includes(key)) {
                                     if(el.type !== 'checkbox' && el.type !== 'radio') {
@@ -1670,7 +1787,7 @@
 
                             if(shouldSaveHistory) {
                                 const hasData = Object.entries(App.state.vitals).some(([key, value]) => {
-                                    if(['arrival','contact','departure'].includes(key)) return false;
+                                    if(['arrival','contact','departure', 'warnings'].includes(key)) return false;
                                     return value !== null && value !== '' && (!Array.isArray(value) || value.length > 0)
                                 });
 
@@ -1688,6 +1805,7 @@
                         },
                         saveAndClose() {
                             this.updateStateFromForm();
+                            this.checkAllVitals(); // Final calculation before saving
                             this.saveState(true); // Save to history
                             App.renderer.renderVitalsSummary();
                             App.utils.hideModal(App.elements.vitalsModal);
@@ -2336,6 +2454,15 @@
                                     if (vitals.pupil_r || vitals.pupil_l) content += this.formatEntry('fa-eye', '瞳孔', `R:${vitals.pupil_r || '?'} L:${vitals.pupil_l || '?'}`);
                                     if(vitals.ecg_findings && vitals.ecg_findings.length > 0) content += this.formatEntry('fa-heart-pulse', 'ECG', vitals.ecg_findings.join(', '));
                                     if(vitals.appearance && vitals.appearance.length > 0) content += this.formatEntry('fa-user-doctor', '外観', vitals.appearance.join(', '));
+                                    
+                                     // Display warnings from history
+                                    const warnings = vitals.warnings || {};
+                                    if (warnings.isBpDiffHigh) content += this.formatWarningEntry('fa-arrows-left-right-to-line', '血圧左右差', `${warnings.bpDiff}mmHg`);
+                                    if (warnings.shockIndex) content += this.formatWarningEntry('fa-bolt', 'ショック指数', warnings.shockIndex.toFixed(2), warnings.isShockIndexHigh);
+                                    if (warnings.isQsofaPositive) content += this.formatWarningEntry('fa-lungs-virus', 'qSOFA', `陽性 (${warnings.qsofaScore}点)`);
+                                    if (warnings.anisocoria) content += this.formatWarningEntry('fa-eye', '瞳孔不同');
+                                    if (warnings.miosis) content += this.formatWarningEntry('fa-compress', '瞳孔縮小');
+                                    if (warnings.mydriasis) content += this.formatWarningEntry('fa-expand', '瞳孔散大');
 
                                     itemEl.innerHTML = content;
                                     listEl.appendChild(itemEl);
@@ -2344,8 +2471,13 @@
                             App.utils.showModal(App.elements.vitalsHistoryModal);
                         },
                         formatEntry(icon, label, value, unit = '') {
-                            if(value === null || value === undefined || value === '' || value.trim() === '歳' || (Array.isArray(value) && value.length === 0)) return '';
-                            return `<div class="flex items-start gap-2 text-sm"><i class="fa-solid ${icon} fa-fw text-gray-400 mt-1"></i> <span class="w-16">${label}:</span> <span class="flex-1"><b>${value}${unit}</b></span></div>`;
+                            if(value === null || value === undefined || value === '' || (typeof value === 'string' && value.trim() === '歳') || (Array.isArray(value) && value.length === 0)) return '';
+                            return `<div class="flex items-start gap-2 text-sm"><i class="fa-solid ${icon} fa-fw text-gray-400 mt-1"></i> <span class="w-20">${label}:</span> <span class="flex-1"><b>${value}${unit}</b></span></div>`;
+                        },
+                        formatWarningEntry(icon, label, value, isDanger = true) {
+                            if (value === null || value === undefined) value = '';
+                            const colorClass = isDanger ? 'vital-danger' : 'vital-normal';
+                            return `<div class="flex items-start gap-2 text-sm"><i class="fa-solid ${icon} fa-fw ${colorClass} mt-1"></i> <span class="w-20">${label}:</span> <span class="flex-1"><b class="${colorClass}">${value}</b></span></div>`;
                         },
                         async clear() {
                             const confirmed = await App.utils.customConfirm('すべてのバイタル履歴を消去しますか？この操作は元に戻せません。', '履歴の消去');
@@ -2571,20 +2703,12 @@
                     checkVitalSign(type, value, age, vitals) {
                         if (value === null || value === undefined || value === '') return 0;
                         let val = parseFloat(value);
-                        if(isNaN(val)) return 0;
+                        if(isNaN(val) && type !== 'jcs') return 0;
 
+                        // JCS/GCS are handled by their own logic, not age-based thresholds here
+                        if (type === 'gcs' || type === 'jcs') return 0;
+                        
                         const category = this.getAgeCategory(age);
-                        
-                        // Special checks that don't depend on age category
-                        if (type === 'pupils') {
-                            if (vitals.pupil_reflex_l === '0' || vitals.pupil_reflex_r === '0') return 2; // Danger for no reflex
-                            if (vitals.pupil_size_l !== vitals.pupil_size_r) return 1; // Warning for anisocoria
-                            return 0;
-                        }
-
-                        if (type === 'gcs') return (val < 15) ? ((val < 9) ? 2 : 1) : 0;
-                        if (type === 'jcs') return (value !== '清明') ? ((parseInt(value) >= 100) ? 2 : 1) : 0;
-                        
                         if (!category || !category[type]) return 0;
                         const t = category[type];
 
