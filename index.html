@@ -1058,7 +1058,7 @@
                     renderContent(data) {
                         const { contentArea, collapseAllBtn } = App.elements;
                         const { searchTerm, activeKeywords } = App.state.filters;
-                        const { isAllCollapsed, selectedItems } = App.state.ui; // FIX: added selectedItems
+                        const { isAllCollapsed, selectedItems } = App.state.ui;
                         
                         const icon = collapseAllBtn.querySelector('i');
                         if(icon) {
@@ -1076,7 +1076,6 @@
                             const originalData = App.state.dataStore.find(d => d.id === entry.id);
                              if (!originalData) return;
                             const complaintId = `complaint-${entry.id}`;
-                            const isComplaintChecked = selectedItems.has(`c_${entry.id}`); // FIX: isComplaintChecked definition
                             const entryDiv = document.createElement('div');
                             entryDiv.className = 'content-card bg-card mb-6 rounded-xl shadow-md p-4';
                             entryDiv.id = complaintId;
@@ -1765,6 +1764,11 @@
                         bindEventListeners() {
                            const el = App.elements;
                            el.settingsModalCloseBtn.addEventListener('click', () => this.close());
+                           el.settingsModal.addEventListener('click', (e) => {
+                                if (e.target === el.settingsModal) {
+                                    this.close();
+                                }
+                           });
                            el.exportCsvBtn.addEventListener('click', () => this.exportCSV());
                            el.importCsvBtn.addEventListener('click', () => el.importCsvInput.click());
                            el.importCsvInput.addEventListener('change', e => this.handleCSVFileSelect(e));
@@ -1783,7 +1787,8 @@
                              App.utils.saveToStorage(App.config.storageKeys.theme, newTheme);
                         },
                         applyTheme(theme) {
-                            App.elements.body.className = `${theme}-mode`;
+                            App.elements.body.className = `text-${App.state.settings.fontSize || 'base'}`;
+                            App.elements.body.classList.add(`${theme}-mode`);
                             App.elements.themeSwitchToggle.checked = theme === 'light';
                             document.querySelector('meta[name="theme-color"]').setAttribute('content', theme === 'dark' ? '#111827' : '#f9fafb');
                         },
@@ -1834,7 +1839,10 @@
                             if(btn) this.applyFontSize(btn.dataset.size);
                         },
                         applyFontSize(size) {
-                            App.elements.html.className = `text-${size}`;
+                            const htmlEl = App.elements.html;
+                            htmlEl.classList.remove('text-sm', 'text-base', 'text-lg');
+                            htmlEl.classList.add(`text-${size}`);
+                            
                             App.elements.fontSizeControls.querySelectorAll('.font-size-btn').forEach(b => {
                                 b.classList.toggle('active', b.dataset.size === size);
                             });
