@@ -14,6 +14,7 @@
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Noto+Sans+JP:wght@400;500;700&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css" xintegrity="sha512-SnH5WK+bZxgPHs44uWIX+LLJAJ9/2PkPKZ5QiAj6Ta86w+fsb2TkcmfRyVX3pBnMFcV7oQPJkl9QevSCWr3W6A==" crossorigin="anonymous" referrerpolicy="no-referrer" />
     <style>
+        /* 基本設定 */
         :root {
             --font-size-base: 14px; --font-size-sm: 12px; --font-size-xs: 11px;
             --font-size-lg: 16px; --font-size-xl: 18px; --font-size-2xl: 20px;
@@ -28,75 +29,96 @@
         h2 { font-size: var(--font-size-xl); } h3 { font-size: var(--font-size-lg); }
         .text-xs { font-size: var(--font-size-xs); } .text-sm { font-size: var(--font-size-sm); }
         
+        /* スクロールバー */
         ::-webkit-scrollbar { width: 8px; } ::-webkit-scrollbar-track { background: #1f2937; } ::-webkit-scrollbar-thumb { background: #4b5563; border-radius: 4px; } ::-webkit-scrollbar-thumb:hover { background: #6b7280; }
         
+        /* モーダルアニメーション */
         .modal { transition: opacity 0.3s ease-in-out, transform 0.3s ease-in-out; }
         .modal.hidden { opacity: 0; transform: scale(0.95); pointer-events: none; }
         
+        /* 検索ハイライト */
         .highlight { background-color: yellow; color: #1f2937; padding: 0 2px; border-radius: 2px; }
         .current-highlight { outline: 2px solid #f97316; scroll-margin-top: 150px; }
         
         button:disabled { opacity: 0.5; cursor: not-allowed; }
         
+        /* チェックボックス */
         .item-checkbox, .nav-item-checkbox { transform: scale(1.0); margin-right: 8px; accent-color: #3b82f6; }
         
+        /* キーワードタグ */
         .keyword-tag, .content-keyword-tag { cursor: pointer; transition: background-color 0.2s ease, color 0.2s ease; }
         .keyword-tag.active, .content-keyword-tag.active { background-color: yellow; color: #1f2937; font-weight: bold; }
         
+        /* ナビゲーションアイテム */
         .nav-item { padding-left: 0.75rem; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; transition: background-color 0.2s ease, color 0.2s ease; padding-top: 0.5rem; padding-bottom: 0.5rem; }
         .nav-item.active-nav { background-color: #2563eb; color: white; }
         
-        #logic-switch-container { position: relative; display: inline-flex; background-color: #374151; border-radius: 9999px; padding: 2px; cursor: pointer; }
-        .switch-label { padding: 2px 10px; font-weight: 500; color: #d1d5db; transition: color 0.2s ease-in-out; z-index: 10; user-select: none; }
-        .switch-label.active-logic { color: #111827; }
-        #switch-bg { position: absolute; top: 2px; bottom: 2px; background-color: #fBBF24; border-radius: 9999px; transition: transform 0.2s ease-in-out; }
-        #logic-switch-container[data-mode="OR"] #switch-bg { width: calc(50% - 2px); left: 2px; transform: translateX(0); }
-        #logic-switch-container[data-mode="AND"] #switch-bg { width: calc(50% - 2px); left: 2px; transform: translateX(100%); }
+        /* ヘッダーのOR/ANDスイッチ */
+        #logic-switch-container {
+            position: relative;
+            display: inline-flex;
+            background-color: #374151; /* gray-700 */
+            border-radius: 9999px;
+            padding: 4px;
+            cursor: pointer;
+            user-select: none;
+        }
+        .switch-label {
+            padding: 2px 12px;
+            font-weight: 600;
+            font-size: var(--font-size-sm);
+            color: #d1d5db; /* gray-300 */
+            transition: color 0.2s ease-in-out;
+            z-index: 10;
+        }
+        .switch-label.active-logic {
+            color: #ffffff;
+        }
+        #switch-bg {
+            position: absolute;
+            top: 4px;
+            bottom: 4px;
+            background-color: #3b82f6; /* blue-600 */
+            border-radius: 9999px;
+            transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            width: calc(50% - 4px);
+            left: 4px;
+        }
+        #logic-switch-container[data-mode="AND"] #switch-bg {
+            transform: translateX(100%);
+        }
 
-        
+        /* 状態別ボタンスタイル */
         #keywords-panel-toggle-btn.active, #filter-favorites-btn.active { color: #fBBF24; }
         .gender-btn.active, .vitals-tag.active, .jcs-btn.active, .era-btn.active, .ecg-tag.active { background-color: #3b82f6; color: white; }
         .font-size-btn.active { background-color: #2563eb; }
         .time-btn.active { background-color: #16a34a; color: white; }
 
+        /* ストップウォッチ */
         #stopwatch.running { background-color: #166534; }
         
+        /* アイコンアニメーション */
         .toggle-chevron { transition: transform 0.2s ease-in-out; }
         .toggle-chevron.collapsed { transform: rotate(-180deg); }
 
+        /* GCSセレクトボックス */
         select.gcs-select { -webkit-appearance: none; appearance: none; background-image: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 20 20'%3e%3cpath stroke='%239ca3af' stroke-linecap='round' stroke-linejoin='round' stroke-width='1.5' d='M6 8l4 4 4-4'/%3e%3c/svg%3e"); background-position: right 0.5rem center; background-repeat: no-repeat; background-size: 1.5em 1.5em; padding-right: 2.5rem; }
 
-        @keyframes flash {
-          50% { opacity: 0.2; }
-        }
-        .flashing-indicator {
-          animation: flash 1.5s linear infinite;
-          color: #f87171; /* red-400 */
-          font-weight: bold;
-        }
+        @keyframes flash { 50% { opacity: 0.2; } }
+        .flashing-indicator { animation: flash 1.5s linear infinite; color: #f87171; font-weight: bold; }
 
-        .slider-container { position: relative; padding: 10px 0; }
-        .slider-ticks { display: flex; justify-content: space-between; position: absolute; top: 18px; left: 8px; right: 8px; pointer-events: none; }
-        .tick { width: 8px; height: 8px; background-color: #4b5563; border-radius: 50%; }
-
-        input[type="range"]::-webkit-slider-thumb { -webkit-appearance: none; appearance: none; width: 20px; height: 20px; background: #3b82f6; cursor: pointer; border-radius: 50%; border: 2px solid #fff; margin-top: -8px; position: relative; z-index: 10; }
-        input[type="range"]::-moz-range-thumb { width: 16px; height: 16px; background: #3b82f6; cursor: pointer; border-radius: 50%; border: 2px solid #fff;}
+        /* ドラッグ&ドロップ */
+        .disease-form-group.dragging { opacity: 0.4; }
+        .disease-form-group .drag-handle { cursor: grab; }
         
-        .disease-form-group.dragging {
-            opacity: 0.4;
-        }
-        .disease-form-group .drag-handle {
-            cursor: grab;
-        }
-        
-        /* Vital Status Colors */
+        /* バイタルステータス色 */
         .vital-normal { color: #e5e7eb; } /* gray-200 */
         .vital-warning { color: #facc15; } /* yellow-400 */
         .vital-danger { color: #f87171; } /* red-400 */
         .warning-text { color: #f87171; font-weight: bold;}
         .warning-text-sm { color: #f87171; font-weight: bold; font-size: var(--font-size-xs); }
 
-        /* Input Border Colors */
+        /* 入力欄ボーダー色 */
         .input-normal { border-color: #4b5563; }
         .input-warning { border-color: #facc15 !important; box-shadow: 0 0 0 2px rgba(250, 204, 21, 0.5); }
         .input-danger { border-color: #f87171 !important; box-shadow: 0 0 0 2px rgba(248, 113, 113, 0.5); }
@@ -148,14 +170,22 @@
                     
                     <!-- Right-aligned action buttons -->
                     <div id="action-buttons-group" class="flex items-center gap-2">
+                        <div id="logic-switch-container" data-mode="OR" title="キーワードの検索ロジック (OR: いずれかを含む / AND: すべてを含む)">
+                            <div id="switch-bg"></div>
+                            <span class="switch-label active-logic">OR</span>
+                            <span class="switch-label">AND</span>
+                        </div>
                         <button id="add-new-btn" class="bg-green-600 hover:bg-green-700 text-white font-bold py-2 px-3 rounded-lg flex-shrink-0" title="新規追加"><i class="fas fa-plus"></i></button>
                         <button id="filter-favorites-btn" class="bg-gray-600 hover:bg-gray-500 text-white font-bold py-2 px-3 rounded-lg flex-shrink-0" title="お気に入りフィルター" aria-label="お気に入りフィルター"><i class="fas fa-star"></i></button>
-                         <button id="clear-selections-btn" class="bg-gray-600 hover:bg-gray-500 text-white font-bold py-2 px-3 rounded-lg flex-shrink-0" title="選択をすべて解除"><i class="fas fa-check-double"></i></button>
+                        <button id="clear-selections-btn" class="bg-gray-600 hover:bg-gray-500 text-white font-bold py-2 px-3 rounded-lg flex-shrink-0" title="選択をすべて解除"><i class="fas fa-check-double"></i></button>
                         <button id="settings-btn" class="bg-gray-600 hover:bg-gray-500 text-white font-bold py-2 px-3 rounded-lg flex-shrink-0" title="設定"><i class="fas fa-cog"></i></button>
                        
                         <div class="h-6 border-l border-gray-600 mx-1"></div>
+                        
+                        <!-- NEW: Random buttons -->
+                        <button id="random-complaint-btn" class="bg-purple-600 hover:bg-purple-700 text-white font-bold py-2 px-3 rounded-lg flex-shrink-0 hidden" title="主訴をランダム表示" aria-label="主訴をランダム表示"><i class="fas fa-dice-d20"></i></button>
+                        <button id="random-disease-btn" class="bg-indigo-600 hover:bg-indigo-700 text-white font-bold py-2 px-3 rounded-lg flex-shrink-0 hidden" title="疾患をランダム表示" aria-label="疾患をランダム表示"><i class="fas fa-dice"></i></button>
 
-                        <button id="random-btn" class="bg-purple-600 hover:bg-purple-700 text-white font-bold py-2 px-3 rounded-lg flex-shrink-0 hidden" title="ランダム表示" aria-label="ランダム表示"><i class="fas fa-dice"></i></button>
                         <div id="stopwatch" class="bg-gray-700 text-white font-mono text-lg p-2 rounded-lg cursor-pointer flex-shrink-0" title="クリック: スタート/ストップ | 長押し: リセット">00:00</div>
                         <button id="vitals-btn" class="bg-cyan-600 hover:bg-cyan-700 text-white font-bold py-2 px-3 rounded-lg flex-shrink-0" title="バイタル入力" aria-label="バイタル入力モーダルを開く"><i class="fas fa-wave-square"></i></button>
                         <div class="flex items-center space-x-1 bg-gray-700 p-1 rounded-lg">
@@ -165,7 +195,6 @@
                         </div>
                         <button id="keywords-panel-toggle-btn" class="bg-gray-600 hover:bg-gray-500 text-white font-bold py-2 px-3 rounded-lg flex-shrink-0" aria-label="キーワードパネルを開く"><i class="fas fa-tags fa-lg"></i></button>
                     </div>
-
                 </div>
                 
                 <div id="vitals-summary-container" class="w-full mt-2 hidden">
@@ -347,7 +376,7 @@
                     <h3 class="font-semibold mb-2">表示設定</h3>
                     <div class="bg-gray-700/50 p-4 rounded-lg space-y-4">
                          <div class="flex items-center justify-between">
-                            <label for="show-random-btn-toggle" class="font-medium">「ランダム表示」ボタンを表示</label>
+                            <label for="show-random-btn-toggle" class="font-medium">ランダム表示ボタンを表示</label>
                             <label class="relative inline-flex items-center cursor-pointer">
                                 <input type="checkbox" id="show-random-btn-toggle" class="sr-only peer">
                                 <div class="w-11 h-6 bg-gray-600 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-blue-600"></div>
@@ -502,6 +531,7 @@
 
         document.addEventListener('DOMContentLoaded', () => {
             const App = {
+                // アプリケーションの設定
                 config: {
                     collectionName: 'clinical_cases',
                     maxHistoryItems: 15,
@@ -515,6 +545,7 @@
                         customEcgTags: `paramedic_app_custom_ecg_tags`,
                         vitalsHistory: `paramedic_app_vitals_history`,
                         vitalThresholds: `paramedic_app_vital_thresholds`,
+                        keywordMode: `paramedic_app_keyword_mode` // NEW: キーワードモードを保存
                     },
                     stopwatchResetDelay: 700,
                     swipeThreshold: 50,
@@ -538,6 +569,7 @@
                     ]
 
                 },
+                // アプリケーションの状態
                 state: {
                     db: null, auth: null, userId: null, dataStore: [], isLoading: true,
                     intersectionObserver: null,
@@ -550,16 +582,18 @@
                     customEcgTags: [],
                     vitalsHistory: [],
                     vitalThresholds: [],
-                    globalKeywordCounts: new Map(), // New state for keyword counts
+                    globalKeywordCounts: new Map(),
                 },
+                // 初期化処理
                 init() {
                     this.cacheDomElements();
                     this.utils.initFirebaseConfig();
                     this.services.auth.init();
                     this.bindEventListeners();
-                    this.pwa.init(); // Initialize PWA features
+                    this.pwa.init(); 
                     Object.values(this.components).forEach(component => component.init?.());
                 },
+                // DOM要素のキャッシュ
                 cacheDomElements() {
                     const D = document;
                     this.elements = {
@@ -578,7 +612,7 @@
                         filterFavoritesBtn: D.getElementById('filter-favorites-btn'),
                         clearSelectionsBtn: D.getElementById('clear-selections-btn'),
                         settingsBtn: D.getElementById('settings-btn'),
-                       
+                        logicSwitchContainer: D.getElementById('logic-switch-container'), // NEW: AND/OR スイッチ
                         // Keywords Panel (Right)
                         keywordsPanelRight: D.getElementById('keywords-panel-right'),
                         keywordsPanelToggleBtn: D.getElementById('keywords-panel-toggle-btn'),
@@ -592,7 +626,8 @@
                         genderBtns: D.querySelectorAll('.gender-btn'),
                         vitalsBtn: D.getElementById('vitals-btn'),
                         tempMemo: D.getElementById('temp-memo'),
-                        randomBtn: D.getElementById('random-btn'),
+                        randomComplaintBtn: D.getElementById('random-complaint-btn'), // RENAMED
+                        randomDiseaseBtn: D.getElementById('random-disease-btn'), // NEW
                         // Time Buttons
                         arrivalBtn: D.getElementById('arrival-btn'),
                         contactBtn: D.getElementById('contact-btn'),
@@ -628,7 +663,7 @@
                         ecgMemo: D.getElementById('ecg-memo'),
                         editAppearanceTagsBtn: D.getElementById('edit-appearance-tags-btn'),
                         editEcgTagsBtn: D.getElementById('edit-ecg-tags-btn'),
-                        vitalsWarningsContainer: D.getElementById('vitals-warnings-container'), // New element
+                        vitalsWarningsContainer: D.getElementById('vitals-warnings-container'),
                         // Settings Modal
                         settingsModal: D.getElementById('settings-modal'),
                         settingsModalCloseBtn: D.getElementById('settings-modal-close-btn'),
@@ -691,6 +726,7 @@
                         vitalsSettingsSaveBtn: D.getElementById('vitals-settings-save-btn'),
                     };
                 },
+                // イベントリスナーの紐付け
                 bindEventListeners() {
                     const { elements: el, handlers: h } = this;
                     
@@ -709,7 +745,10 @@
                     el.clearSelectionsBtn.addEventListener('click', () => h.handleClearAllSelections());
                     el.settingsBtn.addEventListener('click', () => this.components.settings.open());
 
-                    el.randomBtn.addEventListener('click', () => h.handleRandomSelect());
+                    el.randomComplaintBtn.addEventListener('click', () => h.handleRandomComplaintSelect());
+                    el.randomDiseaseBtn.addEventListener('click', () => h.handleRandomDiseaseSelect());
+                    el.logicSwitchContainer.addEventListener('click', () => h.handleKeywordLogicToggle());
+
                     el.arrivalBtn.addEventListener('click', () => h.handleTimestampClick('arrival'));
                     el.contactBtn.addEventListener('click', () => h.handleTimestampClick('contact'));
                     el.departureBtn.addEventListener('click', () => h.handleTimestampClick('departure'));
@@ -722,6 +761,7 @@
                     
                     Object.values(this.components).forEach(component => component.bindEventListeners?.());
                 },
+                // イベントハンドラ
                 handlers: {
                     handleSearch() {
                         App.state.filters.activeKeywords.clear();
@@ -746,11 +786,19 @@
                             setTimeout(() => btn.classList.remove('active'), 500);
                         }
                     },
-                    handleRandomSelect() {
+                    handleRandomComplaintSelect() {
                         const allComplaintCards = App.elements.contentArea.querySelectorAll('.content-card');
                         if (allComplaintCards.length > 0) {
                             const randomIndex = Math.floor(Math.random() * allComplaintCards.length);
-                            allComplaintCards[randomIndex].scrollIntoView({ behavior: 'smooth', block: 'center' });
+                            allComplaintCards[randomIndex].scrollIntoView({ behavior: 'smooth', block: 'start' });
+                        }
+                    },
+                    handleRandomDiseaseSelect() {
+                        // 表示されている疾患要素（キーワードや落とし穴などを含む親コンテナ）を取得
+                        const allDiseaseElements = App.elements.contentArea.querySelectorAll('.content-card .pl-4.border-l-4');
+                        if(allDiseaseElements.length > 0) {
+                            const randomIndex = Math.floor(Math.random() * allDiseaseElements.length);
+                            allDiseaseElements[randomIndex].scrollIntoView({ behavior: 'smooth', block: 'start' });
                         }
                     },
                     handleToggleFavoritesFilter() {
@@ -782,7 +830,7 @@
                         }
                     },
                     handleKeywordTagClick(keyword) {
-                        // Remove count from keyword if present
+                        // カウント部分を除去
                         const keywordName = keyword.replace(/\s\(\d+\)$/, '').trim();
                         const { activeKeywords } = App.state.filters;
                         if (activeKeywords.has(keywordName)) activeKeywords.delete(keywordName);
@@ -809,9 +857,11 @@
                         
                         App.renderer.renderAll();
                     },
-                     handleKeywordLogicToggle() {
+                    handleKeywordLogicToggle() {
                         const { filters } = App.state;
                         filters.keywordMode = filters.keywordMode === 'OR' ? 'AND' : 'OR';
+                        App.utils.saveToStorage(App.config.storageKeys.keywordMode, filters.keywordMode);
+                        App.renderer.renderKeywordSwitch();
                         App.renderer.renderAll();
                     },
                     handleClearKeywordFilter() {
@@ -833,6 +883,7 @@
                         App.components.vitalsModal.checkAllVitals();
                     },
                 },
+                // PWA関連
                 pwa: {
                     init() {
                         if ('serviceWorker' in navigator) {
@@ -846,6 +897,7 @@
                         }
                     }
                 },
+                // 外部サービス（Firebase）
                 services: {
                     auth: {
                         init() {
@@ -947,6 +999,7 @@
                         },
                     }
                 },
+                // 描画関連
                 renderer: {
                     renderAll() {
                         const dataToRender = this.filterAndSortData();
@@ -972,7 +1025,7 @@
                         const { dataStore, filters, ui } = App.state;
                         let processedData = JSON.parse(JSON.stringify(dataStore));
                     
-                        // Filter by selected complaint checkboxes
+                        // 選択された主訴でフィルタリング
                         const selectedComplaintIds = new Set();
                         ui.selectedItems.forEach(item => {
                             if (item.startsWith('c_')) {
@@ -984,7 +1037,7 @@
                             processedData = processedData.filter(entry => selectedComplaintIds.has(entry.id));
                         }
                     
-                        // Filter by favorites
+                        // お気に入りでフィルタリング
                         if (filters.isFavoritesOnly) {
                              processedData = processedData.map(entry => {
                                 const favoriteDiseases = (entry.diseases || []).filter(d => d.isFavorite);
@@ -994,7 +1047,7 @@
                             }).filter(Boolean);
                         }
                         
-                        // Filter by active keywords or search term
+                        // アクティブなキーワードまたは検索語でフィルタリング
                         if (filters.activeKeywords.size > 0) {
                             const activeKeywords = Array.from(filters.activeKeywords);
                              processedData = processedData.map(entry => {
@@ -1181,15 +1234,6 @@
                         controlsContainer.className = "mt-4 pt-4 border-t border-gray-700 flex flex-col items-center gap-3";
                         
                         if (filters.activeKeywords.size > 0) {
-                            if (filters.activeKeywords.size > 1) {
-                                const switchContainer = document.createElement('div');
-                                switchContainer.id = 'logic-switch-container';
-                                switchContainer.dataset.mode = filters.keywordMode;
-                                switchContainer.title = "検索ロジックを切り替え";
-                                switchContainer.innerHTML = `<div id="switch-bg"></div><span class="switch-label ${filters.keywordMode === 'OR' ? 'active-logic' : ''}">OR</span><span class="switch-label ${filters.keywordMode === 'AND' ? 'active-logic' : ''}">AND</span>`;
-                                switchContainer.onclick = () => App.handlers.handleKeywordLogicToggle();
-                                controlsContainer.appendChild(switchContainer);
-                            }
                             const clearBtn = App.utils.createButton('<i class="fas fa-times-circle mr-1"></i> フィルター解除', 'text-sm text-red-500 hover:text-red-400 flex items-center', () => App.handlers.handleClearKeywordFilter());
                             controlsContainer.appendChild(clearBtn);
                         }
@@ -1207,6 +1251,14 @@
                         }
                         
                         keywordsPanelContentArea.appendChild(fragment);
+                    },
+                    renderKeywordSwitch() {
+                        const { logicSwitchContainer } = App.elements;
+                        const { keywordMode } = App.state.filters;
+                        logicSwitchContainer.dataset.mode = keywordMode;
+                        const labels = logicSwitchContainer.querySelectorAll('.switch-label');
+                        labels[0].classList.toggle('active-logic', keywordMode === 'OR');
+                        labels[1].classList.toggle('active-logic', keywordMode === 'AND');
                     },
                     renderVitalsSummary() {
                         const { vitalsSummaryContainer, vitalsSummaryArea } = App.elements;
@@ -1369,6 +1421,7 @@
                         }
                     },
                 },
+                // UIコンポーネント
                 components: {
                     patientInfo: {
                         init() { this.loadInfo(); this.bindEventListeners(); },
@@ -1836,6 +1889,9 @@
                              this.toggleRandomButtonVisibility(showRandom);
                              const fontSize = App.utils.loadFromStorage(App.config.storageKeys.fontSize, 'base');
                              this.applyFontSize(fontSize);
+                             const keywordMode = App.utils.loadFromStorage(App.config.storageKeys.keywordMode, 'OR');
+                             App.state.filters.keywordMode = keywordMode;
+                             App.renderer.renderKeywordSwitch();
                         },
                         bindEventListeners() {
                            App.elements.settingsModalCloseBtn.addEventListener('click', () => this.close());
@@ -1885,7 +1941,8 @@
                         close() { App.utils.hideModal(App.elements.settingsModal); },
                         toggleRandomButtonVisibility(isVisible) {
                              App.utils.saveToStorage(App.config.storageKeys.showRandomBtn, isVisible);
-                             App.elements.randomBtn.classList.toggle('hidden', !isVisible)
+                             App.elements.randomComplaintBtn.classList.toggle('hidden', !isVisible);
+                             App.elements.randomDiseaseBtn.classList.toggle('hidden', !isVisible);
                         },
                         handleFontSizeChange(e) {
                             const btn = e.target.closest('.font-size-btn');
@@ -2606,6 +2663,7 @@
                         }
                     }
                 },
+                // ユーティリティ関数
                 utils: {
                     initFirebaseConfig() {
                         if (typeof __firebase_config !== 'undefined' && __firebase_config) {
