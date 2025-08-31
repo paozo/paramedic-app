@@ -1,0 +1,2834 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>救急隊員向け臨床推論サポートアプリ</title>
+    
+    <!-- PWA Manifest & Theme Color -->
+    <link rel="manifest" href="./manifest.json">
+    <meta name="theme-color" content="#111827">
+
+    <!-- スタイルシートとフォント -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Noto+Sans+JP:wght@400;500;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css" xintegrity="sha512-SnH5WK+bZxgPHs44uWIX+LLJAJ9/2PkPKZ5QiAj6Ta86w+fsb2TkcmfRyVX3pBnMFcV7oQPJkl9QevSCWr3W6A==" crossorigin="anonymous" referrerpolicy="no-referrer" />
+    <style>
+        /* 基本設定 */
+        :root {
+            --font-size-base: 14px; --font-size-sm: 12px; --font-size-xs: 11px;
+            --font-size-lg: 16px; --font-size-xl: 18px; --font-size-2xl: 20px;
+        }
+        html.text-sm {
+            --font-size-base: 13px; --font-size-sm: 11px; --font-size-xs: 10px; --font-size-lg: 15px; --font-size-xl: 17px; --font-size-2xl: 19px;
+        }
+        html.text-lg {
+             --font-size-base: 16px; --font-size-sm: 14px; --font-size-xs: 13px; --font-size-lg: 18px; --font-size-xl: 20px; --font-size-2xl: 22px;
+        }
+        body { font-family: 'Inter', 'Noto Sans JP', sans-serif; -webkit-tap-highlight-color: transparent; font-size: var(--font-size-base); }
+        h2 { font-size: var(--font-size-xl); } h3 { font-size: var(--font-size-lg); }
+        .text-xs { font-size: var(--font-size-xs); } .text-sm { font-size: var(--font-size-sm); }
+        
+        /* スクロールバー */
+        ::-webkit-scrollbar { width: 8px; } ::-webkit-scrollbar-track { background: #1f2937; } ::-webkit-scrollbar-thumb { background: #4b5563; border-radius: 4px; } ::-webkit-scrollbar-thumb:hover { background: #6b7280; }
+        
+        /* モーダルアニメーション */
+        .modal { transition: opacity 0.3s ease-in-out, transform 0.3s ease-in-out; }
+        .modal.hidden { opacity: 0; transform: scale(0.95); pointer-events: none; }
+        
+        /* 検索ハイライト */
+        .highlight { background-color: yellow; color: #1f2937; padding: 0 2px; border-radius: 2px; }
+        .current-highlight { outline: 2px solid #f97316; scroll-margin-top: 150px; }
+        
+        button:disabled { opacity: 0.5; cursor: not-allowed; }
+        
+        /* チェックボックス */
+        .item-checkbox, .nav-item-checkbox { transform: scale(1.0); margin-right: 8px; accent-color: #3b82f6; }
+        
+        /* キーワードタグ */
+        .keyword-tag, .content-keyword-tag { cursor: pointer; transition: background-color 0.2s ease, color 0.2s ease; }
+        .keyword-tag.active, .content-keyword-tag.active { background-color: yellow; color: #1f2937; font-weight: bold; }
+        
+        /* ナビゲーションアイテム */
+        .nav-item { padding-left: 0.75rem; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; transition: background-color 0.2s ease, color 0.2s ease; padding-top: 0.5rem; padding-bottom: 0.5rem; }
+        .nav-item.active-nav { background-color: #2563eb; color: white; }
+        
+        /* ヘッダーのOR/ANDスイッチ */
+        #logic-switch-container {
+            position: relative;
+            display: inline-flex;
+            background-color: #374151; /* gray-700 */
+            border-radius: 9999px;
+            padding: 4px;
+            cursor: pointer;
+            user-select: none;
+        }
+        .switch-label {
+            padding: 2px 12px;
+            font-weight: 600;
+            font-size: var(--font-size-sm);
+            color: #d1d5db; /* gray-300 */
+            transition: color 0.2s ease-in-out;
+            z-index: 10;
+        }
+        .switch-label.active-logic {
+            color: #ffffff;
+        }
+        #switch-bg {
+            position: absolute;
+            top: 4px;
+            bottom: 4px;
+            background-color: #3b82f6; /* blue-600 */
+            border-radius: 9999px;
+            transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            width: calc(50% - 4px);
+            left: 4px;
+        }
+        #logic-switch-container[data-mode="AND"] #switch-bg {
+            transform: translateX(100%);
+        }
+
+        /* 状態別ボタンスタイル */
+        #keywords-panel-toggle-btn.active, #filter-favorites-btn.active { color: #fBBF24; }
+        .gender-btn.active, .vitals-tag.active, .jcs-btn.active, .era-btn.active, .ecg-tag.active { background-color: #3b82f6; color: white; }
+        .font-size-btn.active, .keyword-sort-btn.active { background-color: #2563eb; color: white; }
+        .time-btn.active { background-color: #16a34a; color: white; }
+
+        /* ストップウォッチ */
+        #stopwatch.running { background-color: #166534; }
+        
+        /* アイコンアニメーション */
+        .toggle-chevron { transition: transform 0.2s ease-in-out; }
+        .toggle-chevron.collapsed { transform: rotate(-180deg); }
+
+        /* GCSセレクトボックス */
+        select.gcs-select { -webkit-appearance: none; appearance: none; background-image: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 20 20'%3e%3cpath stroke='%239ca3af' stroke-linecap='round' stroke-linejoin='round' stroke-width='1.5' d='M6 8l4 4 4-4'/%3e%3c/svg%3e"); background-position: right 0.5rem center; background-repeat: no-repeat; background-size: 1.5em 1.5em; padding-right: 2.5rem; }
+
+        @keyframes flash { 50% { opacity: 0.2; } }
+        .flashing-indicator { animation: flash 1.5s linear infinite; color: #f87171; font-weight: bold; }
+
+        /* ドラッグ&ドロップ */
+        .disease-form-group.dragging { opacity: 0.4; }
+        .disease-form-group .drag-handle { cursor: grab; }
+        
+        /* バイタルステータス色 */
+        .vital-normal { color: #e5e7eb; } /* gray-200 */
+        .vital-warning { color: #facc15; } /* yellow-400 */
+        .vital-danger { color: #f87171; } /* red-400 */
+        .warning-text { color: #f87171; font-weight: bold;}
+        .warning-text-sm { color: #f87171; font-weight: bold; font-size: var(--font-size-xs); }
+
+        /* 入力欄ボーダー色 */
+        .input-normal { border-color: #4b5563; }
+        .input-warning { border-color: #facc15 !important; box-shadow: 0 0 0 2px rgba(250, 204, 21, 0.5); }
+        .input-danger { border-color: #f87171 !important; box-shadow: 0 0 0 2px rgba(248, 113, 113, 0.5); }
+    </style>
+</head>
+<body class="bg-gray-900 text-gray-100 antialiased text-sm">
+
+    <div id="app" class="flex h-screen overflow-hidden">
+        <!-- サイドナビゲーション -->
+        <nav id="jump-nav" class="w-48 bg-gray-800 p-2 overflow-y-auto flex flex-col fixed top-0 left-0 h-full z-40 transform -translate-x-full transition-transform md:relative md:w-40 md:translate-x-0 shadow-lg">
+            <div id="nav-scroll-area" class="flex-1 overflow-y-auto">
+                <!-- Nav items will be injected here -->
+            </div>
+        </nav>
+        <div id="sidebar-backdrop" class="hidden fixed inset-0 bg-black bg-opacity-50 z-30 md:hidden"></div>
+
+        <main class="flex-1 flex flex-col">
+            <!-- ヘッダー -->
+            <header class="bg-gray-800/50 backdrop-blur-sm p-2 md:p-3 sticky top-0 z-20 shadow-lg">
+                <div class="flex flex-wrap items-center gap-2">
+                    <button id="sidebar-toggle-btn" class="p-2 text-white hover:text-blue-400 flex-shrink-0" aria-label="ナビゲーションを開く"><i class="fas fa-bars fa-lg"></i></button>
+                    
+                    <div class="flex items-center space-x-2 bg-gray-700 p-1 rounded-lg flex-shrink-0">
+                        <input type="number" id="age-input" placeholder="年齢" min="0" max="130" class="w-14 bg-gray-600 text-white placeholder-gray-400 text-center rounded-md p-1 focus:outline-none focus:ring-2 focus:ring-blue-500" aria-label="年齢">
+                        <button id="dob-btn" class="p-1 text-white hover:text-blue-400" aria-label="生年月日から年齢を計算"><i class="fas fa-calendar-alt"></i></button>
+                        <div class="flex">
+                           <button class="gender-btn bg-gray-600 hover:bg-gray-500 text-white font-bold py-1 px-2 md:px-3 rounded-l-md" data-gender="male">男</button>
+                           <button class="gender-btn bg-gray-600 hover:bg-gray-500 text-white font-bold py-1 px-2 md:px-3 rounded-r-md" data-gender="female">女</button>
+                        </div>
+                    </div>
+                    
+                    <input type="text" id="temp-memo" placeholder="一時メモ..." class="flex-grow min-w-[120px] bg-gray-700 text-white placeholder-gray-400 rounded-lg p-2 focus:outline-none focus:ring-2 focus:ring-blue-500" aria-label="一時メモ">
+
+                    <div class="flex items-center bg-gray-700 rounded-lg relative flex-grow">
+                        <input type="text" id="search-input" placeholder="キーワード検索..." class="w-full bg-transparent text-white placeholder-gray-400 rounded-lg py-2 pl-4 pr-24 focus:outline-none" aria-label="鑑別検索">
+                        <div class="absolute right-2 top-1/2 -translate-y-1/2 flex items-center h-full">
+                            <button id="search-clear-btn" class="text-gray-400 hover:text-white px-2 h-full flex items-center" title="検索文字のクリア" aria-label="検索文字のクリア"><i class="fas fa-times"></i></button>
+                            <div class="h-4 border-l border-gray-600"></div>
+                             <span id="filtered-disease-count" class="font-mono text-white w-12 text-center text-sm" title="絞り込まれた疾患数">0</span>
+                        </div>
+                    </div>
+                    
+                    <div class="flex items-center text-gray-200 bg-gray-700 rounded-lg">
+                        <button id="search-prev-btn" class="p-3 hover:bg-gray-600 disabled:text-gray-500 disabled:cursor-not-allowed rounded-l-lg" title="前の検索結果へ"><i class="fas fa-chevron-left"></i></button>
+                        <span id="search-count" class="text-sm font-mono px-2 border-x border-gray-600">0/0</span>
+                        <button id="search-next-btn" class="p-3 hover:bg-gray-600 disabled:text-gray-500 disabled:cursor-not-allowed rounded-r-lg" title="次の検索結果へ"><i class="fas fa-chevron-right"></i></button>
+                    </div>
+
+                    <div class="relative">
+                        <button id="search-history-btn" class="bg-gray-700 text-gray-400 hover:text-white p-3 rounded-lg flex items-center justify-center" title="検索履歴の表示" aria-label="検索履歴の表示"><i class="fas fa-history"></i></button>
+                        <div id="search-history-dropdown" class="hidden absolute top-full right-0 mt-2 w-48 bg-gray-800 border border-gray-700 rounded-lg shadow-xl z-30"></div>
+                    </div>
+                    
+                    <div class="flex-grow"></div>
+                    
+                    <!-- Right-aligned action buttons -->
+                    <div id="action-buttons-group" class="flex items-center gap-2">
+                        <div id="logic-switch-container" data-mode="OR" title="キーワードの検索ロジック (OR: いずれかを含む / AND: すべてを含む)">
+                            <div id="switch-bg"></div>
+                            <span class="switch-label active-logic">OR</span>
+                            <span class="switch-label">AND</span>
+                        </div>
+                        <button id="add-new-btn" class="bg-green-600 hover:bg-green-700 text-white font-bold py-2 px-3 rounded-lg flex-shrink-0" title="新規追加"><i class="fas fa-plus"></i></button>
+                        <button id="filter-favorites-btn" class="bg-gray-600 hover:bg-gray-500 text-white font-bold py-2 px-3 rounded-lg flex-shrink-0" title="お気に入りフィルター" aria-label="お気に入りフィルター"><i class="fas fa-star"></i></button>
+                        <button id="clear-selections-btn" class="bg-gray-600 hover:bg-gray-500 text-white font-bold py-2 px-3 rounded-lg flex-shrink-0" title="選択をすべて解除"><i class="fas fa-check-double"></i></button>
+                        <button id="settings-btn" class="bg-gray-600 hover:bg-gray-500 text-white font-bold py-2 px-3 rounded-lg flex-shrink-0" title="設定"><i class="fas fa-cog"></i></button>
+                       
+                        <div class="h-6 border-l border-gray-600 mx-1"></div>
+                        
+                        <!-- NEW: Random buttons -->
+                        <button id="random-complaint-btn" class="bg-purple-600 hover:bg-purple-700 text-white font-bold py-2 px-3 rounded-lg flex-shrink-0 hidden" title="主訴をランダム表示" aria-label="主訴をランダム表示"><i class="fas fa-dice-d20"></i></button>
+                        <button id="random-disease-btn" class="bg-indigo-600 hover:bg-indigo-700 text-white font-bold py-2 px-3 rounded-lg flex-shrink-0 hidden" title="疾患をランダム表示" aria-label="疾患をランダム表示"><i class="fas fa-dice"></i></button>
+
+                        <div id="stopwatch" class="bg-gray-700 text-white font-mono text-lg p-2 rounded-lg cursor-pointer flex-shrink-0" title="クリック: スタート/ストップ | 長押し: リセット">00:00</div>
+                        <button id="vitals-btn" class="bg-cyan-600 hover:bg-cyan-700 text-white font-bold py-2 px-3 rounded-lg flex-shrink-0" title="バイタル入力" aria-label="バイタル入力モーダルを開く"><i class="fas fa-wave-square"></i></button>
+                        <div class="flex items-center space-x-1 bg-gray-700 p-1 rounded-lg">
+                            <button id="arrival-btn" class="time-btn bg-gray-600 hover:bg-gray-500 text-white font-bold py-1 px-2 rounded-md" title="現着時刻を記録">着</button>
+                            <button id="contact-btn" class="time-btn bg-gray-600 hover:bg-gray-500 text-white font-bold py-1 px-2 rounded-md" title="接触時刻を記録">接</button>
+                            <button id="departure-btn" class="time-btn bg-gray-600 hover:bg-gray-500 text-white font-bold py-1 px-2 rounded-md" title="出発時刻を記録">出</button>
+                        </div>
+                        <button id="keywords-panel-toggle-btn" class="bg-gray-600 hover:bg-gray-500 text-white font-bold py-2 px-3 rounded-lg flex-shrink-0" aria-label="キーワードパネルを開く"><i class="fas fa-tags fa-lg"></i></button>
+                    </div>
+                </div>
+                
+                <div id="vitals-summary-container" class="w-full mt-2 hidden">
+                     <div class="flex items-start">
+                        <div id="vitals-summary-area" class="flex flex-wrap gap-x-4 gap-y-1 items-center flex-grow text-gray-300 bg-gray-900/50 p-2 rounded-lg border border-gray-700"></div>
+                         <button id="toggle-vitals-summary-btn" class="ml-2 text-gray-400 hover:text-white p-2 flex-shrink-0" title="バイタル概要の表示切替" aria-label="バイタル概要の表示切替"><i class="fas fa-chevron-up toggle-chevron"></i></button>
+                    </div>
+                 </div>
+            </header>
+            <!-- メインコンテンツ -->
+            <div id="content-area" class="flex-1 overflow-y-auto p-2 sm:p-4">
+                 <div id="loading" class="text-center p-8">
+                    <i class="fas fa-spinner fa-spin text-4xl text-blue-500"></i>
+                    <p class="mt-4 text-gray-400">データを読み込んでいます...</p>
+                </div>
+            </div>
+            
+            <footer class="bg-gray-800 p-2 text-center text-xs text-gray-500">
+                UserID: <span id="user-id-display">未ログイン</span>
+            </footer>
+        </main>
+
+        <!-- キーワードパネル -->
+        <aside id="keywords-panel-right" class="w-64 bg-gray-800 flex flex-col fixed top-0 right-0 h-full z-40 transform translate-x-full transition-transform shadow-lg">
+            <div class="p-4 border-b border-gray-700 flex justify-between items-center">
+                <h3 class="text-lg font-bold text-white">キーワードフィルター</h3>
+                <button id="keywords-panel-close-btn" class="text-gray-400 hover:text-white"><i class="fas fa-times fa-lg"></i></button>
+            </div>
+            <div id="keywords-panel-content-area" class="flex-1 p-4 space-y-4 overflow-y-auto"></div>
+        </aside>
+        <div id="keywords-panel-backdrop" class="hidden fixed inset-0 bg-black bg-opacity-50 z-30"></div>
+    </div>
+
+    <!-- Modals -->
+    <div id="vitals-modal" class="modal hidden fixed inset-0 bg-black bg-opacity-80 flex items-center justify-center z-50 p-4">
+        <div class="bg-gray-800 rounded-lg shadow-xl w-full max-w-4xl max-h-[90vh] flex flex-col text-gray-200">
+            <header class="p-4 border-b border-gray-700 flex justify-between items-center">
+                <h2 class="text-xl font-bold text-cyan-400 flex items-center"><i class="fas fa-wave-square mr-3"></i>バイタルサイン入力</h2>
+                <button id="vitals-modal-close-btn" class="text-gray-400 hover:text-white"><i class="fas fa-times fa-lg"></i></button>
+            </header>
+            <main class="p-4 flex-1 overflow-y-auto">
+                <form id="vitals-form" class="space-y-6">
+                    <div class="bg-gray-900 p-4 rounded-lg">
+                        <div class="flex justify-between items-center border-b border-gray-700 pb-2 mb-4">
+                           <h3 class="font-bold text-lg">外観・様子</h3>
+                           <button type="button" id="edit-appearance-tags-btn" class="text-gray-400 hover:text-white"><i class="fas fa-edit"></i></button>
+                        </div>
+                        <div id="vitals-appearance-tags" class="flex flex-wrap gap-2"></div>
+                    </div>
+                    <div class="bg-gray-900 p-4 rounded-lg">
+                        <div class="flex justify-between items-center border-b border-gray-700 pb-2 mb-4">
+                            <h3 class="font-bold text-lg">心電図所見</h3>
+                            <button type="button" id="edit-ecg-tags-btn" class="text-gray-400 hover:text-white"><i class="fas fa-edit"></i></button>
+                        </div>
+                        <div id="vitals-ecg-tags" class="flex flex-wrap gap-2"></div>
+                        <div>
+                            <label for="ecg-memo" class="text-sm mt-4 block">心電図自由記載</label>
+                            <textarea name="ecg_memo" id="ecg-memo" rows="2" class="w-full bg-gray-700 p-2 rounded-md mt-1"></textarea>
+                        </div>
+                    </div>
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                        <div class="space-y-4 bg-gray-900 p-4 rounded-lg">
+                            <h3 class="font-bold text-lg border-b border-gray-700 pb-2">意識レベル</h3>
+                            <div>
+                                <label class="block text-sm font-medium mb-2">JCS (Japan Coma Scale)</label>
+                                <div id="vitals-jcs-group" class="grid grid-cols-4 sm:grid-cols-5 gap-2"></div>
+                            </div>
+                            <div>
+                                <label class="block text-sm font-medium mb-2">GCS (Glasgow Coma Scale) - <span id="gcs-total" class="font-bold">3</span>点</label>
+                                <div class="space-y-2">
+                                    <select id="gcs-e-select" name="gcs_e" class="gcs-select w-full bg-gray-700 p-2 rounded-md border border-gray-600 focus:ring-2 focus:ring-blue-500"></select>
+                                    <select id="gcs-v-select" name="gcs_v" class="gcs-select w-full bg-gray-700 p-2 rounded-md border border-gray-600 focus:ring-2 focus:ring-blue-500"></select>
+                                    <select id="gcs-m-select" name="gcs_m" class="gcs-select w-full bg-gray-700 p-2 rounded-md border border-gray-600 focus:ring-2 focus:ring-blue-500"></select>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="space-y-4 bg-gray-900 p-4 rounded-lg">
+                             <h3 class="font-bold text-lg border-b border-gray-700 pb-2">呼吸・循環</h3>
+                             <div class="grid grid-cols-2 gap-4">
+                                <div><label for="resp-rate" class="text-sm">呼吸数</label><input name="resp" type="number" id="resp-rate" class="w-full bg-gray-700 p-2 mt-1 rounded-md border border-transparent" placeholder="回/分"></div>
+                                <div><label for="spo2" class="text-sm">SpO2</label><input name="spo2" type="number" id="spo2" class="w-full bg-gray-700 p-2 mt-1 rounded-md border border-transparent" placeholder="%"></div>
+                                <div><label for="pulse-rate" class="text-sm">脈拍数</label><input name="pulse" type="number" id="pulse-rate" class="w-full bg-gray-700 p-2 mt-1 rounded-md border border-transparent" placeholder="回/分"></div>
+                                <div><label for="body-temp" class="text-sm">体温</label><input name="temp" type="number" step="0.1" id="body-temp" class="w-full bg-gray-700 p-2 mt-1 rounded-md border border-transparent" placeholder="℃"></div>
+                             </div>
+                             <div>
+                                <h4 class="block text-sm font-medium mt-4">血圧 (mmHg)</h4>
+                                <div class="grid grid-cols-2 gap-x-4 mt-2">
+                                    <div class="space-y-2 relative">
+                                        <div id="pulse-pressure-r" class="absolute right-0 top-0 text-xs"></div>
+                                        <label for="bp-sys-r" class="text-xs">収縮期 (右)</label>
+                                        <input name="bp_sys_r" type="number" id="bp-sys-r" class="w-full bg-gray-700 p-2 rounded-md border border-transparent" placeholder="Sys">
+                                        <label for="bp-dia-r" class="text-xs">拡張期 (右)</label>
+                                        <input name="bp_dia_r" type="number" id="bp-dia-r" class="w-full bg-gray-700 p-2 rounded-md border border-transparent" placeholder="Dia">
+                                    </div>
+                                    <div class="space-y-2 relative">
+                                        <div id="pulse-pressure-l" class="absolute right-0 top-0 text-xs"></div>
+                                        <label for="bp-sys-l" class="text-xs">収縮期 (左)</label>
+                                        <input name="bp_sys_l" type="number" id="bp-sys-l" class="w-full bg-gray-700 p-2 rounded-md border border-transparent" placeholder="Sys">
+                                        <label for="bp-dia-l" class="text-xs">拡張期 (左)</label>
+                                        <input name="bp_dia_l" type="number" id="bp-dia_l" class="w-full bg-gray-700 p-2 rounded-md border border-transparent" placeholder="Dia">
+                                    </div>
+                                </div>
+                             </div>
+                        </div>
+
+                        <div class="space-y-4 bg-gray-900 p-4 rounded-lg md:col-span-2">
+                            <h3 class="font-bold text-lg border-b border-gray-700 pb-2 mb-4">瞳孔</h3>
+                            <div class="grid grid-cols-1 sm:grid-cols-2 gap-6">
+                                <div class="space-y-4">
+                                    <h4 class="font-bold text-center text-lg">右 (R)</h4>
+                                    <div>
+                                        <label for="pupil-size-r" class="text-sm font-medium">瞳孔サイズ (mm)</label>
+                                        <input type="number" id="pupil-size-r" name="pupil_size_r" min="1" max="10" step="0.5" placeholder="mm" class="w-full bg-gray-700 p-2 mt-1 rounded-md border border-gray-600 focus:ring-2 focus:ring-blue-500">
+                                    </div>
+                                    <div>
+                                        <label for="pupil-reflex-r" class="text-sm font-medium">対光反射</label>
+                                        <select id="pupil-reflex-r" name="pupil_reflex_r" class="gcs-select w-full bg-gray-700 p-2 mt-1 rounded-md border border-gray-600 focus:ring-2 focus:ring-blue-500"></select>
+                                    </div>
+                                </div>
+                                <div class="space-y-4">
+                                    <h4 class="font-bold text-center text-lg">左 (L)</h4>
+                                    <div>
+                                        <label for="pupil-size-l" class="text-sm font-medium">瞳孔サイズ (mm)</label>
+                                        <input type="number" id="pupil-size-l" name="pupil_size_l" min="1" max="10" step="0.5" placeholder="mm" class="w-full bg-gray-700 p-2 mt-1 rounded-md border border-gray-600 focus:ring-2 focus:ring-blue-500">
+                                    </div>
+                                    <div>
+                                        <label for="pupil-reflex-l" class="text-sm font-medium">対光反射</label>
+                                        <select id="pupil-reflex-l" name="pupil_reflex_l" class="gcs-select w-full bg-gray-700 p-2 mt-1 rounded-md border border-gray-600 focus:ring-2 focus:ring-blue-500"></select>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </form>
+            </main>
+            <footer class="p-4 border-t border-gray-700 flex justify-between items-start gap-3">
+                <div id="vitals-warnings-container" class="flex-grow flex flex-col gap-1 text-sm">
+                    <!-- Warning messages will be injected here -->
+                </div>
+                <div class="flex-shrink-0 flex gap-2">
+                    <button id="vitals-clear-btn" class="bg-red-800 hover:bg-red-700 text-white font-bold py-2 px-4 rounded-lg">クリア</button>
+                    <button id="vitals-save-btn" class="bg-blue-600 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded-lg">保存して閉じる</button>
+                </div>
+            </footer>
+        </div>
+    </div>
+    
+    <div id="settings-modal" class="modal hidden fixed inset-0 bg-black bg-opacity-70 flex items-center justify-center z-50 p-4">
+         <div class="bg-gray-800 rounded-lg shadow-xl w-full max-w-md text-gray-200">
+            <header class="p-4 border-b border-gray-700 flex justify-between items-center">
+                <h2 class="text-xl font-bold text-gray-300 flex items-center"><i class="fas fa-cog mr-3"></i>設定</h2>
+                <button id="settings-modal-close-btn" class="text-gray-400 hover:text-white"><i class="fas fa-times fa-lg"></i></button>
+            </header>
+            <main class="p-6 space-y-6">
+                <div>
+                    <h3 class="font-semibold mb-2">症例リセット</h3>
+                    <button id="next-case-btn" class="w-full bg-red-600 hover:bg-red-700 text-white font-bold py-2 px-4 rounded-lg flex items-center justify-center">
+                        <i class="fas fa-arrow-right-to-bracket mr-2"></i>次の症例へ
+                    </button>
+                </div>
+                 <div>
+                    <h3 class="font-semibold mb-2">バイタル履歴</h3>
+                    <div class="flex gap-2">
+                        <button id="view-vitals-history-btn" class="flex-1 bg-gray-600 hover:bg-gray-500 text-white font-bold py-2 px-4 rounded-lg"><i class="fas fa-history mr-2"></i>履歴を表示</button>
+                        <button id="clear-vitals-history-btn" class="flex-1 bg-red-800 hover:bg-red-700 text-white font-bold py-2 px-4 rounded-lg"><i class="fas fa-trash-alt mr-2"></i>履歴を全消去</button>
+                    </div>
+                </div>
+                <div>
+                    <h3 class="font-semibold mb-2">データ管理</h3>
+                    <div class="space-y-2">
+                         <button id="vitals-settings-btn" class="w-full bg-orange-600 hover:bg-orange-700 text-white font-bold py-2 px-4 rounded-lg"><i class="fas fa-triangle-exclamation mr-2"></i>バイタルアラート設定</button>
+                        <button id="export-csv-btn" class="w-full bg-green-600 hover:bg-green-700 text-white font-bold py-2 px-4 rounded-lg"><i class="fas fa-file-csv mr-2"></i>CSVエクスポート</button>
+                        <button id="import-csv-btn" class="w-full bg-blue-600 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded-lg"><i class="fas fa-file-import mr-2"></i>CSVインポート</button>
+                        <input type="file" id="import-csv-input" class="hidden" accept=".csv">
+                    </div>
+                </div>
+                <div>
+                    <h3 class="font-semibold mb-2">表示設定</h3>
+                    <div class="bg-gray-700/50 p-4 rounded-lg space-y-4">
+                         <div class="flex items-center justify-between">
+                            <label for="show-random-btn-toggle" class="font-medium">ランダム表示ボタンを表示</label>
+                            <label class="relative inline-flex items-center cursor-pointer">
+                                <input type="checkbox" id="show-random-btn-toggle" class="sr-only peer">
+                                <div class="w-11 h-6 bg-gray-600 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-blue-600"></div>
+                            </label>
+                        </div>
+                        <div class="flex items-center justify-between">
+                            <span class="font-medium">フォントサイズ</span>
+                            <div id="font-size-controls" class="flex items-center bg-gray-600 rounded-lg p-1">
+                                <button data-size="sm" class="font-size-btn px-3 py-1 text-sm rounded-md hover:bg-gray-500">小</button>
+                                <button data-size="base" class="font-size-btn px-3 py-1 text-sm rounded-md hover:bg-gray-500 active">中</button>
+                                <button data-size="lg" class="font-size-btn px-3 py-1 text-sm rounded-md hover:bg-gray-500">大</button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </main>
+         </div>
+    </div>
+    
+    <div id="data-modal" class="modal hidden fixed inset-0 bg-black bg-opacity-70 flex items-center justify-center z-50 p-4">
+         <div class="bg-gray-800 rounded-lg shadow-xl w-full max-w-2xl max-h-[90vh] flex flex-col">
+            <header class="p-4 border-b border-gray-700 flex justify-between items-center">
+                <h2 id="modal-title" class="text-xl font-bold"></h2>
+                <button id="modal-close-btn" class="text-gray-400 hover:text-white"><i class="fas fa-times fa-lg"></i></button>
+            </header>
+            <main class="p-4 flex-1 overflow-y-auto">
+                <form id="data-form" class="space-y-4">
+                    <input type="hidden" id="entry-id">
+                    <div>
+                        <label for="chief-complaint" class="block font-medium mb-1">主訴</label>
+                        <input type="text" id="chief-complaint" class="w-full bg-gray-700 p-2 rounded-md" required>
+                    </div>
+                     <div>
+                        <label for="chief-complaint-description" class="block font-medium mb-1">主訴の説明</label>
+                        <textarea id="chief-complaint-description" rows="2" class="w-full bg-gray-700 p-2 rounded-md"></textarea>
+                    </div>
+                    <div>
+                        <label for="chief-complaint-memo" class="block font-medium mb-1">主訴メモ</label>
+                        <textarea id="chief-complaint-memo" rows="2" class="w-full bg-gray-700 p-2 rounded-md"></textarea>
+                    </div>
+                    <div class="border-t border-gray-700 pt-4">
+                        <h3 class="text-lg font-semibold mb-2">鑑別疾患</h3>
+                        <div id="diseases-container" class="space-y-4"></div>
+                        <button type="button" id="add-disease-btn" class="mt-4 bg-blue-600 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded-lg"><i class="fas fa-plus mr-2"></i>疾患を追加</button>
+                    </div>
+                </form>
+            </main>
+            <footer class="p-4 border-t border-gray-700 flex justify-between">
+                <button type="button" id="delete-btn" class="bg-red-800 hover:bg-red-700 text-white font-bold py-2 px-4 rounded-lg">削除</button>
+                <button type="submit" form="data-form" class="bg-green-600 hover:bg-green-700 text-white font-bold py-2 px-4 rounded-lg">保存</button>
+            </footer>
+        </div>
+    </div>
+    
+    <div id="confirm-modal" class="modal hidden fixed inset-0 bg-black bg-opacity-80 flex items-center justify-center z-50 p-4">
+        <div class="bg-gray-800 rounded-lg shadow-xl w-full max-w-sm">
+            <div class="p-6 text-center">
+                <div id="alert-icon" class="mx-auto mb-4"></div>
+                <h3 id="confirm-title" class="text-lg font-bold mb-2"></h3>
+                <p id="confirm-message" class="text-sm text-gray-300"></p>
+            </div>
+            <div id="confirm-buttons" class="bg-gray-700/50 p-4 flex justify-end gap-3 rounded-b-lg"></div>
+        </div>
+    </div>
+    
+    <div id="compare-modal" class="modal hidden fixed inset-0 bg-black bg-opacity-80 flex items-center justify-center z-50 p-4">
+        <div class="bg-gray-800 rounded-lg shadow-xl w-full max-w-4xl max-h-[90vh] flex flex-col">
+            <header class="p-4 border-b border-gray-700 flex justify-between items-center">
+                <h2 class="text-xl font-bold text-indigo-400 flex items-center"><i class="fas fa-exchange-alt mr-3"></i>疾患の比較</h2>
+                <button id="compare-modal-close-btn" class="text-gray-400 hover:text-white"><i class="fas fa-times fa-lg"></i></button>
+            </header>
+            <main id="compare-modal-body" class="p-4 flex-1 overflow-y-auto"></main>
+        </div>
+    </div>
+
+    <div id="dob-era-modal" class="modal hidden fixed inset-0 bg-black bg-opacity-70 flex items-center justify-center z-50 p-4">
+         <div class="bg-gray-800 rounded-lg shadow-xl w-full max-w-sm">
+            <header class="p-4 border-b border-gray-700 flex justify-between items-center">
+                <h2 class="text-xl font-bold">生年月日から計算</h2>
+                <button id="dob-modal-close-btn" class="text-gray-400 hover:text-white"><i class="fas fa-times fa-lg"></i></button>
+            </header>
+            <main class="p-6 space-y-4">
+                <div class="grid grid-cols-5 gap-2" id="era-buttons">
+                    <button class="era-btn bg-gray-600 p-2 rounded-md" data-era="M">明治</button>
+                    <button class="era-btn bg-gray-600 p-2 rounded-md" data-era="T">大正</button>
+                    <button class="era-btn bg-gray-600 p-2 rounded-md" data-era="S">昭和</button>
+                    <button class="era-btn bg-gray-600 p-2 rounded-md" data-era="H">平成</button>
+                    <button class="era-btn bg-gray-600 p-2 rounded-md" data-era="R">令和</button>
+                </div>
+                <div class="flex items-center gap-2">
+                    <input type="number" id="era-year" class="w-full bg-gray-700 p-2 rounded-md" placeholder="年">
+                    <input type="number" id="era-month" class="w-full bg-gray-700 p-2 rounded-md" placeholder="月">
+                    <input type="number" id="era-day" class="w-full bg-gray-700 p-2 rounded-md" placeholder="日">
+                </div>
+                <button id="dob-calc-btn" class="w-full bg-blue-600 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded-lg">年齢を計算</button>
+            </main>
+        </div>
+    </div>
+
+    <div id="tag-editor-modal" class="modal hidden fixed inset-0 bg-black bg-opacity-80 flex items-center justify-center z-50 p-4">
+         <div class="bg-gray-800 rounded-lg shadow-xl w-full max-w-md">
+            <header class="p-4 border-b border-gray-700 flex justify-between items-center">
+                <h2 id="tag-editor-title" class="text-xl font-bold">タグの編集</h2>
+                <button id="tag-editor-close-btn" class="text-gray-400 hover:text-white"><i class="fas fa-times fa-lg"></i></button>
+            </header>
+            <main class="p-6 space-y-4">
+                <div id="tag-editor-list" class="space-y-2 max-h-60 overflow-y-auto"></div>
+                <div class="flex gap-2 pt-4 border-t border-gray-600">
+                    <input type="text" id="new-tag-input" class="w-full bg-gray-700 p-2 rounded-md" placeholder="新しいタグを追加...">
+                    <button id="add-tag-btn" class="bg-green-600 hover:bg-green-700 text-white font-bold py-2 px-4 rounded-lg">追加</button>
+                </div>
+            </main>
+         </div>
+    </div>
+
+    <div id="vitals-history-modal" class="modal hidden fixed inset-0 bg-black bg-opacity-80 flex items-center justify-center z-50 p-4">
+         <div class="bg-gray-800 rounded-lg shadow-xl w-full max-w-2xl max-h-[90vh] flex flex-col">
+            <header class="p-4 border-b border-gray-700 flex justify-between items-center">
+                <h2 class="text-xl font-bold">バイタル履歴</h2>
+                <button id="vitals-history-close-btn" class="text-gray-400 hover:text-white"><i class="fas fa-times fa-lg"></i></button>
+            </header>
+            <main id="vitals-history-list" class="p-4 flex-1 overflow-y-auto space-y-4">
+                <!-- History items will be injected here -->
+            </main>
+         </div>
+    </div>
+    
+    <div id="vitals-settings-modal" class="modal hidden fixed inset-0 bg-black bg-opacity-80 flex items-center justify-center z-50 p-4">
+         <div class="bg-gray-800 rounded-lg shadow-xl w-full max-w-7xl max-h-[90vh] flex flex-col">
+            <header class="p-4 border-b border-gray-700 flex justify-between items-center">
+                <h2 class="text-xl font-bold">バイタルアラート設定</h2>
+                <button id="vitals-settings-close-btn" class="text-gray-400 hover:text-white"><i class="fas fa-times fa-lg"></i></button>
+            </header>
+            <main class="p-4 flex-1 overflow-auto">
+                <div id="vitals-settings-table-container" class="w-full text-sm"></div>
+            </main>
+            <footer class="p-4 border-t border-gray-700 flex justify-between items-center">
+                 <div class="flex gap-4">
+                    <button id="vitals-settings-add-row-btn" class="bg-green-600 hover:bg-green-700 text-white font-bold py-2 px-4 rounded-lg">年齢区分を追加</button>
+                    <button id="vitals-settings-reset-btn" class="bg-yellow-600 hover:bg-yellow-700 text-white font-bold py-2 px-4 rounded-lg">初期値に戻す</button>
+                 </div>
+                 <button id="vitals-settings-save-btn" class="bg-blue-600 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded-lg">保存して閉じる</button>
+            </footer>
+         </div>
+    </div>
+
+
+    <script type="module">
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/11.9.1/firebase-app.js";
+        import { getFirestore, collection, onSnapshot, doc, addDoc, setDoc, deleteDoc, getDocs, writeBatch, updateDoc } from "https://www.gstatic.com/firebasejs/11.9.1/firebase-firestore.js";
+        import { getAuth, signInAnonymously, onAuthStateChanged, signInWithCustomToken } from "https://www.gstatic.com/firebasejs/11.9.1/firebase-auth.js";
+
+        document.addEventListener('DOMContentLoaded', () => {
+            const App = {
+                // アプリケーションの設定
+                config: {
+                    collectionName: 'clinical_cases',
+                    maxHistoryItems: 15,
+                    storageKeys: {
+                        showRandomBtn: `paramedic_app_show_random_button`,
+                        fontSize: `paramedic_app_font_size`,
+                        vitals: `paramedic_app_vitals`,
+                        tempMemo: `paramedic_app_temp_memo`,
+                        ageAndGender: `paramedic_app_age_gender`,
+                        customAppearanceTags: `paramedic_app_custom_appearance_tags`,
+                        customEcgTags: `paramedic_app_custom_ecg_tags`,
+                        vitalsHistory: `paramedic_app_vitals_history`,
+                        vitalThresholds: `paramedic_app_vital_thresholds`,
+                        keywordMode: `paramedic_app_keyword_mode`
+                    },
+                    stopwatchResetDelay: 700,
+                    swipeThreshold: 50,
+                    firebaseConfig: null,
+                    appId: 'default-app-id',
+                    gcsOptions: {
+                        E: [ {v:4,t:"4:自発的に"}, {v:3,t:"3:呼びかけで"}, {v:2,t:"2:痛み刺激で"}, {v:1,t:"1:開眼せず"} ],
+                        V: [ {v:5,t:"5:見当識良好"}, {v:4,t:"4:混乱した会話"}, {v:3,t:"3:不適切な発語"}, {v:2,t:"2:理解不能な音声"}, {v:1,t:"1:発語せず"} ],
+                        M: [ {v:6,t:"6:命令に従う"}, {v:5,t:"5:痛み刺激に手で払う"}, {v:4,t:"4:痛み刺激で逃避"}, {v:3,t:"3:異常屈曲"}, {v:2,t:"2:異常伸展"}, {v:1,t:"1:全く動かず"} ],
+                    },
+                    jcsOptions: ["清明", "1", "2", "3", "10", "20", "30", "100", "200", "300"],
+                    defaultAppearanceOptions: ["起坐呼吸", "喘鳴", "顔面蒼白", "頸静脈怒張", "冷や汗"],
+                    pupilReflexMap: ["なし(-)", "鈍", "迅速(+)"],
+                    defaultEcgOptions: ["ショック適応", "ショック非適応", "不安定頻拍", "症候性徐脈", "ST上昇", "T波増高", "ST低下", "QT延長", "異常Q波", "J波", "PSVT", "VPC", "Af", "洞調律"],
+                    defaultVitalThresholds: [
+                        { category: "新生児", age: [0, 0], resp: { lowWarning: 30, highWarning: 60 }, pulse: { lowWarning: 100, highWarning: 180 }, sbp: { lowWarning: 60 } },
+                        { category: "乳児", age: [0, 1], resp: { lowWarning: 25, highWarning: 50 }, pulse: { lowWarning: 90, highWarning: 160 }, sbp: { lowWarning: 70 } },
+                        { category: "幼児", age: [2, 5], resp: { lowWarning: 20, highWarning: 40 }, pulse: { lowWarning: 80, highWarning: 140 }, sbp: { lowWarning: 80 } },
+                        { category: "学童", age: [6, 12], resp: { lowWarning: 15, highWarning: 30 }, pulse: { lowWarning: 70, highWarning: 120 }, sbp: { lowWarning: 90 } },
+                        { category: "成人", age: [13, 130], resp: { lowWarning: 12, lowDanger: 8, highWarning: 20, highDanger: 24 }, pulse: { lowWarning: 60, lowDanger: 50, highWarning: 100, highDanger: 120 }, sbp: { lowWarning: 90, lowDanger: 80, highWarning: 140, highDanger: 180 }, spo2: { lowWarning: 94, lowDanger: 90 } }
+                    ]
+
+                },
+                // アプリケーションの状態
+                state: {
+                    db: null, auth: null, userId: null, dataStore: [], isLoading: true,
+                    intersectionObserver: null,
+                    filters: { searchTerm: '', activeKeywords: new Set(), keywordMode: 'OR', isFavoritesOnly: false, keywordSortBy: 'name' }, // MODIFIED: Added keywordSortBy
+                    ui: { selectedItems: new Set(), highlightedElements: [], currentHighlightIndex: -1 },
+                    stopwatch: { interval: null, isRunning: false, elapsedSeconds: 0, pressTimer: null },
+                    vitals: {},
+                    sidebar: { touchStartX: 0, touchCurrentX: 0, isDragging: false },
+                    customAppearanceTags: [],
+                    customEcgTags: [],
+                    vitalsHistory: [],
+                    vitalThresholds: [],
+                    globalKeywordCounts: new Map(),
+                },
+                // 初期化処理
+                init() {
+                    this.cacheDomElements();
+                    this.utils.initFirebaseConfig();
+                    this.services.auth.init();
+                    this.bindEventListeners();
+                    this.pwa.init(); 
+                    Object.values(this.components).forEach(component => component.init?.());
+                },
+                // DOM要素のキャッシュ
+                cacheDomElements() {
+                    const D = document;
+                    this.elements = {
+                        // General
+                        html: D.documentElement, body: D.body, app: D.getElementById('app'),
+                        contentArea: D.getElementById('content-area'),
+                        loading: D.getElementById('loading'),
+                        userIdDisplay: D.getElementById('user-id-display'),
+                        // Sidebar
+                        jumpNav: D.getElementById('jump-nav'),
+                        navScrollArea: D.getElementById('nav-scroll-area'),
+                        sidebarToggleBtn: D.getElementById('sidebar-toggle-btn'),
+                        sidebarBackdrop: D.getElementById('sidebar-backdrop'),
+                        // Header Buttons
+                        addNewBtn: D.getElementById('add-new-btn'),
+                        filterFavoritesBtn: D.getElementById('filter-favorites-btn'),
+                        clearSelectionsBtn: D.getElementById('clear-selections-btn'),
+                        settingsBtn: D.getElementById('settings-btn'),
+                        logicSwitchContainer: D.getElementById('logic-switch-container'),
+                        // Keywords Panel (Right)
+                        keywordsPanelRight: D.getElementById('keywords-panel-right'),
+                        keywordsPanelToggleBtn: D.getElementById('keywords-panel-toggle-btn'),
+                        keywordsPanelCloseBtn: D.getElementById('keywords-panel-close-btn'),
+                        keywordsPanelBackdrop: D.getElementById('keywords-panel-backdrop'),
+                        keywordsPanelContentArea: D.getElementById('keywords-panel-content-area'),
+                        // Header
+                        stopwatch: D.getElementById('stopwatch'),
+                        ageInput: D.getElementById('age-input'),
+                        dobBtn: D.getElementById('dob-btn'),
+                        genderBtns: D.querySelectorAll('.gender-btn'),
+                        vitalsBtn: D.getElementById('vitals-btn'),
+                        tempMemo: D.getElementById('temp-memo'),
+                        randomComplaintBtn: D.getElementById('random-complaint-btn'),
+                        randomDiseaseBtn: D.getElementById('random-disease-btn'),
+                        // Time Buttons
+                        arrivalBtn: D.getElementById('arrival-btn'),
+                        contactBtn: D.getElementById('contact-btn'),
+                        departureBtn: D.getElementById('departure-btn'),
+                        // Search
+                        searchInput: D.getElementById('search-input'),
+                        searchClearBtn: D.getElementById('search-clear-btn'),
+                        searchHistoryBtn: D.getElementById('search-history-btn'),
+                        searchHistoryDropdown: D.getElementById('search-history-dropdown'),
+                        searchCount: D.getElementById('search-count'),
+                        searchPrevBtn: D.getElementById('search-prev-btn'),
+                        searchNextBtn: D.getElementById('search-next-btn'),
+                        filteredDiseaseCount: D.getElementById('filtered-disease-count'), // NEW
+                        // Vitals Summary
+                        vitalsSummaryContainer: D.getElementById('vitals-summary-container'),
+                        vitalsSummaryArea: D.getElementById('vitals-summary-area'),
+                        toggleVitalsSummaryBtn: D.getElementById('toggle-vitals-summary-btn'),
+                        // Vitals Modal
+                        vitalsModal: D.getElementById('vitals-modal'),
+                        vitalsModalCloseBtn: D.getElementById('vitals-modal-close-btn'),
+                        vitalsSaveBtn: D.getElementById('vitals-save-btn'),
+                        vitalsClearBtn: D.getElementById('vitals-clear-btn'),
+                        vitalsForm: D.getElementById('vitals-form'),
+                        gcsTotalEl: D.getElementById('gcs-total'),
+                        gcsESelect: D.getElementById('gcs-e-select'),
+                        gcsVSelect: D.getElementById('gcs-v-select'),
+                        gcsMSelect: D.getElementById('gcs-m-select'),
+                        vitalsAppearanceTags: D.getElementById('vitals-appearance-tags'),
+                        vitalsJcsGroup: D.getElementById('vitals-jcs-group'),
+                        pulsePressureR: D.getElementById('pulse-pressure-r'),
+                        pulsePressureL: D.getElementById('pulse-pressure-l'),
+                        vitalsEcgTags: D.getElementById('vitals-ecg-tags'),
+                        ecgMemo: D.getElementById('ecg-memo'),
+                        editAppearanceTagsBtn: D.getElementById('edit-appearance-tags-btn'),
+                        editEcgTagsBtn: D.getElementById('edit-ecg-tags-btn'),
+                        vitalsWarningsContainer: D.getElementById('vitals-warnings-container'),
+                        // Settings Modal
+                        settingsModal: D.getElementById('settings-modal'),
+                        settingsModalCloseBtn: D.getElementById('settings-modal-close-btn'),
+                        exportCsvBtn: D.getElementById('export-csv-btn'),
+                        importCsvBtn: D.getElementById('import-csv-btn'),
+                        importCsvInput: D.getElementById('import-csv-input'),
+                        showRandomBtnToggle: D.getElementById('show-random-btn-toggle'),
+                        fontSizeControls: D.getElementById('font-size-controls'),
+                        nextCaseBtn: D.getElementById('next-case-btn'),
+                        viewVitalsHistoryBtn: D.getElementById('view-vitals-history-btn'),
+                        clearVitalsHistoryBtn: D.getElementById('clear-vitals-history-btn'),
+                        vitalsSettingsBtn: D.getElementById('vitals-settings-btn'),
+                        // Data Modal
+                        dataModal: D.getElementById('data-modal'),
+                        modalTitle: D.getElementById('modal-title'),
+                        dataForm: D.getElementById('data-form'),
+                        modalCloseBtn: D.getElementById('modal-close-btn'),
+                        addDiseaseBtn: D.getElementById('add-disease-btn'),
+                        deleteBtn: D.getElementById('delete-btn'),
+                        entryIdInput: D.getElementById('entry-id'),
+                        chiefComplaintInput: D.getElementById('chief-complaint'),
+                        chiefComplaintDescInput: D.getElementById('chief-complaint-description'),
+                        chiefComplaintMemoInput: D.getElementById('chief-complaint-memo'),
+                        diseasesContainer: D.getElementById('diseases-container'),
+                        // Confirm Modal
+                        confirmModal: D.getElementById('confirm-modal'),
+                        confirmTitle: D.getElementById('confirm-title'),
+                        confirmMessage: D.getElementById('confirm-message'),
+                        confirmButtons: D.getElementById('confirm-buttons'),
+                        alertIcon: D.getElementById('alert-icon'),
+                        // Compare Modal
+                        compareModal: D.getElementById('compare-modal'),
+                        compareModalCloseBtn: D.getElementById('compare-modal-close-btn'),
+                        compareModalBody: D.getElementById('compare-modal-body'),
+                         // DOB Modal
+                        dobEraModal: D.getElementById('dob-era-modal'),
+                        dobModalCloseBtn: D.getElementById('dob-modal-close-btn'),
+                        eraBtns: D.getElementById('era-buttons'),
+                        eraYearInput: D.getElementById('era-year'),
+                        eraMonthInput: D.getElementById('era-month'),
+                        eraDayInput: D.getElementById('era-day'),
+                        dobCalcBtn: D.getElementById('dob-calc-btn'),
+                        // Tag Editor Modal
+                        tagEditorModal: D.getElementById('tag-editor-modal'),
+                        tagEditorTitle: D.getElementById('tag-editor-title'),
+                        tagEditorCloseBtn: D.getElementById('tag-editor-close-btn'),
+                        tagEditorList: D.getElementById('tag-editor-list'),
+                        newTagInput: D.getElementById('new-tag-input'),
+                        addTagBtn: D.getElementById('add-tag-btn'),
+                        // Vitals History Modal
+                        vitalsHistoryModal: D.getElementById('vitals-history-modal'),
+                        vitalsHistoryCloseBtn: D.getElementById('vitals-history-close-btn'),
+                        vitalsHistoryList: D.getElementById('vitals-history-list'),
+                        // Vitals Settings Modal
+                        vitalsSettingsModal: D.getElementById('vitals-settings-modal'),
+                        vitalsSettingsCloseBtn: D.getElementById('vitals-settings-close-btn'),
+                        vitalsSettingsTableContainer: D.getElementById('vitals-settings-table-container'),
+                        vitalsSettingsAddRowBtn: D.getElementById('vitals-settings-add-row-btn'),
+                        vitalsSettingsResetBtn: D.getElementById('vitals-settings-reset-btn'),
+                        vitalsSettingsSaveBtn: D.getElementById('vitals-settings-save-btn'),
+                    };
+                },
+                // イベントリスナーの紐付け
+                bindEventListeners() {
+                    const { elements: el, handlers: h } = this;
+                    
+                    el.searchInput.addEventListener('input', () => h.handleSearch()); // MODIFIED: Real-time search
+                    el.searchClearBtn.addEventListener('click', () => h.handleSearchClear());
+                    el.searchNextBtn.addEventListener('click', () => this.renderer.search.navigateToHighlight(1));
+                    el.searchPrevBtn.addEventListener('click', () => this.renderer.search.navigateToHighlight(-1));
+                    
+                    el.contentArea.addEventListener('click', e => h.handleContentAreaClick(e));
+                    el.contentArea.addEventListener('change', e => h.handleCheckboxChange(e));
+                    el.navScrollArea.addEventListener('change', e => h.handleCheckboxChange(e));
+
+                    el.addNewBtn.addEventListener('click', () => this.components.dataModal.openForNew());
+                    el.filterFavoritesBtn.addEventListener('click', () => h.handleToggleFavoritesFilter());
+                    el.clearSelectionsBtn.addEventListener('click', () => h.handleClearAllSelections());
+                    el.settingsBtn.addEventListener('click', () => this.components.settings.open());
+
+                    el.randomComplaintBtn.addEventListener('click', () => h.handleRandomComplaintSelect());
+                    el.randomDiseaseBtn.addEventListener('click', () => h.handleRandomDiseaseSelect());
+                    el.logicSwitchContainer.addEventListener('click', () => h.handleKeywordLogicToggle());
+
+                    el.arrivalBtn.addEventListener('click', () => h.handleTimestampClick('arrival'));
+                    el.contactBtn.addEventListener('click', () => h.handleTimestampClick('contact'));
+                    el.departureBtn.addEventListener('click', () => h.handleTimestampClick('departure'));
+
+                    el.toggleVitalsSummaryBtn.addEventListener('click', () => h.handleToggleVisibility(el.vitalsSummaryArea, el.toggleVitalsSummaryBtn, true));
+                    
+                    document.addEventListener('click', e => {
+                        if (el.searchHistoryBtn && !el.searchHistoryBtn.parentElement.contains(e.target)) this.utils.hide(el.searchHistoryDropdown);
+                    });
+                    
+                    Object.values(this.components).forEach(component => component.bindEventListeners?.());
+                },
+                // イベントハンドラ
+                handlers: {
+                    handleSearch() {
+                        App.state.filters.activeKeywords.clear();
+                        const searchTerm = App.elements.searchInput.value.trim();
+                        App.state.filters.searchTerm = searchTerm;
+                        if (searchTerm) App.components.searchHistory.save(searchTerm);
+                        App.renderer.renderAll();
+                    },
+                    handleSearchClear() {
+                        App.elements.searchInput.value = '';
+                        this.handleSearch();
+                    },
+                    handleTimestampClick(type) {
+                        const now = new Date();
+                        const timeString = now.toTimeString().split(' ')[0].substring(0, 5); // HH:mm
+                        App.state.vitals[type] = timeString;
+                        App.components.vitalsModal.saveState(); // Save to localStorage
+                        App.renderer.renderVitalsSummary();
+                        const btn = App.elements[`${type}Btn`];
+                        if (btn) {
+                            btn.classList.add('active');
+                            setTimeout(() => btn.classList.remove('active'), 500);
+                        }
+                    },
+                    handleRandomComplaintSelect() {
+                        const allComplaintCards = App.elements.contentArea.querySelectorAll('.content-card');
+                        if (allComplaintCards.length > 0) {
+                            const randomIndex = Math.floor(Math.random() * allComplaintCards.length);
+                            allComplaintCards[randomIndex].scrollIntoView({ behavior: 'smooth', block: 'start' });
+                        }
+                    },
+                    handleRandomDiseaseSelect() {
+                        // 表示されている疾患要素（キーワードや落とし穴などを含む親コンテナ）を取得
+                        const allDiseaseElements = App.elements.contentArea.querySelectorAll('.content-card .pl-4.border-l-4');
+                        if(allDiseaseElements.length > 0) {
+                            const randomIndex = Math.floor(Math.random() * allDiseaseElements.length);
+                            allDiseaseElements[randomIndex].scrollIntoView({ behavior: 'smooth', block: 'start' });
+                        }
+                    },
+                    handleToggleFavoritesFilter() {
+                        App.state.filters.isFavoritesOnly = !App.state.filters.isFavoritesOnly;
+                        App.elements.filterFavoritesBtn.classList.toggle('active', App.state.filters.isFavoritesOnly);
+                        App.renderer.renderAll();
+                    },
+                    handleToggleVisibility(area, button, isCollapsed = false) {
+                        const isHidden = area.classList.toggle('hidden');
+                        const chevron = button.querySelector('.toggle-chevron');
+                        if (chevron) {
+                            chevron.classList.toggle('collapsed', isHidden);
+                        }
+                    },
+                    handleContentAreaClick(event) {
+                        const { target } = event;
+                        const actions = {
+                            'edit-btn': el => App.components.dataModal.openForEdit(el.dataset.id),
+                            'favorite-btn': el => App.services.db.toggleFavorite('complaint', el.dataset.id),
+                            'favorite-disease-btn': el => App.services.db.toggleFavorite('disease', el.dataset.complaintId, el.dataset.diseaseName),
+                            'content-keyword-tag': el => this.handleKeywordTagClick(el.textContent.trim()),
+                        };
+                        for (const className in actions) {
+                            const el = target.closest(`.${className}`);
+                            if (el) {
+                                actions[className](el);
+                                return;
+                            }
+                        }
+                    },
+                    handleKeywordTagClick(keyword) {
+                        // カウント部分を除去
+                        const keywordName = keyword.replace(/\s\(\d+\)$/, '').trim();
+                        const { activeKeywords } = App.state.filters;
+                        if (activeKeywords.has(keywordName)) activeKeywords.delete(keywordName);
+                        else activeKeywords.add(keywordName);
+                        App.state.filters.searchTerm = '';
+                        App.elements.searchInput.value = '';
+                        App.renderer.renderAll();
+                    },
+                    handleCheckboxChange(event) {
+                        const checkbox = event.target;
+                        if (!checkbox.classList.contains('item-checkbox') && !checkbox.classList.contains('nav-item-checkbox')) return;
+                        
+                        const { type, id, name } = checkbox.dataset;
+                        const uniqueId = type === 'complaint' ? `c_${id}` : `d_${id}_${name.replace(/\s/g, '_')}`;
+                        
+                        if (checkbox.checked) {
+                            App.state.ui.selectedItems.add(uniqueId);
+                        } else {
+                            App.state.ui.selectedItems.delete(uniqueId);
+                        }
+                        
+                        const allCheckboxes = document.querySelectorAll(`.item-checkbox[data-id='${id}']${name ? `[data-name='${name}']` : ''}, .nav-item-checkbox[data-id='${id}']`);
+                        allCheckboxes.forEach(cb => { if (cb.checked !== checkbox.checked) cb.checked = checkbox.checked; });
+                        
+                        App.renderer.renderAll();
+                    },
+                    handleKeywordLogicToggle() {
+                        const { filters } = App.state;
+                        filters.keywordMode = filters.keywordMode === 'OR' ? 'AND' : 'OR';
+                        App.utils.saveToStorage(App.config.storageKeys.keywordMode, filters.keywordMode);
+                        App.renderer.renderKeywordSwitch();
+                        App.renderer.renderAll();
+                    },
+                    handleClearKeywordFilter() {
+                        App.state.filters.activeKeywords.clear();
+                        App.renderer.renderAll();
+                    },
+                    handleClearAllSelections() {
+                        App.state.ui.selectedItems.clear();
+                        document.querySelectorAll('.item-checkbox, .nav-item-checkbox').forEach(cb => cb.checked = false);
+                        App.renderer.renderAll();
+                    },
+                    handlePatientInfoChange() {
+                        const data = {
+                            age: App.elements.ageInput.value,
+                            gender: document.querySelector('.gender-btn.active')?.dataset.gender || null
+                        };
+                        App.utils.saveToStorage(App.config.storageKeys.ageAndGender, data);
+                        App.renderer.renderVitalsSummary();
+                        App.components.vitalsModal.checkAllVitals();
+                    },
+                },
+                // PWA関連
+                pwa: {
+                    init() {
+                        if ('serviceWorker' in navigator) {
+                            window.addEventListener('load', () => {
+                                navigator.serviceWorker.register('./sw.js').then(registration => {
+                                    console.log('ServiceWorker registration successful with scope: ', registration.scope);
+                                }, err => {
+                                    console.log('ServiceWorker registration failed: ', err);
+                                });
+                            });
+                        }
+                    }
+                },
+                // 外部サービス（Firebase）
+                services: {
+                    auth: {
+                        init() {
+                            try {
+                                const app = initializeApp(App.config.firebaseConfig);
+                                App.state.db = getFirestore(app);
+                                App.state.auth = getAuth(app);
+                                this.listen();
+                            } catch (error) {
+                                console.error("Firebase Initialization Failed:", error);
+                                App.elements.loading.innerHTML = `<p class="text-red-500 p-8">アプリケーションの初期化に失敗しました。</p>`;
+                            }
+                        },
+                        listen() {
+                            onAuthStateChanged(App.state.auth, async (user) => {
+                                if (user) {
+                                    App.state.userId = user.uid;
+                                    App.elements.userIdDisplay.textContent = user.uid;
+                                    App.services.db.listenForChanges();
+                                } else {
+                                    App.elements.userIdDisplay.textContent = "匿名ログイン中...";
+                                    await this.signIn();
+                                }
+                            });
+                        },
+                        async signIn() {
+                             try {
+                                if (typeof __initial_auth_token !== 'undefined' && __initial_auth_token) {
+                                    await signInWithCustomToken(App.state.auth, __initial_auth_token);
+                                } else {
+                                    await signInAnonymously(App.state.auth);
+                                }
+                            } catch (error) {
+                                console.error("Authentication failed:", error);
+                                if (App.elements.loading) App.elements.loading.innerHTML = '<p class="text-red-500">Authentication Failed.</p>';
+                            }
+                        }
+                    },
+                    db: {
+                        getCollectionRef() {
+                            const { db, userId } = App.state;
+                            const { appId, collectionName } = App.config;
+                            if (!userId) return null;
+                            return collection(db, 'artifacts', appId, 'users', userId, collectionName);
+                        },
+                        listenForChanges() {
+                            const collectionRef = this.getCollectionRef();
+                            if (!collectionRef) return;
+                            onSnapshot(collectionRef, (snapshot) => {
+                                App.utils.hide(App.elements.loading);
+                                App.state.isLoading = false;
+                                
+                                const docs = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+                                App.state.dataStore = docs;
+                
+                                App.renderer.renderAll();
+                            }, (error) => {
+                                console.error("Error fetching data:", error);
+                                if (App.elements.loading) App.elements.loading.innerHTML = '<p class="text-red-500">データの取得に失敗しました。</p>';
+                            });
+                        },
+                        async toggleFavorite(type, id, diseaseName = null) {
+                            const entryIndex = App.state.dataStore.findIndex(e => e.id === id);
+                            if (entryIndex === -1) return;
+                            
+                            const entry = { ...App.state.dataStore[entryIndex] };
+                            const collectionRef = this.getCollectionRef();
+                            if (!collectionRef) return;
+                            const docRef = doc(collectionRef, id);
+
+                            let updatePayload = {
+                                updatedAt: new Date().toISOString()
+                            };
+
+                            if(type === 'complaint') {
+                                entry.isFavorite = !entry.isFavorite;
+                                updatePayload.isFavorite = entry.isFavorite;
+                            } else {
+                                entry.diseases = entry.diseases.map(d => {
+                                    if(d.name === diseaseName) {
+                                        return {...d, isFavorite: !d.isFavorite};
+                                    }
+                                    return d;
+                                });
+                                updatePayload.diseases = entry.diseases;
+                            }
+                            
+                            App.state.dataStore[entryIndex] = entry;
+                            App.renderer.renderAll();
+                
+                            try {
+                                await updateDoc(docRef, updatePayload);
+                            } catch (error) {
+                                console.error("Error updating favorite status:", error);
+                                App.state.dataStore[entryIndex] = App.state.dataStore.find(e => e.id === id);
+                                App.renderer.renderAll();
+                                App.utils.customAlert("お気に入り状態の更新に失敗しました。");
+                            }
+                        },
+                    }
+                },
+                // 描画関連
+                renderer: {
+                    renderAll() {
+                        const dataToRender = this.filterAndSortData();
+                        const diseaseCount = dataToRender.reduce((acc, entry) => acc + (entry.diseases ? entry.diseases.length : 0), 0);
+                        App.elements.filteredDiseaseCount.textContent = diseaseCount;
+
+                        this.updateGlobalKeywordCounts(dataToRender);
+                        this.renderContent(dataToRender);
+                        this.renderNav();
+                        this.renderKeywordsPanel(dataToRender);
+                        this.renderVitalsSummary();
+                        this.search.collectAndNavigateHighlights();
+                        this.setupIntersectionObserver();
+                    },
+                    updateGlobalKeywordCounts(data) {
+                        App.state.globalKeywordCounts.clear();
+                        data.forEach(entry => {
+                            (entry.diseases || []).forEach(d => {
+                                (d.keywords || []).forEach(k => {
+                                    App.state.globalKeywordCounts.set(k, (App.state.globalKeywordCounts.get(k) || 0) + 1);
+                                });
+                            });
+                        });
+                    },
+                    filterAndSortData() {
+                        const { dataStore, filters, ui } = App.state;
+                        let processedData = JSON.parse(JSON.stringify(dataStore));
+                    
+                        // 選択された主訴でフィルタリング
+                        const selectedComplaintIds = new Set();
+                        ui.selectedItems.forEach(item => {
+                            if (item.startsWith('c_')) {
+                                selectedComplaintIds.add(item.split('_')[1]);
+                            }
+                        });
+                    
+                        if (selectedComplaintIds.size > 0) {
+                            processedData = processedData.filter(entry => selectedComplaintIds.has(entry.id));
+                        }
+                    
+                        // お気に入りでフィルタリング
+                        if (filters.isFavoritesOnly) {
+                             processedData = processedData.map(entry => {
+                                const favoriteDiseases = (entry.diseases || []).filter(d => d.isFavorite);
+                                if (entry.isFavorite) return entry;
+                                if (favoriteDiseases.length > 0) return { ...entry, diseases: favoriteDiseases };
+                                return null;
+                            }).filter(Boolean);
+                        }
+                        
+                        // アクティブなキーワードまたは検索語でフィルタリング
+                        if (filters.activeKeywords.size > 0) {
+                            const activeKeywords = Array.from(filters.activeKeywords);
+                             processedData = processedData.map(entry => {
+                                const matchingDiseases = (entry.diseases || []).filter(d => {
+                                    const keywords = d.keywords || [];
+                                    return filters.keywordMode === 'OR'
+                                        ? activeKeywords.some(filter => keywords.includes(filter))
+                                        : activeKeywords.every(filter => keywords.includes(filter));
+                                });
+                                if (matchingDiseases.length > 0) return { ...entry, diseases: matchingDiseases };
+                                return null;
+                            }).filter(Boolean);
+                        } else if (filters.searchTerm) {
+                            const keywords = filters.searchTerm.trim().toLowerCase().split(/\s+/).filter(Boolean);
+                            if (keywords.length > 0) {
+                                 processedData = processedData.map(entry => {
+                                    const matchingDiseases = (entry.diseases || []).filter(disease => {
+                                        const diseaseText = [
+                                            disease.name,
+                                            disease.description,
+                                            disease.memo,
+                                            ...(disease.keywords || []),
+                                            ...(disease.pitfalls || [])
+                                        ].join(' ').toLowerCase();
+                                        return keywords.every(k => diseaseText.includes(k));
+                                    });
+
+                                    const entryText = [entry.chiefComplaint, entry.description, entry.memo].join(' ').toLowerCase();
+                                    const entryMatches = keywords.every(k => entryText.includes(k));
+
+                                    if (matchingDiseases.length > 0) {
+                                        return { ...entry, diseases: matchingDiseases };
+                                    }
+                                    if(entryMatches) {
+                                        return { ...entry, diseases: [] }; // Keep entry if it matches, even with no matching diseases
+                                    }
+
+                                    return null;
+                                }).filter(Boolean);
+                            }
+                        }
+                        
+                        processedData.sort((a, b) => a.chiefComplaint.localeCompare(b.chiefComplaint, 'ja'));
+                        
+                        return processedData;
+                    },
+                    renderNav() {
+                        const { navScrollArea } = App.elements;
+                        const { dataStore, ui } = App.state;
+                        
+                        const navData = [...dataStore].sort((a, b) => a.chiefComplaint.localeCompare(b.chiefComplaint, 'ja'));
+
+                        navScrollArea.innerHTML = '';
+                        const fragment = document.createDocumentFragment();
+                        
+                        navData.forEach(entry => {
+                            const complaintId = `complaint-${entry.id}`;
+                            const navItem = document.createElement('a');
+                            navItem.href = `#${complaintId}`;
+                            navItem.className = 'nav-item block text-gray-300 hover:bg-blue-600 hover:text-white font-bold rounded-lg transition-colors flex items-center';
+                            
+                            const isChecked = ui.selectedItems.has(`c_${entry.id}`);
+                            const starIcon = entry.isFavorite ? `<i class="fas fa-star text-yellow-400 mr-2"></i>` : '';
+                            
+                            navItem.innerHTML = `<input type="checkbox" class="nav-item-checkbox" data-type="complaint" data-id="${entry.id}" ${isChecked ? 'checked' : ''}> ${starIcon}${entry.chiefComplaint}`;
+                            navItem.title = entry.chiefComplaint;
+                            navItem.querySelector('.nav-item-checkbox').addEventListener('click', e => e.stopPropagation());
+                            navItem.addEventListener('click', (e) => { 
+                                e.preventDefault(); 
+                                const targetEl = document.getElementById(complaintId);
+                                if (targetEl) targetEl.scrollIntoView({ behavior: 'smooth' }); 
+                                App.components.sidebar.toggle(false);
+                            });
+                            fragment.appendChild(navItem);
+                        });
+                        navScrollArea.appendChild(fragment);
+                    },
+                    renderContent(data) {
+                        const { contentArea } = App.elements;
+                        const { searchTerm, activeKeywords } = App.state.filters;
+                        
+                        contentArea.innerHTML = '';
+                        if (data.length === 0 && !App.state.isLoading) {
+                            contentArea.innerHTML = `<div class="text-center p-8 text-gray-400"><i class="fas fa-folder-open fa-3x mb-4"></i><p>データがありません。<br>「+」ボタンから新しい主訴を追加してください。</p></div>`;
+                            return;
+                        }
+                        
+                        const fragment = document.createDocumentFragment();
+                        data.forEach(entry => {
+                            const originalData = App.state.dataStore.find(d => d.id === entry.id);
+                             if (!originalData) return;
+                            const complaintId = `complaint-${entry.id}`;
+                            const isComplaintChecked = App.state.ui.selectedItems.has(`c_${entry.id}`);
+                            const entryDiv = document.createElement('div');
+                            entryDiv.className = 'content-card mb-6 bg-gray-800 rounded-xl shadow-md p-4';
+                            entryDiv.id = complaintId;
+                            
+                            const memoHTML = originalData.memo ? `<div class="mt-4 pl-6 text-sm text-amber-300 bg-gray-900/50 p-3 rounded-lg"><i class="fas fa-pencil-alt fa-fw mr-2 text-amber-400"></i>${App.utils.highlightText(originalData.memo, searchTerm).replace(/\n/g, '<br>')}</div>` : '';
+                            const favoriteClass = originalData.isFavorite ? 'fas text-yellow-400' : 'far text-gray-500';
+            
+                            const diseasesHTML = (entry.diseases || []).map(disease => { 
+                                const originalDisease = (originalData.diseases || []).find(d => d.name === disease.name) || {};
+                                const diseaseFavoriteClass = originalDisease.isFavorite ? 'fas text-yellow-400' : 'far text-gray-500';
+                                const diseaseMemoHTML = disease.memo ? `<div class="mt-3 text-sm text-amber-300 bg-gray-900/50 p-2 rounded-lg"><i class="fas fa-pencil-alt fa-fw mr-2 text-amber-400"></i>${App.utils.highlightText(disease.memo, searchTerm).replace(/\n/g, '<br>')}</div>` : '';
+                                
+                                const keywordTagsHTML = (disease.keywords || []).map(k => {
+                                    const count = App.state.globalKeywordCounts.get(k) || 0;
+                                    const countHTML = count > 1 ? ` <span class="text-red-400 font-bold">(${count})</span>` : '';
+                                    return `<span class="content-keyword-tag bg-gray-700 text-sm text-gray-200 rounded-full px-3 py-1 hover:bg-gray-500 ${activeKeywords.has(k) ? 'active' : ''}">${App.utils.highlightText(k, searchTerm)}${countHTML}</span>`;
+                                }).join('');
+
+                                return `
+                                    <div class="pl-4 border-l-4 border-gray-700">
+                                        <div class="flex items-center justify-between">
+                                            <div class="flex items-center">
+                                                <h3 class="text-lg font-semibold text-teal-400">${App.utils.highlightText(disease.name, searchTerm)}</h3>
+                                            </div>
+                                            <button class="favorite-disease-btn text-lg" data-complaint-id="${entry.id}" data-disease-name="${disease.name}" title="お気に入り登録"><i class="${diseaseFavoriteClass} fa-star"></i></button>
+                                        </div>
+                                        <div class="mt-2 pl-8">
+                                            <p class="text-sm text-gray-400 mt-1">${App.utils.highlightText(disease.description || '', searchTerm)}</p>
+                                            ${diseaseMemoHTML}
+                                            <h4 class="font-bold text-sm text-gray-300 mt-3"><i class="fas fa-lightbulb text-yellow-400 mr-2"></i>キーワード</h4><div class="flex flex-wrap gap-2 mt-1">${keywordTagsHTML}</div>
+                                            <h4 class="font-bold text-sm text-gray-300 mt-3"><i class="fas fa-exclamation-triangle text-red-400 mr-2"></i>落とし穴</h4><ul class="list-disc list-inside mt-1 text-sm text-gray-300 space-y-1">${(disease.pitfalls || []).map(p => `<li>${App.utils.highlightText(p, searchTerm)}</li>`).join('')}</ul>
+                                        </div>
+                                    </div>`;
+                            }).join('<div class="my-4"></div>');
+
+                            entryDiv.innerHTML = `
+                                <div class="flex justify-between items-center">
+                                    <div class="flex items-center">
+                                        <input type="checkbox" class="item-checkbox" data-type="complaint" data-id="${entry.id}" ${isComplaintChecked ? 'checked' : ''}>
+                                        <h2 class="text-xl md:text-2xl font-bold text-blue-400">${App.utils.highlightText(originalData.chiefComplaint, searchTerm)}</h2>
+                                    </div>
+                                    <div class="flex items-center">
+                                        <button class="favorite-btn text-xl mr-4" data-id="${entry.id}" title="お気に入り登録"><i class="${favoriteClass} fa-star"></i></button>
+                                        <button class="edit-btn text-gray-400 hover:text-white" data-id="${entry.id}"><i class="fas fa-edit"></i></button>
+                                    </div>
+                                </div>
+                                <p class="text-sm text-gray-400 mt-1 ml-10">${App.utils.highlightText(originalData.description || '', searchTerm)}</p>
+                                ${memoHTML}
+                                <div class="mt-4 space-y-4 pl-6">${diseasesHTML}</div>`;
+                            fragment.appendChild(entryDiv);
+                        });
+                        contentArea.appendChild(fragment);
+                    },
+                    renderKeywordsPanel(dataToRender) {
+                        const { keywordsPanelContentArea } = App.elements;
+                        const { filters, ui, globalKeywordCounts } = App.state;
+
+                        if (!keywordsPanelContentArea) return;
+                        
+                        keywordsPanelContentArea.innerHTML = '';
+                        const fragment = document.createDocumentFragment();
+
+                        // NEW: Add sorting controls
+                        const sortContainer = document.createElement('div');
+                        sortContainer.className = 'flex items-center justify-between gap-2 mb-4 p-2 bg-gray-900/50 rounded-lg';
+                        sortContainer.innerHTML = `
+                            <label class="text-sm font-medium text-gray-300">並び順:</label>
+                            <div class="flex items-center bg-gray-700 rounded-lg p-1 text-xs">
+                                <button data-sort="name" class="keyword-sort-btn px-3 py-1 rounded-md hover:bg-gray-600">名前順</button>
+                                <button data-sort="count" class="keyword-sort-btn px-3 py-1 rounded-md hover:bg-gray-600">数が多い順</button>
+                            </div>
+                        `;
+                        sortContainer.querySelector(`.keyword-sort-btn[data-sort="${filters.keywordSortBy}"]`).classList.add('active');
+                        sortContainer.querySelectorAll('.keyword-sort-btn').forEach(btn => {
+                            btn.onclick = () => {
+                                App.state.filters.keywordSortBy = btn.dataset.sort;
+                                App.renderer.renderAll();
+                            };
+                        });
+                        fragment.appendChild(sortContainer);
+                        
+                        const keywordCounts = new Map();
+                        const selectedComplaintIds = new Set([...ui.selectedItems].filter(item => item.startsWith('c_')).map(item => item.split('_')[1]));
+                        const sourceData = selectedComplaintIds.size > 0 
+                            ? App.state.dataStore.filter(entry => selectedComplaintIds.has(entry.id))
+                            : App.state.dataStore; 
+
+                        sourceData.forEach(entry => {
+                            (entry.diseases || []).forEach(d => {
+                                (d.keywords || []).forEach(k => {
+                                    keywordCounts.set(k, (keywordCounts.get(k) || 0) + 1);
+                                });
+                            });
+                        });
+                        
+                        const allAvailableKeywords = new Set();
+                        dataToRender.forEach(entry => (entry.diseases || []).forEach(d => (d.keywords || []).forEach(k => allAvailableKeywords.add(k))));
+
+                        if (allAvailableKeywords.size > 0) {
+                            let sortedKeywords = [...allAvailableKeywords];
+                            if (filters.keywordSortBy === 'name') {
+                                sortedKeywords.sort((a, b) => a.localeCompare(b, 'ja'));
+                            } else { // count
+                                sortedKeywords.sort((a, b) => {
+                                    const countA = globalKeywordCounts.get(a) || 0;
+                                    const countB = globalKeywordCounts.get(b) || 0;
+                                    if (countB !== countA) return countB - countA;
+                                    return a.localeCompare(b, 'ja'); // tie-breaker
+                                });
+                            }
+
+                            const keywordTags = document.createElement('div');
+                            keywordTags.className = 'flex flex-wrap gap-2';
+                            sortedKeywords.forEach(keyword => {
+                                const tag = document.createElement('span');
+                                const count = keywordCounts.get(keyword) || 0;
+                                let tagContent = keyword;
+                                if (count > 0) { // Always show count
+                                    tagContent += ` <span class="text-red-400 font-bold">(${count})</span>`;
+                                }
+                                tag.className = `keyword-tag bg-gray-700 hover:bg-gray-600 text-sm py-1 px-3 rounded-full transition-colors ${filters.activeKeywords.has(keyword) ? 'active' : ''}`;
+                                tag.innerHTML = tagContent;
+                                tag.onclick = () => App.handlers.handleKeywordTagClick(keyword);
+                                keywordTags.appendChild(tag);
+                            });
+                            fragment.appendChild(keywordTags);
+                        }
+
+                        const controlsContainer = document.createElement('div');
+                        controlsContainer.className = "mt-4 pt-4 border-t border-gray-700 flex flex-col items-center gap-3";
+                        
+                        if (filters.activeKeywords.size > 0) {
+                            const clearBtn = App.utils.createButton('<i class="fas fa-times-circle mr-1"></i> フィルター解除', 'text-sm text-red-500 hover:text-red-400 flex items-center', () => App.handlers.handleClearKeywordFilter());
+                            controlsContainer.appendChild(clearBtn);
+                        }
+                        
+                        let diseaseCount = 0;
+                        ui.selectedItems.forEach(itemId => { if (itemId.startsWith('d_')) diseaseCount++; });
+                
+                        if (diseaseCount >= 2) {
+                            const compareBtn = App.utils.createButton('<i class="fas fa-exchange-alt mr-2"></i>選択した疾患を比較', 'w-full text-sm bg-indigo-600 hover:bg-indigo-700 text-white font-bold py-2 px-4 rounded-lg flex items-center justify-center', () => App.components.compareModal.open());
+                            controlsContainer.appendChild(compareBtn);
+                        }
+                
+                        if (controlsContainer.children.length > 0) {
+                           fragment.appendChild(controlsContainer);
+                        }
+                        
+                        keywordsPanelContentArea.appendChild(fragment);
+                    },
+                    renderKeywordSwitch() {
+                        const { logicSwitchContainer } = App.elements;
+                        const { keywordMode } = App.state.filters;
+                        logicSwitchContainer.dataset.mode = keywordMode;
+                        const labels = logicSwitchContainer.querySelectorAll('.switch-label');
+                        labels[0].classList.toggle('active-logic', keywordMode === 'OR');
+                        labels[1].classList.toggle('active-logic', keywordMode === 'AND');
+                    },
+                    renderVitalsSummary() {
+                        const { vitalsSummaryContainer, vitalsSummaryArea } = App.elements;
+                        const vitals = App.state.vitals;
+                        const patientInfo = App.utils.loadFromStorage(App.config.storageKeys.ageAndGender, {});
+                        
+                        const hasVitals = vitals && Object.values(vitals).some(v => v !== null && v !== '' && (!Array.isArray(v) || v.length > 0));
+                        const hasPatientInfo = patientInfo && (patientInfo.age || patientInfo.gender);
+
+                        if (!hasVitals && !hasPatientInfo) {
+                            App.utils.hide(vitalsSummaryContainer);
+                            return;
+                        }
+                        
+                        let html = '';
+                       
+                        const genderText = patientInfo.gender === 'male' ? '男性' : patientInfo.gender === 'female' ? '女性' : '';
+                        html += this.formatSummaryEntry('fa-user', '患者', `${patientInfo.age || ''}歳 ${genderText}`.trim());
+
+                        if(hasVitals){
+                            const age = parseInt(patientInfo.age) || 30; // Default to adult if no age
+                            html += this.formatSummaryEntry('fa-location-dot', '着', vitals.arrival);
+                            html += this.formatSummaryEntry('fa-handshake', '接', vitals.contact);
+                            html += this.formatSummaryEntry('fa-truck-fast', '出', vitals.departure);
+
+                            html += this.formatSummaryEntry('fa-brain', 'JCS', vitals.jcs, '', App.utils.checkVitalSign('jcs', vitals.jcs, age, vitals));
+                            if(vitals.gcs && parseInt(vitals.gcs) > 0) html += this.formatSummaryEntry('fa-arrows-to-dot', 'GCS', vitals.gcs, ` (E${vitals.gcs_e || '?'}V${vitals.gcs_v || '?'}M${vitals.gcs_m || '?'})`, App.utils.checkVitalSign('gcs', vitals.gcs, age, vitals));
+                            html += this.formatSummaryEntry('fa-lungs', '呼吸', vitals.resp, '回', App.utils.checkVitalSign('resp', vitals.resp, age, vitals));
+                            html += this.formatSummaryEntry('fa-heart-pulse', '脈拍', vitals.pulse, '回', App.utils.checkVitalSign('pulse', vitals.pulse, age, vitals));
+                            html += this.formatSummaryEntry('fa-o', 'SpO2', vitals.spo2, '%', App.utils.checkVitalSign('spo2', vitals.spo2, age, vitals));
+                            html += this.formatSummaryEntry('fa-temperature-half', '体温', vitals.temp, '℃', App.utils.checkVitalSign('temp', vitals.temp, age, vitals));
+                            
+                            let bpTextR = `${vitals.bp_sys_r || '?'}/${vitals.bp_dia_r || '?'}`;
+                            if (vitals.pulse_pressure_r) bpTextR += ` <b class="text-red-400">${vitals.pulse_pressure_r}</b>`;
+                            if (vitals.bp_sys_r || vitals.bp_dia_r) html += this.formatSummaryEntry('fa-droplet', '血圧(R)', bpTextR, '', App.utils.checkVitalSign('sbp', vitals.bp_sys_r, age, vitals), true);
+
+                            let bpTextL = `${vitals.bp_sys_l || '?'}/${vitals.bp_dia_l || '?'}`;
+                             if (vitals.pulse_pressure_l) bpTextL += ` <b class="text-red-400">${vitals.pulse_pressure_l}</b>`;
+                            if (vitals.bp_sys_l || vitals.bp_dia_l) html += this.formatSummaryEntry('fa-droplet', '血圧(L)', bpTextL, '', App.utils.checkVitalSign('sbp', vitals.bp_sys_l, age, vitals), true);
+
+                             const pupilCheck = App.utils.checkVitalSign('pupils', vitals, age, vitals);
+                            if (vitals.pupil_r || vitals.pupil_l) html += this.formatSummaryEntry('fa-eye', '瞳孔', `R:${vitals.pupil_r || '?'} L:${vitals.pupil_l || '?'}`,'', pupilCheck);
+                        
+                            if(vitals.ecg_findings && vitals.ecg_findings.length > 0) {
+                                html += this.formatSummaryEntry('fa-heart-pulse', 'ECG', vitals.ecg_findings.join(', '));
+                            }
+                            
+                            // Render warnings
+                            const warnings = vitals.warnings || {};
+                            if (warnings.anisocoria) html += this.formatWarningEntry('fa-eye', '瞳孔不同');
+                            if (warnings.isBpDiffHigh) html += this.formatWarningEntry('fa-arrows-left-right-to-line', '血圧左右差', `${warnings.bpDiff}mmHg`);
+                            if (warnings.shockIndex) html += this.formatWarningEntry('fa-bolt', 'ショック指数', warnings.shockIndex.toFixed(2), warnings.isShockIndexHigh);
+                            if (warnings.isQsofaPositive) html += this.formatWarningEntry('fa-lungs-virus', 'qSOFA', `陽性 (${warnings.qsofaScore}点)`);
+                            if (warnings.miosis) html += this.formatWarningEntry('fa-compress', '瞳孔縮小');
+                            if (warnings.mydriasis) html += this.formatWarningEntry('fa-expand', '瞳孔散大');
+                        }
+                        
+                        vitalsSummaryArea.innerHTML = html;
+                        App.utils.show(vitalsSummaryContainer);
+                    },
+                    formatSummaryEntry(icon, label, value, unit = '', dangerLevel = 0, rawHtml = false) {
+                        if (value === null || value === undefined || value === '' || (typeof value === 'string' && value.trim() === '歳')) return '';
+                        
+                        let colorClass = 'vital-normal';
+                        if (dangerLevel === 1) colorClass = 'vital-warning';
+                        else if (dangerLevel === 2) colorClass = 'vital-danger';
+
+                        const valueContent = rawHtml ? `<span class="${colorClass}">${value}</span>` : `<b class="${colorClass}">${value}${unit}</b>`;
+                        return `<span class="flex items-center gap-1"><i class="fa-solid ${icon} fa-fw text-gray-400"></i> ${label}: ${valueContent}</span>`;
+                    },
+                    formatWarningEntry(icon, label, value, isDanger = true) {
+                        if (value === null || value === undefined) value = '';
+                        const colorClass = isDanger ? 'vital-danger' : 'vital-normal';
+                        return `<span class="flex items-center gap-1"><i class="fa-solid ${icon} fa-fw ${colorClass}"></i> ${label}: <b class="${colorClass}">${value}</b></span>`;
+                    },
+                    setupIntersectionObserver() {
+                        if (App.state.intersectionObserver) App.state.intersectionObserver.disconnect();
+                        
+                        const options = { root: App.elements.contentArea, rootMargin: '0px 0px -90% 0px', threshold: 0 };
+                        
+                        App.state.intersectionObserver = new IntersectionObserver((entries) => {
+                             const intersectingEntry = entries.find(e => e.isIntersecting);
+                             if (intersectingEntry) {
+                                 const navLink = App.elements.navScrollArea.querySelector(`a[href="#${intersectingEntry.target.id}"]`);
+                                 if (navLink) {
+                                     document.querySelectorAll('.nav-item').forEach(link => link.classList.remove('active-nav'));
+                                     navLink.classList.add('active-nav');
+                                 }
+                             }
+                        }, options);
+                        document.querySelectorAll('.content-card').forEach(card => App.state.intersectionObserver.observe(card));
+                    },
+                    search: {
+                        collectAndNavigateHighlights() {
+                            const { ui, filters } = App.state;
+                            
+                            this.unhighlight();
+        
+                            if (!filters.searchTerm) {
+                                ui.highlightedElements = [];
+                                ui.currentHighlightIndex = -1;
+                                this.updateNav();
+                                return;
+                            }
+        
+                            ui.highlightedElements = Array.from(App.elements.contentArea.querySelectorAll('.highlight'));
+                            
+                            if (ui.highlightedElements.length > 0) {
+                                ui.currentHighlightIndex = -1; 
+                                this.navigateToHighlight(1);
+                            } else {
+                                ui.currentHighlightIndex = -1;
+                                this.updateNav();
+                            }
+                        },
+        
+                        navigateToHighlight(direction) {
+                            const { ui } = App.state;
+                            const { highlightedElements } = ui;
+                            if (highlightedElements.length === 0) return;
+        
+                            if (ui.currentHighlightIndex >= 0 && highlightedElements[ui.currentHighlightIndex]) {
+                                highlightedElements[ui.currentHighlightIndex].classList.remove('current-highlight');
+                            }
+        
+                            ui.currentHighlightIndex += direction;
+        
+                            if (ui.currentHighlightIndex >= highlightedElements.length) {
+                                ui.currentHighlightIndex = 0;
+                            }
+                            if (ui.currentHighlightIndex < 0) {
+                                ui.currentHighlightIndex = highlightedElements.length - 1;
+                            }
+        
+                            const newElement = highlightedElements[ui.currentHighlightIndex];
+                            if (newElement) {
+                                newElement.classList.add('current-highlight');
+                                newElement.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                            }
+        
+                            this.updateNav();
+                        },
+                        
+                        unhighlight() {
+                            const current = App.elements.contentArea.querySelector('.current-highlight');
+                            if (current) {
+                                current.classList.remove('current-highlight');
+                            }
+                        },
+        
+                        updateNav() {
+                            const { ui } = App.state;
+                            const { searchCount, searchPrevBtn, searchNextBtn } = App.elements;
+                            const count = ui.highlightedElements.length;
+                            const currentIndex = count > 0 ? ui.currentHighlightIndex + 1 : 0;
+                            
+                            searchCount.textContent = `${currentIndex}/${count}`;
+                            searchPrevBtn.disabled = count === 0;
+                            searchNextBtn.disabled = count === 0;
+                        }
+                    },
+                },
+                // UIコンポーネント
+                components: {
+                    patientInfo: {
+                        init() { this.loadInfo(); this.bindEventListeners(); },
+                        bindEventListeners() {
+                            const { elements: el, handlers: h } = App;
+                             el.ageInput.addEventListener('change', h.handlePatientInfoChange);
+                            el.genderBtns.forEach(btn => btn.addEventListener('click', () => {
+                                el.genderBtns.forEach(b => b.classList.remove('active'));
+                                btn.classList.add('active');
+                                h.handlePatientInfoChange();
+                            }));
+                            el.tempMemo.addEventListener('input', (e) => App.utils.saveToStorage(App.config.storageKeys.tempMemo, e.target.value));
+                        },
+                        loadInfo() {
+                            const { elements: el, config } = App;
+                            const patientInfo = App.utils.loadFromStorage(config.storageKeys.ageAndGender, {});
+                            if (patientInfo.age) el.ageInput.value = patientInfo.age;
+                            if (patientInfo.gender) {
+                                el.genderBtns.forEach(b => b.classList.toggle('active', b.dataset.gender === patientInfo.gender));
+                            }
+                            const tempMemo = App.utils.loadFromStorage(config.storageKeys.tempMemo, '');
+                            el.tempMemo.value = tempMemo;
+                        }
+                    },
+                    sidebar: {
+                        init() {
+                            App.elements.body.addEventListener('touchstart', e => this.handleTouchStart(e), { passive: true });
+                            App.elements.body.addEventListener('touchmove', e => this.handleTouchMove(e), { passive: false });
+                            App.elements.body.addEventListener('touchend', e => this.handleTouchEnd(e));
+                        },
+                        bindEventListeners() {
+                           App.elements.sidebarToggleBtn.addEventListener('click', () => this.toggle());
+                           App.elements.sidebarBackdrop.addEventListener('click', () => this.toggle(false));
+                        },
+                        handleTouchStart(e) {
+                            const s = App.state.sidebar;
+                            const isOpen = !App.elements.jumpNav.classList.contains('-translate-x-full');
+                            if (!isOpen && e.touches[0].clientX < 40) {
+                                s.isDragging = true;
+                                s.touchStartX = e.touches[0].clientX;
+                            }
+                            if(isOpen && e.target === App.elements.sidebarBackdrop) {
+                                s.isDragging = true;
+                                s.touchStartX = e.touches[0].clientX;
+                            }
+                        },
+                        handleTouchMove(e) {
+                            const s = App.state.sidebar;
+                            if (!s.isDragging) return;
+                            e.preventDefault();
+                            
+                            s.touchCurrentX = e.touches[0].clientX;
+                            const diff = s.touchCurrentX - s.touchStartX;
+                            const navWidth = App.elements.jumpNav.offsetWidth;
+                            const isOpen = !App.elements.jumpNav.classList.contains('-translate-x-full');
+
+                            if (!isOpen && diff > 0) {
+                                App.elements.jumpNav.style.transition = 'none';
+                                App.elements.jumpNav.style.transform = `translateX(${Math.min(diff - navWidth, 0)}px)`;
+                            } else if (isOpen && diff < 0) {
+                                App.elements.jumpNav.style.transition = 'none';
+                                App.elements.jumpNav.style.transform = `translateX(${Math.max(diff, -navWidth)}px)`;
+                            }
+                        },
+                        handleTouchEnd() {
+                            const s = App.state.sidebar;
+                            if (!s.isDragging) return;
+                            s.isDragging = false;
+                            
+                            const diff = s.touchCurrentX - s.touchStartX;
+                            const isOpen = !App.elements.jumpNav.classList.contains('-translate-x-full');
+                            
+                            App.elements.jumpNav.style.transition = '';
+                            App.elements.jumpNav.style.transform = '';
+
+                            if (Math.abs(diff) > App.config.swipeThreshold) this.toggle(!isOpen);
+                             else this.toggle(isOpen);
+                        },
+                        toggle(forceShow) {
+                            const { jumpNav, sidebarBackdrop } = App.elements;
+                            const shouldShow = typeof forceShow === 'boolean' ? forceShow : jumpNav.classList.contains('-translate-x-full');
+                            jumpNav.classList.toggle('-translate-x-full', !shouldShow);
+                            sidebarBackdrop.classList.toggle('hidden', !shouldShow);
+                        }
+                    },
+                    keywordsPanel: {
+                        bindEventListeners() {
+                            App.elements.keywordsPanelToggleBtn.addEventListener('click', () => this.toggle());
+                            App.elements.keywordsPanelCloseBtn.addEventListener('click', () => this.toggle(false));
+                            App.elements.keywordsPanelBackdrop.addEventListener('click', () => this.toggle(false));
+                        },
+                        toggle(forceShow) {
+                            const { keywordsPanelRight, keywordsPanelBackdrop, keywordsPanelToggleBtn } = App.elements;
+                            const shouldShow = typeof forceShow === 'boolean' ? forceShow : keywordsPanelRight.classList.contains('translate-x-full');
+                            keywordsPanelRight.classList.toggle('translate-x-full', !shouldShow);
+                            keywordsPanelBackdrop.classList.toggle('hidden', !shouldShow);
+                            keywordsPanelToggleBtn.classList.toggle('active', shouldShow);
+                        }
+                    },
+                    stopwatch: {
+                        bindEventListeners() {
+                           const el = App.elements.stopwatch;
+                           el.addEventListener('mousedown', e => this.handlePress(e));
+                           el.addEventListener('mouseup', e => this.handleRelease(e));
+                           el.addEventListener('mouseleave', e => this.handleRelease(e, true));
+                           el.addEventListener('touchstart', e => this.handlePress(e));
+                           el.addEventListener('touchend', e => this.handleRelease(e));
+                        },
+                        handlePress(e) {
+                            e.preventDefault();
+                            App.state.stopwatch.pressTimer = setTimeout(() => {
+                                this.reset(true);
+                                App.state.stopwatch.pressTimer = null; 
+                            }, App.config.stopwatchResetDelay);
+                        },
+                        handleRelease(e, isMouseLeave = false) {
+                            if (App.state.stopwatch.pressTimer) {
+                                clearTimeout(App.state.stopwatch.pressTimer);
+                                App.state.stopwatch.pressTimer = null;
+                                if (!isMouseLeave) this.toggle();
+                            }
+                        },
+                        toggle() {
+                            const s = App.state.stopwatch;
+                            s.isRunning = !s.isRunning;
+                            if (s.isRunning) {
+                                s.interval = setInterval(() => this.update(), 1000);
+                                App.elements.stopwatch.classList.add('running');
+                            } else {
+                                clearInterval(s.interval);
+                                App.elements.stopwatch.classList.remove('running');
+                            }
+                        },
+                        update() {
+                            App.state.stopwatch.elapsedSeconds++;
+                            const time = App.state.stopwatch.elapsedSeconds;
+                            const mins = Math.floor(time / 60).toString().padStart(2, '0');
+                            const secs = (time % 60).toString().padStart(2, '0');
+                            App.elements.stopwatch.textContent = `${mins}:${secs}`;
+                        },
+                        reset(showAlert = false) {
+                            const s = App.state.stopwatch;
+                            clearInterval(s.interval);
+                            s.isRunning = false;
+                            s.elapsedSeconds = 0;
+                            App.elements.stopwatch.textContent = "00:00";
+                            App.elements.stopwatch.classList.remove('running');
+                            if(showAlert) App.utils.customAlert("ストップウォッチをリセットしました。");
+                        },
+                    },
+                    vitalsModal: {
+                         init() {
+                            this.loadCustomTags();
+                            this.populateSelectors();
+                            const savedVitals = App.utils.loadFromStorage(App.config.storageKeys.vitals, {});
+                            App.state.vitals = savedVitals;
+                            this.updateFormFromState();
+                        },
+                        bindEventListeners() {
+                            const el = App.elements;
+                            el.vitalsBtn.addEventListener('click', () => { this.updateFormFromState(); App.utils.showModal(el.vitalsModal); });
+                            el.vitalsModalCloseBtn.addEventListener('click', () => App.utils.hideModal(el.vitalsModal));
+                            el.vitalsSaveBtn.addEventListener('click', () => this.saveAndClose());
+                            el.vitalsClearBtn.addEventListener('click', () => this.clear(true));
+                            el.editAppearanceTagsBtn.addEventListener('click', () => App.components.tagEditor.open('appearance'));
+                            el.editEcgTagsBtn.addEventListener('click', () => App.components.tagEditor.open('ecg'));
+                            
+                            el.vitalsForm.addEventListener('input', e => {
+                                this.updateStateFromForm();
+                                this.checkAllVitals();
+                            });
+                             el.vitalsForm.addEventListener('click', e => {
+                                const target = e.target.closest('.jcs-btn, .vitals-tag, .ecg-tag');
+                                if (target) {
+                                    if(target.classList.contains('vitals-tag') || target.classList.contains('ecg-tag')) {
+                                        target.classList.toggle('active');
+                                    }
+                                    this.updateStateFromForm();
+                                    this.checkAllVitals();
+                                }
+                            });
+                             App.elements.ageInput.addEventListener('change', () => this.checkAllVitals());
+                        },
+                        checkAllVitals(){
+                            this.checkPulsePressure();
+                            this.calculateWarningScores();
+                            this.updateVitalsUI();
+                            this.renderVitalsWarnings();
+                        },
+                        updateVitalsUI() {
+                            const age = App.elements.ageInput.value || 30; // Default age
+                            const vitals = App.state.vitals;
+                            const warnings = vitals.warnings || {};
+                             
+                            const formElements = App.elements.vitalsForm.elements;
+                            const vitalKeys = ['resp', 'spo2', 'pulse', 'temp', 'bp_sys_r', 'bp_dia_r', 'bp_sys_l', 'bp_dia_l'];
+                            
+                            vitalKeys.forEach(key => {
+                                const el = formElements[key];
+                                const typeMap = { 'bp_sys_r': 'sbp', 'bp_dia_r': 'dbp', 'bp_sys_l': 'sbp', 'bp_dia_l': 'dbp' };
+                                const vitalType = typeMap[key] || key;
+                                const dangerLevel = App.utils.checkVitalSign(vitalType, vitals[key], age, vitals);
+                                this.updateInputStyle(el, dangerLevel);
+                            });
+
+                            // JCS/GCS
+                            const jcsLevel = App.utils.checkVitalSign('jcs', vitals.jcs, age, vitals);
+                            App.elements.vitalsJcsGroup.querySelectorAll('.jcs-btn').forEach(btn => this.updateInputStyle(btn, btn.textContent === vitals.jcs ? jcsLevel : 0));
+                            this.updateInputStyle(App.elements.gcsTotalEl.parentElement, App.utils.checkVitalSign('gcs', vitals.gcs, age, vitals));
+
+                            // Pupils
+                            this.updateInputStyle(formElements.pupil_size_r, warnings.miosis || warnings.mydriasis ? 2 : (warnings.anisocoria ? 1: 0));
+                            this.updateInputStyle(formElements.pupil_size_l, warnings.miosis || warnings.mydriasis ? 2 : (warnings.anisocoria ? 1: 0));
+                            this.updateInputStyle(formElements.pupil_reflex_r, vitals.pupil_reflex_r === '0' ? 2 : (vitals.pupil_reflex_r === '1' ? 1 : 0));
+                            this.updateInputStyle(formElements.pupil_reflex_l, vitals.pupil_reflex_l === '0' ? 2 : (vitals.pupil_reflex_l === '1' ? 1 : 0));
+                        },
+                        updateInputStyle(el, level) {
+                            if (!el) return;
+                            el.classList.remove('input-normal', 'input-warning', 'input-danger');
+                             switch(level) {
+                                case 1: el.classList.add('input-warning'); break;
+                                case 2: el.classList.add('input-danger'); break;
+                                default: el.classList.add('input-normal'); break;
+                            }
+                        },
+                        loadCustomTags() {
+                            const { storageKeys, defaultAppearanceOptions, defaultEcgOptions } = App.config;
+                            App.state.customAppearanceTags = App.utils.loadFromStorage(storageKeys.customAppearanceTags, defaultAppearanceOptions);
+                            App.state.customEcgTags = App.utils.loadFromStorage(storageKeys.customEcgTags, defaultEcgOptions);
+                        },
+                         populateSelectors() {
+                            const { gcsOptions, jcsOptions, pupilReflexMap } = App.config;
+                            const form = App.elements.vitalsForm;
+                            
+                            ['E', 'V', 'M'].forEach(type => {
+                                const select = App.elements[`gcs${type.toUpperCase()}Select`];
+                                select.innerHTML = '';
+                                gcsOptions[type].forEach(opt => select.add(new Option(opt.t, opt.v)));
+                            });
+                            
+                            App.elements.vitalsJcsGroup.innerHTML = '';
+                            jcsOptions.forEach(val => App.elements.vitalsJcsGroup.appendChild(App.utils.createButton(val, 'jcs-btn bg-gray-700 hover:bg-gray-600 p-2 rounded-md flex-grow text-center', e => {
+                                this.handleJcsClick(e);
+                                this.updateStateFromForm();
+                                this.checkAllVitals();
+                            })));
+                            
+                            ['r', 'l'].forEach(side => {
+                                const select = form.elements[`pupil_reflex_${side}`];
+                                if (!select) return;
+                                select.innerHTML = '';
+                                pupilReflexMap.forEach((text, index) => {
+                                    select.add(new Option(text, index));
+                                });
+                            });
+
+                            this.renderTagButtons('appearance');
+                            this.renderTagButtons('ecg');
+                        },
+                        renderTagButtons(type) {
+                            const { vitalsAppearanceTags, vitalsEcgTags } = App.elements;
+                            const container = type === 'appearance' ? vitalsAppearanceTags : vitalsEcgTags;
+                            const tags = type === 'appearance' ? App.state.customAppearanceTags : App.state.customEcgTags;
+                            const className = type === 'appearance' ? 'vitals-tag' : 'ecg-tag';
+                            
+                            container.innerHTML = '';
+                            tags.forEach(val => container.appendChild(App.utils.createButton(val, `${className} bg-gray-600 hover:bg-gray-500 text-sm py-1 px-3 rounded-full whitespace-nowrap`)));
+                        },
+                         handleJcsClick(e) {
+                            App.elements.vitalsJcsGroup.querySelectorAll('.active').forEach(b => b.classList.remove('active'));
+                            e.target.classList.add('active');
+                        },
+                         updateGcsTotal() {
+                            const { gcsESelect, gcsVSelect, gcsMSelect, gcsTotalEl } = App.elements;
+                            const total = parseInt(gcsESelect.value || 0) + parseInt(gcsVSelect.value || 0) + parseInt(gcsMSelect.value || 0);
+                            gcsTotalEl.textContent = isNaN(total) ? '?' : total;
+                            return total;
+                        },
+                         updateStateFromForm() {
+                             const form = App.elements.vitalsForm;
+                             const vitals = App.state.vitals; // Keep existing timestamps
+                             const { config } = App;
+                             
+                             const formData = new FormData(form);
+                             for(const [key, value] of formData.entries()){
+                                 vitals[key] = value || null;
+                             }
+                             vitals.jcs = form.querySelector('#vitals-jcs-group .active')?.textContent.trim() || null;
+                             vitals.gcs = this.updateGcsTotal();
+                            
+                             ['r', 'l'].forEach(side => {
+                                const size = form.elements[`pupil_size_${side}`]?.value;
+                                const reflexIndex = form.elements[`pupil_reflex_${side}`]?.value;
+                                vitals[`pupil_size_${side}`] = size;
+                                vitals[`pupil_reflex_${side}`] = reflexIndex;
+                                const reflexText = (reflexIndex !== null && reflexIndex !== undefined) ? config.pupilReflexMap[reflexIndex] : null;
+                                vitals[`pupil_${side}`] = [size ? `${parseFloat(size).toFixed(1)}mm` : null, reflexText].filter(Boolean).join(' / ') || null;
+                             });
+                             vitals.appearance = Array.from(form.querySelectorAll('#vitals-appearance-tags .active')).map(t => t.textContent.trim());
+                             vitals.ecg_findings = Array.from(form.querySelectorAll('#vitals-ecg-tags .active')).map(t => t.textContent.trim());
+                             App.state.vitals = vitals;
+                        },
+                        checkPulsePressure() {
+                            ['r', 'l'].forEach(side => {
+                                const sysEl = App.elements.vitalsForm.querySelector(`#bp-sys-${side}`);
+                                const diaEl = App.elements.vitalsForm.querySelector(`#bp-dia-${side}`);
+                                if(!sysEl || !diaEl) return;
+                                const sys = parseInt(sysEl.value, 10);
+                                const dia = parseInt(diaEl.value, 10);
+                                const indicatorEl = document.getElementById(`pulse-pressure-${side}`);
+                                let indicatorText = null;
+                                if (sys && dia) {
+                                    const pulsePressure = sys - dia;
+                                    if (pulsePressure > sys / 2) indicatorText = '大脈圧';
+                                    else if (pulsePressure < sys / 4) indicatorText = '小脈圧';
+                                }
+                                App.state.vitals[`pulse_pressure_${side}`] = indicatorText;
+                                if (indicatorEl) {
+                                    indicatorEl.textContent = indicatorText || '';
+                                    indicatorEl.classList.toggle('flashing-indicator', !!indicatorText);
+                                }
+                            });
+                        },
+                        calculateWarningScores() {
+                            const v = App.state.vitals;
+                            const warnings = {};
+
+                            // BP Difference
+                            const sysR = parseFloat(v.bp_sys_r);
+                            const sysL = parseFloat(v.bp_sys_l);
+                            if (!isNaN(sysR) && !isNaN(sysL)) {
+                                warnings.bpDiff = Math.abs(sysR - sysL);
+                                warnings.isBpDiffHigh = warnings.bpDiff >= 20;
+                            }
+
+                            // Shock Index
+                            const pulse = parseFloat(v.pulse);
+                            if (!isNaN(pulse) && pulse > 0) {
+                                const siR = !isNaN(sysR) && sysR > 0 ? pulse / sysR : 0;
+                                const siL = !isNaN(sysL) && sysL > 0 ? pulse / sysL : 0;
+                                warnings.shockIndex = Math.max(siR, siL);
+                                warnings.isShockIndexHigh = warnings.shockIndex >= 1.0;
+                            }
+
+                            // qSOFA
+                            let score = 0;
+                            const resp = parseFloat(v.resp);
+                            const gcs = parseInt(v.gcs, 10);
+                            const jcs = v.jcs;
+                            const sbp = Math.min(sysR || Infinity, sysL || Infinity);
+
+                            if (!isNaN(resp) && resp >= 22) score++;
+                            if ((jcs && jcs !== '清明') || (!isNaN(gcs) && gcs <= 14)) score++;
+                            if (!isNaN(sbp) && sbp <= 100) score++;
+                            
+                            warnings.qsofaScore = score;
+                            warnings.isQsofaPositive = score >= 2;
+
+                            // Pupil warnings
+                            const sizeR = parseFloat(v.pupil_size_r);
+                            const sizeL = parseFloat(v.pupil_size_l);
+                            if(!isNaN(sizeR) && !isNaN(sizeL) && Math.abs(sizeR - sizeL) >= 1) warnings.anisocoria = true;
+                            if((!isNaN(sizeR) && sizeR <= 2) || (!isNaN(sizeL) && sizeL <= 2)) warnings.miosis = true;
+                            if((!isNaN(sizeR) && sizeR >= 4.5) || (!isNaN(sizeL) && sizeL >= 4.5)) warnings.mydriasis = true;
+
+                            App.state.vitals.warnings = warnings;
+                        },
+                        renderVitalsWarnings() {
+                            const container = App.elements.vitalsWarningsContainer;
+                            const warnings = App.state.vitals.warnings || {};
+                            let html = '';
+
+                            if (warnings.isBpDiffHigh) html += `<div class="warning-text"><i class="fas fa-arrows-left-right-to-line mr-1"></i>血圧左右差: ${warnings.bpDiff}mmHg</div>`;
+                            if (warnings.isShockIndexHigh) html += `<div class="warning-text"><i class="fas fa-bolt mr-1"></i>ショック指数: ${warnings.shockIndex.toFixed(2)}</div>`;
+                            if (warnings.isQsofaPositive) html += `<div class="warning-text"><i class="fas fa-lungs-virus mr-1"></i>qSOFA陽性 (${warnings.qsofaScore}点)</div>`;
+                            if (warnings.anisocoria) html += `<div class="warning-text"><i class="fas fa-eye mr-1"></i>瞳孔不同</div>`;
+                            if (warnings.miosis) html += `<div class="warning-text-sm"><i class="fas fa-compress mr-1"></i>瞳孔縮小（橋出血,有機リン中毒など）</div>`;
+                            if (warnings.mydriasis) html += `<div class="warning-text-sm"><i class="fas fa-expand mr-1"></i>瞳孔散大（CPA,低酸素血症など）</div>`;
+                            
+                            container.innerHTML = html;
+                        },
+                        updateFormFromState() {
+                            const vitals = App.state.vitals || {};
+                            const form = App.elements.vitalsForm;
+                            form.reset();
+                            for (const key in vitals) {
+                                if (key === 'warnings') continue;
+                                const el = form.elements[key];
+                                if (el && el.type !== 'hidden' && !key.startsWith('pupil') && !['arrival', 'contact', 'departure'].includes(key)) {
+                                    if(el.type !== 'checkbox' && el.type !== 'radio') {
+                                        el.value = vitals[key] || '';
+                                    }
+                                }
+                            }
+                            App.elements.vitalsJcsGroup.querySelectorAll('.jcs-btn').forEach(b => b.classList.toggle('active', b.textContent === vitals.jcs));
+                            
+                            ['r', 'l'].forEach(side => {
+                                const sizeInput = form.elements[`pupil_size_${side}`];
+                                const reflexSelect = form.elements[`pupil_reflex_${side}`];
+                                if (sizeInput) {
+                                    sizeInput.value = vitals[`pupil_size_${side}`] || '';
+                                }
+                                if (reflexSelect) {
+                                    reflexSelect.value = vitals[`pupil_reflex_${side}`] !== undefined && vitals[`pupil_reflex_${side}`] !== null ? vitals[`pupil_reflex_${side}`] : '2';
+                                }
+                            });
+
+                             App.elements.vitalsAppearanceTags.querySelectorAll('.vitals-tag').forEach(b => b.classList.toggle('active', (vitals.appearance || []).includes(b.textContent)));
+                             App.elements.vitalsEcgTags.querySelectorAll('.ecg-tag').forEach(b => b.classList.toggle('active', (vitals.ecg_findings || []).includes(b.textContent)));
+
+                             this.updateGcsTotal();
+                             this.checkAllVitals();
+                        },
+                        saveState(shouldSaveHistory = false) {
+                            App.utils.saveToStorage(App.config.storageKeys.vitals, App.state.vitals);
+
+                            if(shouldSaveHistory) {
+                                const hasData = Object.entries(App.state.vitals).some(([key, value]) => {
+                                    if(['arrival','contact','departure', 'warnings'].includes(key)) return false;
+                                    return value !== null && value !== '' && (!Array.isArray(value) || value.length > 0)
+                                });
+
+                                if(hasData) {
+                                    const history = App.utils.loadFromStorage(App.config.storageKeys.vitalsHistory, []);
+                                    const newEntry = {
+                                        timestamp: new Date().toLocaleString('ja-JP'),
+                                        vitals: { ...App.state.vitals },
+                                        patient: App.utils.loadFromStorage(App.config.storageKeys.ageAndGender, {})
+                                    };
+                                    history.unshift(newEntry);
+                                    App.utils.saveToStorage(App.config.storageKeys.vitalsHistory, history);
+                                }
+                            }
+                        },
+                        saveAndClose() {
+                            this.updateStateFromForm();
+                            this.checkAllVitals(); // Final calculation before saving
+                            this.saveState(true); // Save to history
+                            App.renderer.renderVitalsSummary();
+                            App.utils.hideModal(App.elements.vitalsModal);
+                        },
+                        async clear(withConfirmation = true) {
+                             const performClear = async () => {
+                                App.state.vitals = {}; // Clears everything including timestamps
+                                this.saveState(false); // Do not save empty vitals to history
+                                this.updateFormFromState();
+                                App.renderer.renderVitalsSummary();
+                                App.elements.vitalsForm.querySelectorAll('.vitals-tag.active, .ecg-tag.active').forEach(tag => tag.classList.remove('active'));
+                             };
+
+                            if (withConfirmation) {
+                                const confirmed = await App.utils.customConfirm("バイタル入力と記録時刻をすべてクリアしますか？", "確認");
+                                if(confirmed) {
+                                   await performClear();
+                                }
+                            } else {
+                                await performClear();
+                            }
+                        },
+                    },
+                    settings: {
+                        init(){
+                             const showRandom = App.utils.loadFromStorage(App.config.storageKeys.showRandomBtn, false);
+                             App.elements.showRandomBtnToggle.checked = showRandom;
+                             this.toggleRandomButtonVisibility(showRandom);
+                             const fontSize = App.utils.loadFromStorage(App.config.storageKeys.fontSize, 'base');
+                             this.applyFontSize(fontSize);
+                             const keywordMode = App.utils.loadFromStorage(App.config.storageKeys.keywordMode, 'OR');
+                             App.state.filters.keywordMode = keywordMode;
+                             App.renderer.renderKeywordSwitch();
+                        },
+                        bindEventListeners() {
+                           App.elements.settingsModalCloseBtn.addEventListener('click', () => this.close());
+                           App.elements.exportCsvBtn.addEventListener('click', () => this.exportCSV());
+                           App.elements.importCsvBtn.addEventListener('click', () => App.elements.importCsvInput.click());
+                           App.elements.importCsvInput.addEventListener('change', e => this.handleCSVFileSelect(e));
+                           App.elements.showRandomBtnToggle.addEventListener('change', e => this.toggleRandomButtonVisibility(e.target.checked));
+                           App.elements.fontSizeControls.addEventListener('click', e => this.handleFontSizeChange(e));
+                           App.elements.nextCaseBtn.addEventListener('click', () => this.handleNextCase());
+                           App.elements.viewVitalsHistoryBtn.addEventListener('click', () => App.components.vitalsHistory.open());
+                           App.elements.clearVitalsHistoryBtn.addEventListener('click', () => App.components.vitalsHistory.clear());
+                           App.elements.vitalsSettingsBtn.addEventListener('click', () => App.components.vitalsSettings.open());
+
+                        },
+                        async handleNextCase() {
+                            const confirmed = await App.utils.customConfirm(
+                                '現在の入力内容をすべてリセットし、次の症例に移行しますか？\n（バイタル履歴は保持されます）',
+                                '次の症例へ'
+                            );
+                            if (confirmed) {
+                                // 1. Reset patient info
+                                App.elements.ageInput.value = '';
+                                App.elements.genderBtns.forEach(btn => btn.classList.remove('active'));
+                                App.utils.saveToStorage(App.config.storageKeys.ageAndGender, {});
+
+                                // 2. Reset temp memo
+                                App.elements.tempMemo.value = '';
+                                App.utils.saveToStorage(App.config.storageKeys.tempMemo, '');
+
+                                // 3. Reset filters and selections
+                                App.state.filters.isFavoritesOnly = false;
+                                App.elements.filterFavoritesBtn.classList.remove('active');
+                                App.handlers.handleClearAllSelections();
+
+                                // 4. Reset stopwatch
+                                App.components.stopwatch.reset();
+                                
+                                // 5. Reset vitals
+                                await App.components.vitalsModal.clear(false); // Clear without confirmation
+
+                                // 6. Close the settings modal
+                                this.close();
+                                App.utils.customAlert('次の症例の準備ができました。');
+                            }
+                        },
+                        open() { App.utils.showModal(App.elements.settingsModal); },
+                        close() { App.utils.hideModal(App.elements.settingsModal); },
+                        toggleRandomButtonVisibility(isVisible) {
+                             App.utils.saveToStorage(App.config.storageKeys.showRandomBtn, isVisible);
+                             App.elements.randomComplaintBtn.classList.toggle('hidden', !isVisible);
+                             App.elements.randomDiseaseBtn.classList.toggle('hidden', !isVisible);
+                        },
+                        handleFontSizeChange(e) {
+                            const btn = e.target.closest('.font-size-btn');
+                            if(btn) this.applyFontSize(btn.dataset.size);
+                        },
+                        applyFontSize(size) {
+                            App.elements.html.className = `text-${size}`;
+                            App.elements.fontSizeControls.querySelectorAll('.font-size-btn').forEach(b => {
+                                b.classList.toggle('active', b.dataset.size === size);
+                            });
+                            App.utils.saveToStorage(App.config.storageKeys.fontSize, size);
+                        },
+                        exportCSV() {
+                            const data = App.state.dataStore;
+                            if (data.length === 0) {
+                                App.utils.customAlert('エクスポートするデータがありません。');
+                                return;
+                            }
+
+                            // Flatten data for CSV
+                            const flattenedData = [];
+                            data.forEach(entry => {
+                                if (entry.diseases && entry.diseases.length > 0) {
+                                    entry.diseases.forEach(disease => {
+                                        flattenedData.push({
+                                            chiefComplaint: entry.chiefComplaint || '',
+                                            description: entry.description || '',
+                                            memo: entry.memo || '',
+                                            diseaseName: disease.name || '',
+                                            diseaseDescription: disease.description || '',
+                                            diseaseKeywords: (disease.keywords || []).join(';'), // Use semicolon to avoid comma issues
+                                            diseasePitfalls: (disease.pitfalls || []).join(';'),
+                                            diseaseMemo: disease.memo || ''
+                                        });
+                                    });
+                                } else {
+                                     flattenedData.push({
+                                        chiefComplaint: entry.chiefComplaint || '',
+                                        description: entry.description || '',
+                                        memo: entry.memo || '',
+                                        diseaseName: '', diseaseDescription: '', diseaseKeywords: '', diseasePitfalls: '', diseaseMemo: ''
+                                     });
+                                }
+                            });
+                            
+                            // Convert to CSV string
+                            const header = Object.keys(flattenedData[0]).join(',');
+                            const csv = flattenedData.map(row => 
+                                Object.values(row).map(value => `"${String(value).replace(/"/g, '""')}"`).join(',')
+                            ).join('\n');
+                            
+                            const csvContent = `${header}\n${csv}`;
+                            const blob = new Blob([`\uFEFF${csvContent}`], { type: 'text/csv;charset=utf-8;' }); // Add BOM for Excel
+                            const url = URL.createObjectURL(blob);
+                            const a = document.createElement('a');
+                            a.href = url;
+                            a.download = `paramedic_data_${new Date().toISOString().slice(0,10)}.csv`;
+                            a.click();
+                            URL.revokeObjectURL(url);
+                        },
+                        handleCSVFileSelect(event) {
+                            const file = event.target.files[0];
+                            if (!file) return;
+                            const reader = new FileReader();
+                            reader.onload = async (e) => {
+                                try {
+                                    const csvString = e.target.result;
+                                    const confirmed = await App.utils.customConfirm('現在のデータをすべて上書きして、CSVからインポートしますか？この操作は元に戻せません。', 'インポートの確認');
+                                    if (confirmed) {
+                                        this.importCSV(csvString);
+                                    }
+                                } catch (error) {
+                                    App.utils.customAlert('ファイルの読み込みに失敗しました。');
+                                    console.error("Import error:", error);
+                                }
+                            };
+                             reader.onerror = () => {
+                                App.utils.customAlert('ファイルの読み込み中にエラーが発生しました。');
+                            };
+                            reader.readAsText(file, 'Shift_JIS'); // Specify Shift_JIS encoding
+                        },
+                        async importCSV(csvString) {
+                            try {
+                                const lines = csvString.trim().split('\n');
+                                const header = lines[0].split(',').map(h => h.trim().replace(/"/g, ''));
+                                const rows = lines.slice(1).map(line => {
+                                    const data = line.split(/,(?=(?:(?:[^"]*"){2})*[^"]*$)/); // Handle commas inside quotes
+                                    const rowData = {};
+                                    header.forEach((key, i) => {
+                                        rowData[key] = (data[i] || '').trim().replace(/(^"|"$)/g, '').replace(/""/g, '"');
+                                    });
+                                    return rowData;
+                                });
+
+                                // Group by chiefComplaint to reconstruct nested structure
+                                const groupedByComplaint = rows.reduce((acc, row) => {
+                                    const complaint = row.chiefComplaint;
+                                    if (!acc[complaint]) {
+                                        acc[complaint] = {
+                                            chiefComplaint: complaint,
+                                            description: row.description || '',
+                                            memo: row.memo || '',
+                                            createdAt: new Date().toISOString(),
+                                            updatedAt: new Date().toISOString(),
+                                            isFavorite: false,
+                                            diseases: []
+                                        };
+                                    }
+                                    if (row.diseaseName) {
+                                        acc[complaint].diseases.push({
+                                            name: row.diseaseName,
+                                            description: row.diseaseDescription || '',
+                                            // FIX: Split by semicolon instead of comma
+                                            keywords: (row.diseaseKeywords || '').split(';').map(k => k.trim()).filter(Boolean),
+                                            pitfalls: (row.diseasePitfalls || '').split(';').map(p => p.trim()).filter(Boolean),
+                                            memo: row.diseaseMemo || '',
+                                            isFavorite: false
+                                        });
+                                    }
+                                    return acc;
+                                }, {});
+
+                                const finalData = Object.values(groupedByComplaint);
+
+                                // Batch write to Firestore
+                                const collectionRef = App.services.db.getCollectionRef();
+                                if (!collectionRef) return;
+
+                                // Delete existing documents
+                                const snapshot = await getDocs(collectionRef);
+                                const deleteBatch = writeBatch(App.state.db);
+                                snapshot.docs.forEach(d => deleteBatch.delete(d.ref));
+                                await deleteBatch.commit();
+
+                                // Add new documents
+                                const addBatch = writeBatch(App.state.db);
+                                finalData.forEach(item => {
+                                    const docRef = doc(collectionRef);
+                                    addBatch.set(docRef, item);
+                                });
+                                await addBatch.commit();
+                                
+                                App.utils.customAlert('データのインポートが完了しました。');
+                                this.close();
+
+                            } catch (error) {
+                                App.utils.customAlert('CSVデータの解析またはインポート中にエラーが発生しました。ファイルの形式を確認してください。');
+                                console.error("CSV Import failed:", error);
+                            }
+                        }
+                    },
+                    searchHistory: {
+                        bindEventListeners() {
+                            App.elements.searchHistoryBtn.addEventListener('click', e => { e.stopPropagation(); this.toggleDropdown(); });
+                        },
+                        getKey() { return `paramedic_app_search_history_${App.config.appId}`; },
+                        get() { return JSON.parse(localStorage.getItem(this.getKey())) || []; },
+                        save(term) {
+                            if (!term) return;
+                            let history = this.get();
+                            history = history.filter(item => item !== term);
+                            history.unshift(term);
+                            if (history.length > App.config.maxHistoryItems) history.pop();
+                            localStorage.setItem(this.getKey(), JSON.stringify(history));
+                        },
+                        clear() {
+                            localStorage.removeItem(this.getKey());
+                            this.render();
+                        },
+                        render() {
+                            const { searchHistoryDropdown } = App.elements;
+                            const history = this.get();
+                            searchHistoryDropdown.innerHTML = '';
+                            if (history.length === 0) {
+                                searchHistoryDropdown.innerHTML = '<div class="p-3 text-sm text-gray-500 text-center">検索履歴はありません。</div>';
+                                return;
+                            }
+                            const list = document.createElement('ul');
+                            history.forEach(term => {
+                                const item = document.createElement('li');
+                                item.className = 'px-4 py-2 hover:bg-gray-700 cursor-pointer text-gray-200';
+                                item.textContent = term;
+                                item.addEventListener('click', () => { App.elements.searchInput.value = term; App.handlers.handleSearch(); App.utils.hide(searchHistoryDropdown); });
+                                list.appendChild(item);
+                            });
+                            searchHistoryDropdown.appendChild(list);
+                            const footer = document.createElement('div');
+                            footer.className = 'p-2 border-t border-gray-700 text-center';
+                            const clearButton = App.utils.createButton('履歴を消去', 'text-sm text-red-500 hover:text-red-400', e => { e.stopPropagation(); this.clear(); });
+                            footer.appendChild(clearButton);
+                            searchHistoryDropdown.appendChild(footer);
+                        },
+                        toggleDropdown() {
+                             if(App.elements.searchHistoryDropdown.classList.contains('hidden')) {
+                                this.render();
+                                App.utils.show(App.elements.searchHistoryDropdown);
+                             } else {
+                                App.utils.hide(App.elements.searchHistoryDropdown);
+                             }
+                        }
+                    },
+                    dataModal: {
+                        dragged: null,
+                        bindEventListeners() {
+                            const el = App.elements;
+                            el.modalCloseBtn.addEventListener('click', () => this.close());
+                            el.addDiseaseBtn.addEventListener('click', () => this.addDiseaseForm());
+                            el.dataForm.addEventListener('submit', e => { e.preventDefault(); this.submit(); });
+                            el.deleteBtn.addEventListener('click', () => this.delete());
+                            
+                            // Drag and Drop Listeners
+                            el.diseasesContainer.addEventListener('dragstart', e => this.onDragStart(e));
+                            el.diseasesContainer.addEventListener('dragend', e => this.onDragEnd(e));
+                            el.diseasesContainer.addEventListener('dragover', e => this.onDragOver(e));
+                        },
+                        onDragStart(e) {
+                            if (e.target.classList.contains('disease-form-group')) {
+                                this.dragged = e.target;
+                                e.dataTransfer.effectAllowed = 'move';
+                                e.dataTransfer.setData('text/plain', null); // Required for Firefox
+                                setTimeout(() => {
+                                    this.dragged.classList.add('dragging');
+                                }, 0);
+                            }
+                        },
+                        onDragEnd() {
+                            if (this.dragged) {
+                                this.dragged.classList.remove('dragging');
+                            }
+                            this.dragged = null;
+                        },
+                        onDragOver(e) {
+                            e.preventDefault();
+                            const container = App.elements.diseasesContainer;
+                            if (!this.dragged || !container.contains(this.dragged)) return;
+
+                            const afterElement = this.getDragAfterElement(container, e.clientY);
+                            if (afterElement == null) {
+                                container.appendChild(this.dragged);
+                            } else {
+                                container.insertBefore(this.dragged, afterElement);
+                            }
+                        },
+                        getDragAfterElement(container, y) {
+                            const draggableElements = [...container.querySelectorAll('.disease-form-group:not(.dragging)')];
+                            return draggableElements.reduce((closest, child) => {
+                                const box = child.getBoundingClientRect();
+                                const offset = y - box.top - box.height / 2;
+                                if (offset < 0 && offset > closest.offset) {
+                                    return { offset: offset, element: child };
+                                } else {
+                                    return closest;
+                                }
+                            }, { offset: Number.NEGATIVE_INFINITY }).element;
+                        },
+                        openForNew() {
+                             const { dataModal, modalTitle, dataForm, diseasesContainer, deleteBtn } = App.elements;
+                             modalTitle.textContent = '新規主訴の追加';
+                             dataForm.reset();
+                             dataForm.querySelector('#entry-id').value = '';
+                             diseasesContainer.innerHTML = '';
+                             this.addDiseaseForm();
+                             App.utils.hide(deleteBtn);
+                             App.utils.showModal(dataModal);
+                        },
+                        openForEdit(id) {
+                            const entry = App.state.dataStore.find(e => e.id === id);
+                            if (!entry) return;
+                             const { dataModal, modalTitle, chiefComplaintInput, chiefComplaintDescInput, chiefComplaintMemoInput, diseasesContainer, deleteBtn, entryIdInput } = App.elements;
+                             modalTitle.textContent = '主訴の編集';
+                             entryIdInput.value = id;
+                             chiefComplaintInput.value = entry.chiefComplaint;
+                             chiefComplaintDescInput.value = entry.description || '';
+                             chiefComplaintMemoInput.value = entry.memo || '';
+                             diseasesContainer.innerHTML = '';
+                             (entry.diseases || []).forEach(d => this.addDiseaseForm(d));
+                             App.utils.show(deleteBtn);
+                             App.utils.showModal(dataModal);
+                        },
+                        close() { App.utils.hideModal(App.elements.dataModal); },
+                        addDiseaseForm(disease = {}) {
+                            const container = App.elements.diseasesContainer;
+                            const diseaseDiv = document.createElement('div');
+                            diseaseDiv.className = 'disease-form-group bg-gray-700/50 p-4 pl-10 rounded-lg space-y-2 relative';
+                            diseaseDiv.draggable = true;
+                            const diseaseId = `disease_${Date.now()}_${Math.random()}`;
+                            diseaseDiv.innerHTML = `
+                                <span class="drag-handle absolute top-1/2 -translate-y-1/2 left-2 text-gray-500 hover:text-white" title="ドラッグして並び替え"><i class="fas fa-grip-vertical fa-lg"></i></span>
+                                <button type="button" class="remove-disease-btn absolute top-2 right-2 text-gray-500 hover:text-red-500"><i class="fas fa-times-circle"></i></button>
+                                <div><label class="text-sm">疾患名</label><input type="text" name="${diseaseId}_name" class="w-full bg-gray-600 p-2 rounded-md mt-1" value="${disease.name || ''}" required></div>
+                                <div><label class="text-sm">説明</label><textarea name="${diseaseId}_description" rows="2" class="w-full bg-gray-600 p-2 rounded-md mt-1">${disease.description || ''}</textarea></div>
+                                <div><label class="text-sm">キーワード (カンマ区切り)</label><input type="text" name="${diseaseId}_keywords" class="w-full bg-gray-600 p-2 rounded-md mt-1" value="${(disease.keywords || []).join(', ')}"></div>
+                                <div><label class="text-sm">落とし穴 (カンマ区切り)</label><input type="text" name="${diseaseId}_pitfalls" class="w-full bg-gray-600 p-2 rounded-md mt-1" value="${(disease.pitfalls || []).join(', ')}"></div>
+                                <div><label class="text-sm">疾患メモ</label><textarea name="${diseaseId}_memo" rows="2" class="w-full bg-gray-600 p-2 rounded-md mt-1">${disease.memo || ''}</textarea></div>`;
+                            diseaseDiv.querySelector('.remove-disease-btn').onclick = () => diseaseDiv.remove();
+                            container.appendChild(diseaseDiv);
+                        },
+                        async submit() {
+                            const form = App.elements.dataForm;
+                            const entryId = form.querySelector('#entry-id').value;
+                            const diseases = [];
+                            form.querySelectorAll('.disease-form-group').forEach(group => {
+                                const nameInput = group.querySelector('input[name$="_name"]');
+                                if(!nameInput || !nameInput.value) return;
+                                const disease = {
+                                    name: nameInput.value.trim(),
+                                    description: group.querySelector('textarea[name$="_description"]').value.trim(),
+                                    keywords: group.querySelector('input[name$="_keywords"]').value.split(',').map(k => k.trim()).filter(Boolean),
+                                    pitfalls: group.querySelector('input[name$="_pitfalls"]').value.split(',').map(p => p.trim()).filter(Boolean),
+                                    memo: group.querySelector('textarea[name$="_memo"]').value.trim(),
+                                    isFavorite: false,
+                                };
+                                diseases.push(disease);
+                            });
+                            const data = {
+                                chiefComplaint: form.querySelector('#chief-complaint').value,
+                                description: form.querySelector('#chief-complaint-description').value,
+                                memo: form.querySelector('#chief-complaint-memo').value,
+                                diseases: diseases,
+                                updatedAt: new Date().toISOString()
+                            };
+                            try {
+                                const collectionRef = App.services.db.getCollectionRef();
+                                if (entryId) {
+                                    const existingData = App.state.dataStore.find(d => d.id === entryId);
+                                    data.isFavorite = existingData?.isFavorite || false;
+                                    if (existingData?.createdAt) {
+                                        data.createdAt = existingData.createdAt;
+                                    }
+                                    data.diseases.forEach(d => {
+                                        const existingDisease = (existingData.diseases || []).find(ed => ed.name === d.name);
+                                        if (existingDisease) d.isFavorite = existingDisease.isFavorite;
+                                    });
+                                    await setDoc(doc(collectionRef, entryId), data);
+                                    App.utils.customAlert('データが更新されました。');
+                                } else {
+                                    data.createdAt = new Date().toISOString();
+                                    data.isFavorite = false;
+                                    await addDoc(collectionRef, data);
+                                    App.utils.customAlert('データが追加されました。');
+                                }
+                                this.close();
+                            } catch(error) {
+                                console.error("Error saving data:", error);
+                                App.utils.customAlert('データの保存に失敗しました。');
+                            }
+                        },
+                        async delete() {
+                            const entryId = App.elements.entryIdInput.value;
+                            if (!entryId) return;
+
+                            const confirmed = await App.utils.customConfirm('この主訴を本当に削除しますか？', '削除の確認');
+                            if (confirmed) {
+                                const originalDataStore = [...App.state.dataStore];
+                                try {
+                                    this.close();
+                                    App.state.dataStore = App.state.dataStore.filter(entry => entry.id !== entryId);
+                                    App.renderer.renderAll();
+                                    App.utils.customAlert('データが削除されました。');
+                                    await deleteDoc(doc(App.services.db.getCollectionRef(), entryId));
+                                } catch (error) {
+                                    console.error("Error deleting data:", error);
+                                    App.state.dataStore = originalDataStore; 
+                                    App.renderer.renderAll();
+                                    App.utils.customAlert('データの削除に失敗しました。');
+                                }
+                            }
+                        }
+                    },
+                    compareModal: {
+                        init(){this.bindEventListeners()},
+                        open() {
+                            const { compareModal, compareModalBody } = App.elements;
+                            compareModalBody.innerHTML = '';
+                            const selectedDiseases = [];
+                            App.state.ui.selectedItems.forEach(itemId => {
+                                if (!itemId.startsWith('d_')) return;
+                                const parts = itemId.split('_');
+                                const entryId = parts[1];
+                                const diseaseName = parts.slice(2).join(' ').replace(/_/g, ' ');
+                                const entry = App.state.dataStore.find(e => e.id === entryId);
+                                if (entry) {
+                                    const disease = (entry.diseases || []).find(d => d.name === diseaseName);
+                                    if (disease) selectedDiseases.push({ ...disease, complaint: entry.chiefComplaint });
+                                }
+                            });
+                            if (selectedDiseases.length < 2) {
+                                App.utils.customAlert('比較するには、疾患を2つ以上選択してください。');
+                                return;
+                            }
+                            const allKeywords = [...new Set(selectedDiseases.flatMap(d => d.keywords || []))];
+                            const allPitfalls = [...new Set(selectedDiseases.flatMap(d => d.pitfalls || []))];
+                            let tableHTML = `<div class="overflow-x-auto"><table class="w-full text-left border-collapse">`;
+                            tableHTML += '<thead><tr class="bg-gray-700"><th class="p-2 border border-gray-600">特徴</th>';
+                            selectedDiseases.forEach(d => {
+                                tableHTML += `<th class="p-2 border border-gray-600 text-teal-400">${d.name} <span class="text-xs text-gray-400">(${d.complaint})</span></th>`;
+                            });
+                            tableHTML += '</tr></thead>';
+                            tableHTML += '<tbody>';
+                            tableHTML += `<tr><td class="p-2 border border-gray-600 font-bold bg-gray-700/50" colspan="${selectedDiseases.length + 1}">キーワード</td></tr>`;
+                            allKeywords.forEach(keyword => {
+                                tableHTML += `<tr><td class="p-2 border border-gray-600">${keyword}</td>`;
+                                selectedDiseases.forEach(d => {
+                                    const hasKeyword = (d.keywords || []).includes(keyword);
+                                    tableHTML += `<td class="p-2 border border-gray-600 text-center">${hasKeyword ? '<i class="fas fa-check text-green-400"></i>' : '<i class="fas fa-times text-red-400"></i>'}</td>`;
+                                });
+                                tableHTML += '</tr>';
+                            });
+                            tableHTML += `<tr><td class="p-2 border border-gray-600 font-bold bg-gray-700/50" colspan="${selectedDiseases.length + 1}">落とし穴</td></tr>`;
+                            allPitfalls.forEach(pitfall => {
+                                tableHTML += `<tr><td class="p-2 border border-gray-600">${pitfall}</td>`;
+                                selectedDiseases.forEach(d => {
+                                    const hasPitfall = (d.pitfalls || []).includes(pitfall);
+                                    tableHTML += `<td class="p-2 border border-gray-600 text-center">${hasPitfall ? '<i class="fas fa-check text-green-400"></i>' : ''}</td>`;
+                                });
+                                tableHTML += '</tr>';
+                            });
+                            tableHTML += '</tbody></table></div>';
+                            compareModalBody.innerHTML = tableHTML;
+                            App.utils.showModal(compareModal);
+                        },
+                        bindEventListeners() {
+                             App.elements.compareModalCloseBtn.addEventListener('click', () => App.utils.hideModal(App.elements.compareModal));
+                        }
+                    },
+                    dobModal: {
+                        init(){this.bindEventListeners()},
+                        bindEventListeners() {
+                            const el = App.elements;
+                            el.dobBtn.addEventListener('click', () => App.utils.showModal(el.dobEraModal));
+                            el.dobModalCloseBtn.addEventListener('click', () => App.utils.hideModal(el.dobEraModal));
+                            el.dobCalcBtn.addEventListener('click', () => this.calculateAge());
+                            el.eraBtns.querySelectorAll('.era-btn').forEach(btn => {
+                                btn.addEventListener('click', (e) => {
+                                    el.eraBtns.querySelectorAll('.era-btn').forEach(b => b.classList.remove('active'));
+                                    e.currentTarget.classList.add('active');
+                                });
+                            });
+                        },
+                        calculateAge() {
+                            const eraBtn = App.elements.eraBtns.querySelector('.active');
+                            if (!eraBtn) {
+                                App.utils.customAlert('元号を選択してください。');
+                                return;
+                            }
+                            const era = eraBtn.dataset.era;
+                            const year = parseInt(App.elements.eraYearInput.value);
+                            const month = parseInt(App.elements.eraMonthInput.value);
+                            const day = parseInt(App.elements.eraDayInput.value);
+                            if (isNaN(year) || isNaN(month) || isNaN(day)) {
+                                App.utils.customAlert('年月日を正しく入力してください。');
+                                return;
+                            }
+                            let birthYear;
+                            switch (era) {
+                                case 'M': birthYear = 1867 + year; break;
+                                case 'T': birthYear = 1911 + year; break;
+                                case 'S': birthYear = 1925 + year; break;
+                                case 'H': birthYear = 1988 + year; break;
+                                case 'R': birthYear = 2018 + year; break;
+                                default: return;
+                            }
+                            const today = new Date();
+                            const birthDate = new Date(birthYear, month - 1, day);
+                            let age = today.getFullYear() - birthDate.getFullYear();
+                            const m = today.getMonth() - birthDate.getMonth();
+                            if (m < 0 || (m === 0 && today.getDate() < birthDate.getDate())) age--;
+                            App.elements.ageInput.value = age;
+                            App.handlers.handlePatientInfoChange();
+                            App.utils.hideModal(App.elements.dobEraModal);
+                        }
+                    },
+                    tagEditor: {
+                        currentType: null,
+                        init() { this.bindEventListeners(); },
+                        bindEventListeners() {
+                            const el = App.elements;
+                            el.tagEditorCloseBtn.addEventListener('click', () => this.close());
+                            el.addTagBtn.addEventListener('click', () => this.addTag());
+                            el.newTagInput.addEventListener('keypress', e => { if (e.key === 'Enter') this.addTag(); });
+                        },
+                        open(type) {
+                            this.currentType = type;
+                            const title = type === 'appearance' ? '外観・様子のタグを編集' : '心電図所見のタグを編集';
+                            App.elements.tagEditorTitle.textContent = title;
+                            this.renderList();
+                            App.utils.showModal(App.elements.tagEditorModal);
+                        },
+                        close() {
+                            App.utils.hideModal(App.elements.tagEditorModal);
+                        },
+                        renderList() {
+                            const listEl = App.elements.tagEditorList;
+                            const tags = this.currentType === 'appearance' ? App.state.customAppearanceTags : App.state.customEcgTags;
+                            listEl.innerHTML = '';
+                            tags.forEach(tag => {
+                                const item = document.createElement('div');
+                                item.className = 'flex items-center justify-between bg-gray-700 p-2 rounded';
+                                item.innerHTML = `<span>${tag}</span><button class="delete-tag-btn text-red-500 hover:text-red-400"><i class="fas fa-trash-alt"></i></button>`;
+                                item.querySelector('.delete-tag-btn').onclick = () => this.deleteTag(tag);
+                                listEl.appendChild(item);
+                            });
+                        },
+                        addTag() {
+                            const input = App.elements.newTagInput;
+                            const newTag = input.value.trim();
+                            if (!newTag) return;
+                            
+                            const tags = this.currentType === 'appearance' ? App.state.customAppearanceTags : App.state.customEcgTags;
+                            if (tags.includes(newTag)) {
+                                App.utils.customAlert('このタグは既に追加されています。');
+                                return;
+                            }
+                            tags.push(newTag);
+                            this.saveTags(tags);
+                            this.renderList();
+                            input.value = '';
+                        },
+                        deleteTag(tagToDelete) {
+                            let tags = this.currentType === 'appearance' ? App.state.customAppearanceTags : App.state.customEcgTags;
+                            tags = tags.filter(tag => tag !== tagToDelete);
+                            
+                            if (this.currentType === 'appearance') App.state.customAppearanceTags = tags;
+                            else App.state.customEcgTags = tags;
+
+                            this.saveTags(tags);
+                            this.renderList();
+                        },
+                        saveTags(tags) {
+                             const key = this.currentType === 'appearance' ? App.config.storageKeys.customAppearanceTags : App.config.storageKeys.customEcgTags;
+                             App.utils.saveToStorage(key, tags);
+                             App.components.vitalsModal.renderTagButtons(this.currentType);
+                        }
+                    },
+                     vitalsHistory: {
+                        init() { this.bindEventListeners(); },
+                        bindEventListeners() { App.elements.vitalsHistoryCloseBtn.addEventListener('click', () => this.close()); },
+                        open() {
+                            const history = App.utils.loadFromStorage(App.config.storageKeys.vitalsHistory, []);
+                            const listEl = App.elements.vitalsHistoryList;
+                            listEl.innerHTML = '';
+
+                            if(history.length === 0) {
+                                listEl.innerHTML = '<p class="text-gray-400 text-center">バイタル履歴はありません。</p>';
+                            } else {
+                                history.forEach(entry => {
+                                    const itemEl = document.createElement('div');
+                                    itemEl.className = 'bg-gray-700/50 p-3 rounded-lg';
+                                    
+                                    let content = `<div class="font-bold text-lg text-cyan-300 border-b border-gray-600 pb-2 mb-2">${entry.timestamp}</div>`;
+                                    
+                                    const patientInfo = entry.patient;
+                                    const genderText = patientInfo.gender === 'male' ? '男性' : patientInfo.gender === 'female' ? '女性' : '';
+                                    content += this.formatEntry('fa-user', '患者', `${patientInfo.age || ''}歳 ${genderText}`.trim());
+
+                                    const vitals = entry.vitals;
+                                    content += this.formatEntry('fa-brain', 'JCS', vitals.jcs);
+                                    if(vitals.gcs && parseInt(vitals.gcs) > 0) content += this.formatEntry('fa-arrows-to-dot', 'GCS', vitals.gcs, ` (E${vitals.gcs_e || '?'}V${vitals.gcs_v || '?'}M${vitals.gcs_m || '?'})`);
+                                    content += this.formatEntry('fa-lungs', '呼吸', vitals.resp, '回');
+                                    content += this.formatEntry('fa-heart-pulse', '脈拍', vitals.pulse, '回');
+                                    content += this.formatEntry('fa-o', 'SpO2', vitals.spo2, '%');
+                                    content += this.formatEntry('fa-temperature-half', '体温', vitals.temp, '℃');
+                                    
+                                    if (vitals.bp_sys_r || vitals.bp_dia_r) content += this.formatEntry('fa-droplet', '血圧(R)', `${vitals.bp_sys_r || '?'}/${vitals.bp_dia_r || '?'}`);
+                                    if (vitals.bp_sys_l || vitals.bp_dia_l) content += this.formatEntry('fa-droplet', '血圧(L)', `${vitals.bp_sys_l || '?'}/${vitals.bp_dia_l || '?'}`);
+                                    if (vitals.pupil_r || vitals.pupil_l) content += this.formatEntry('fa-eye', '瞳孔', `R:${vitals.pupil_r || '?'} L:${vitals.pupil_l || '?'}`);
+                                    if(vitals.ecg_findings && vitals.ecg_findings.length > 0) content += this.formatEntry('fa-heart-pulse', 'ECG', vitals.ecg_findings.join(', '));
+                                    if(vitals.appearance && vitals.appearance.length > 0) content += this.formatEntry('fa-user-doctor', '外観', vitals.appearance.join(', '));
+                                    
+                                     // Display warnings from history
+                                    const warnings = vitals.warnings || {};
+                                    if (warnings.isBpDiffHigh) content += this.formatWarningEntry('fa-arrows-left-right-to-line', '血圧左右差', `${warnings.bpDiff}mmHg`);
+                                    if (warnings.shockIndex) content += this.formatWarningEntry('fa-bolt', 'ショック指数', warnings.shockIndex.toFixed(2), warnings.isShockIndexHigh);
+                                    if (warnings.isQsofaPositive) content += this.formatWarningEntry('fa-lungs-virus', 'qSOFA', `陽性 (${warnings.qsofaScore}点)`);
+                                    if (warnings.anisocoria) content += this.formatWarningEntry('fa-eye', '瞳孔不同');
+                                    if (warnings.miosis) content += this.formatWarningEntry('fa-compress', '瞳孔縮小');
+                                    if (warnings.mydriasis) content += this.formatWarningEntry('fa-expand', '瞳孔散大');
+
+                                    itemEl.innerHTML = content;
+                                    listEl.appendChild(itemEl);
+                                });
+                            }
+                            App.utils.showModal(App.elements.vitalsHistoryModal);
+                        },
+                        formatEntry(icon, label, value, unit = '') {
+                            if(value === null || value === undefined || value === '' || (typeof value === 'string' && value.trim() === '歳') || (Array.isArray(value) && value.length === 0)) return '';
+                            return `<div class="flex items-start gap-2 text-sm"><i class="fa-solid ${icon} fa-fw text-gray-400 mt-1"></i> <span class="w-20">${label}:</span> <span class="flex-1"><b>${value}${unit}</b></span></div>`;
+                        },
+                        formatWarningEntry(icon, label, value, isDanger = true) {
+                            if (value === null || value === undefined) value = '';
+                            const colorClass = isDanger ? 'vital-danger' : 'vital-normal';
+                            return `<div class="flex items-start gap-2 text-sm"><i class="fa-solid ${icon} fa-fw ${colorClass} mt-1"></i> <span class="w-20">${label}:</span> <span class="flex-1"><b class="${colorClass}">${value}</b></span></div>`;
+                        },
+                        async clear() {
+                            const confirmed = await App.utils.customConfirm('すべてのバイタル履歴を消去しますか？この操作は元に戻せません。', '履歴の消去');
+                            if(confirmed){
+                                App.state.vitalsHistory = [];
+                                App.utils.saveToStorage(App.config.storageKeys.vitalsHistory, []);
+                                App.utils.customAlert('バイタル履歴を消去しました。');
+                                if(!App.elements.vitalsHistoryModal.classList.contains('hidden')) { this.open(); }
+                            }
+                        },
+                        close() { App.utils.hideModal(App.elements.vitalsHistoryModal); }
+                    },
+                    vitalsSettings: {
+                        init() {
+                            this.loadThresholds();
+                            this.bindEventListeners();
+                        },
+                        bindEventListeners() {
+                            const el = App.elements;
+                            el.vitalsSettingsBtn.addEventListener('click', () => this.open());
+                            el.vitalsSettingsCloseBtn.addEventListener('click', () => this.close());
+                            el.vitalsSettingsSaveBtn.addEventListener('click', () => this.saveAndClose());
+                            el.vitalsSettingsResetBtn.addEventListener('click', () => this.resetToDefaults());
+                            el.vitalsSettingsAddRowBtn.addEventListener('click', () => this.addTableRow());
+                        },
+                        loadThresholds() {
+                            const saved = App.utils.loadFromStorage(App.config.storageKeys.vitalThresholds);
+                            App.state.vitalThresholds = saved ? saved : JSON.parse(JSON.stringify(App.config.defaultVitalThresholds));
+                        },
+                        open() {
+                            this.renderTable();
+                            App.utils.showModal(App.elements.vitalsSettingsModal);
+                        },
+                        close() { App.utils.hideModal(App.elements.vitalsSettingsModal); },
+                        saveAndClose() {
+                            this.saveTableToState();
+                            App.utils.saveToStorage(App.config.storageKeys.vitalThresholds, App.state.vitalThresholds);
+                            App.utils.customAlert('バイタルアラート設定を保存しました。');
+                            this.close();
+                            App.components.vitalsModal.checkAllVitals();
+                            App.renderer.renderVitalsSummary();
+                        },
+                        async resetToDefaults() {
+                            const confirmed = await App.utils.customConfirm('すべての設定を初期値に戻しますか？', '初期化の確認');
+                            if (confirmed) {
+                                App.state.vitalThresholds = JSON.parse(JSON.stringify(App.config.defaultVitalThresholds));
+                                this.renderTable();
+                                App.utils.customAlert('設定を初期値に戻しました。');
+                            }
+                        },
+                        renderTable() {
+                            const container = App.elements.vitalsSettingsTableContainer;
+                            const thresholds = App.state.vitalThresholds;
+                            const headers = ['年齢区分', '年齢範囲', '呼吸数', '脈拍', '収縮期血圧(SBP)', 'SpO2', '操作'];
+                            const vitalKeys = ['resp', 'pulse', 'sbp', 'spo2'];
+                            
+                            let tableHTML = `<table class="w-full border-collapse"><thead><tr class="bg-gray-700">`;
+                            headers.forEach(h => tableHTML += `<th class="p-2 border border-gray-600">${h}</th>`);
+                            tableHTML += `</tr></thead><tbody id="vitals-settings-tbody">`;
+
+                            thresholds.forEach((row, index) => {
+                                tableHTML += this.getTableRowHTML(row, index, vitalKeys);
+                            });
+
+                            tableHTML += '</tbody></table>';
+                            container.innerHTML = tableHTML;
+
+                            container.querySelectorAll('.delete-row-btn').forEach(btn => {
+                                btn.addEventListener('click', e => this.deleteTableRow(e));
+                            });
+                        },
+                        getTableRowHTML(row, index, vitalKeys) {
+                            let rowHTML = `<tr data-index="${index}">`;
+                            rowHTML += `<td class="p-1 border border-gray-600"><input type="text" class="w-full bg-gray-900 p-1 rounded" value="${row.category}" data-field="category"></td>`;
+                            rowHTML += `<td class="p-1 border border-gray-600"><div class="flex items-center gap-1"><input type="number" class="w-1/2 bg-gray-900 p-1 rounded" value="${row.age[0]}" data-field="age" data-age-index="0"><span>-</span><input type="number" class="w-1/2 bg-gray-900 p-1 rounded" value="${row.age[1]}" data-field="age" data-age-index="1"></div></td>`;
+                            
+                            vitalKeys.forEach(key => {
+                                const val = row[key] || {};
+                                rowHTML += `<td class="p-1 border border-gray-600 space-y-1">
+                                    <div class="grid grid-cols-2 gap-1">
+                                        <input type="number" placeholder="警告(下)" class="w-full bg-yellow-900/50 p-1 rounded text-xs" value="${val.lowWarning || ''}" data-vital="${key}" data-level="lowWarning">
+                                        <input type="number" placeholder="警告(上)" class="w-full bg-yellow-900/50 p-1 rounded text-xs" value="${val.highWarning || ''}" data-vital="${key}" data-level="highWarning">
+                                        <input type="number" placeholder="危険(下)" class="w-full bg-red-900/50 p-1 rounded text-xs" value="${val.lowDanger || ''}" data-vital="${key}" data-level="lowDanger">
+                                        <input type="number" placeholder="危険(上)" class="w-full bg-red-900/50 p-1 rounded text-xs" value="${val.highDanger || ''}" data-vital="${key}" data-level="highDanger">
+                                    </div>
+                                </td>`;
+                            });
+
+                            rowHTML += `<td class="p-1 border border-gray-600 text-center"><button class="delete-row-btn text-red-500 hover:text-red-400 p-2"><i class="fas fa-trash-alt"></i></button></td>`;
+                            rowHTML += '</tr>';
+                            return rowHTML;
+                        },
+                        addTableRow(rowData = { category: '新規', age: [0, 0] }) {
+                            this.saveTableToState();
+                            App.state.vitalThresholds.push(rowData);
+                            this.renderTable();
+                        },
+                        deleteTableRow(event) {
+                             const row = event.target.closest('tr');
+                             const index = parseInt(row.dataset.index, 10);
+                             this.saveTableToState();
+                             App.state.vitalThresholds.splice(index, 1);
+                             this.renderTable();
+                        },
+                        saveTableToState() {
+                            const newThresholds = [];
+                            const tbody = document.getElementById('vitals-settings-tbody');
+                            if (!tbody) return;
+
+                            tbody.querySelectorAll('tr').forEach(row => {
+                                const category = row.querySelector('input[data-field="category"]').value;
+                                const ageInputs = row.querySelectorAll('input[data-field="age"]');
+                                const age = [parseInt(ageInputs[0].value) || 0, parseInt(ageInputs[1].value) || 0];
+                                
+                                const newRow = { category, age };
+                                
+                                row.querySelectorAll('input[data-vital]').forEach(input => {
+                                    const vital = input.dataset.vital;
+                                    const level = input.dataset.level;
+                                    if (!newRow[vital]) newRow[vital] = {};
+                                    if(input.value) newRow[vital][level] = parseFloat(input.value);
+                                });
+                                newThresholds.push(newRow);
+                            });
+                             App.state.vitalThresholds = newThresholds;
+                        }
+                    }
+                },
+                // ユーティリティ関数
+                utils: {
+                    initFirebaseConfig() {
+                        if (typeof __firebase_config !== 'undefined' && __firebase_config) {
+                            try { App.config.firebaseConfig = JSON.parse(__firebase_config); } catch(e) { console.error("Failed to parse firebase config:", e); }
+                        } 
+                        if (!App.config.firebaseConfig) {
+                            console.warn("Firebase config not found globally. Using fallback local config.");
+                             App.config.firebaseConfig = {
+                                apiKey: "AIzaSyC6umJXFGulRAkwdhx-Hoj1_5DbEbSdBOQ",
+                                authDomain: "paramedic-app-df696.firebaseapp.com",
+                                projectId: "paramedic-app-df696",
+                                storageBucket: "paramedic-app-df696.firebasestorage.app",
+                                messagingSenderId: "950566286423",
+                                appId: "1:950566286423:web:8086a8eb31b63008465f12",
+                                measurementId: "G-GHKF63GY9X"
+                            };
+                        }
+                        App.config.appId = typeof __app_id !== 'undefined' ? __app_id : 'default-app-id';
+                    },
+                    show(el) { if(el) el.classList.remove('hidden'); },
+                    hide(el) { if(el) el.classList.add('hidden'); },
+                    showModal(el) { if(el) { el.classList.remove('hidden'); el.style.opacity = 1; el.style.transform = 'scale(1)';} },
+                    hideModal(el) { if(el) { el.style.opacity = 0; el.style.transform = 'scale(0.95)'; setTimeout(() => el.classList.add('hidden'), 300); }},
+                    createButton(html, classes, onClick) {
+                        const btn = document.createElement('button');
+                        btn.type = 'button';
+                        btn.innerHTML = html;
+                        btn.className = classes;
+                        if(onClick) btn.onclick = onClick;
+                        return btn;
+                    },
+                    customAlert(message, title = '情報') {
+                        return new Promise((resolve) => {
+                            const { confirmModal, confirmTitle, confirmMessage, alertIcon, confirmButtons } = App.elements;
+                            if(!confirmModal) { resolve(true); return; }
+                            confirmTitle.textContent = title;
+                            confirmMessage.textContent = message;
+                            alertIcon.innerHTML = `<i class="fas fa-info-circle text-blue-400 text-2xl"></i>`;
+                            confirmButtons.innerHTML = `<button id="alert-ok-btn" class="w-full inline-flex justify-center rounded-md border border-transparent shadow-sm px-4 py-2 bg-blue-600 text-base font-medium text-white hover:bg-blue-700 focus:outline-none sm:ml-3 sm:w-auto sm:text-sm">OK</button>`;
+                            this.showModal(confirmModal);
+                            document.getElementById('alert-ok-btn').onclick = () => { this.hideModal(confirmModal); resolve(true); };
+                        });
+                    },
+                    customConfirm(message, title = '確認') {
+                        return new Promise((resolve) => {
+                            const { confirmModal, confirmTitle, confirmMessage, alertIcon, confirmButtons } = App.elements;
+                            if(!confirmModal) { resolve(false); return; }
+                            confirmTitle.textContent = title;
+                            confirmMessage.textContent = message;
+                            alertIcon.innerHTML = `<i class="fas fa-exclamation-triangle text-yellow-400 text-2xl"></i>`;
+                            confirmButtons.innerHTML = `
+                                <button id="confirm-cancel-btn" class="mt-3 w-full inline-flex justify-center rounded-md border border-gray-500 shadow-sm px-4 py-2 bg-gray-600 text-base font-medium text-white hover:bg-gray-500 focus:outline-none sm:mt-0 sm:w-auto sm:text-sm">キャンセル</button>
+                                <button id="confirm-ok-btn" class="w-full inline-flex justify-center rounded-md border border-transparent shadow-sm px-4 py-2 bg-red-600 text-base font-medium text-white hover:bg-red-700 focus:outline-none sm:ml-3 sm:w-auto sm:text-sm">実行</button>`;
+                            this.showModal(confirmModal);
+                            document.getElementById('confirm-ok-btn').onclick = () => { this.hideModal(confirmModal); resolve(true); };
+                            document.getElementById('confirm-cancel-btn').onclick = () => { this.hideModal(confirmModal); resolve(false); };
+                        });
+                    },
+                    loadFromStorage(key, defaultValue = null) {
+                        const item = localStorage.getItem(key);
+                        if (item === null) return defaultValue;
+                        try { return JSON.parse(item); } catch (e) { return item; }
+                    },
+                    saveToStorage(key, value) {
+                        localStorage.setItem(key, typeof value === 'object' ? JSON.stringify(value) : value);
+                    },
+                    escapeRegExp(string) {
+                        if (typeof string !== 'string') return '';
+                        return string.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'); 
+                    },
+                    highlightText(text, term) {
+                        if (!term || !text) return String(text); 
+                        const keywords = term.trim().split(/\s+/).filter(Boolean);
+                        if (keywords.length === 0) return String(text);
+                
+                        const regex = new RegExp(keywords.map(k => App.utils.escapeRegExp(k)).join('|'), 'gi');
+                        
+                        return String(text).replace(regex, `<mark class="highlight">$&</mark>`);
+                    },
+                    getAgeCategory(age) {
+                        if (age === null || age === undefined) return null;
+                        const thresholds = App.state.vitalThresholds;
+                        if (!thresholds || thresholds.length === 0) return null;
+                        
+                        // Sort by age to handle overlaps correctly
+                        const sortedThresholds = [...thresholds].sort((a,b) => a.age[0] - b.age[0]);
+
+                        for (const category of sortedThresholds) {
+                            if (age >= category.age[0] && age <= category.age[1]) {
+                                return category;
+                            }
+                        }
+                        return null;
+                    },
+                    checkVitalSign(type, value, age, vitals) {
+                        if (value === null || value === undefined || value === '') return 0;
+                        let val = parseFloat(value);
+                        if(isNaN(val) && type !== 'jcs') return 0;
+
+                        // JCS/GCS are handled by their own logic, not age-based thresholds here
+                        if (type === 'gcs' || type === 'jcs') return 0;
+                        
+                        const category = this.getAgeCategory(age);
+                        if (!category || !category[type]) return 0;
+                        const t = category[type];
+
+                        // Danger checks first
+                        if ((t.lowDanger !== undefined && val < t.lowDanger) || (t.highDanger !== undefined && val > t.highDanger)) return 2;
+                        // Then warning checks
+                        if ((t.lowWarning !== undefined && val < t.lowWarning) || (t.highWarning !== undefined && val > t.highWarning)) return 1;
+                        
+                        return 0; // Normal
+                    },
+                }
+            };
+
+            App.init();
+        });
+    </script>
+</body>
+</html>
